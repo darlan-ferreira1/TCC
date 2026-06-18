@@ -1,77 +1,74 @@
-/* function App() {
-  return (
-    <>
-    testezinho
-    </>
-  )
-}
+import { useState } from 'react';
+import ModeSelect from './pages/ModeSelect';
+import Home from './pages/Home';
+import BohrModelSimulation         from './simulations/chemistry/BohrModel/index';
+import MolecularGeometrySimulation from './simulations/chemistry/MolecularGeometry/index';
+import DnaHelixSimulation          from './simulations/biology/DnaHelix/index';
+import PendulumSimulation          from './simulations/physics/Pendulum/index';
+import WavesSimulation             from './simulations/physics/Waves/index';
+import ProjectileSimulation        from './simulations/physics/Projectile/index';
+import SolarSystemSimulation       from './simulations/physics/SolarSystem/index';
 
-export default App */
+type Mode = 'select' | 'normal' | 'immersive';
 
-import { useState, useEffect } from 'react'
-
-type Produto = {
-  id: number
-  nome: string
-  preco: number
-}
+type Page =
+  | 'home'
+  | 'bohr-model'
+  | 'molecular-geometry'
+  | 'dna-helix'
+  | 'simple-pendulum'
+  | 'mechanical-waves'
+  | 'projectile-motion'
+  | 'planetary-motion';
 
 export default function App() {
-  const [produtos, setProdutos] = useState<Produto[]>([])
-  const [nome, setNome] = useState('')
-  const [preco, setPreco] = useState('')
+  const [mode, setMode] = useState<Mode>('select');
+  const [page, setPage] = useState<Page>('home');
 
-  // READ — roda uma vez quando a página carrega
-  useEffect(() => {
-    fetch('/api/produtos')
-      .then((res) => res.json())
-      .then((data: Produto[]) => setProdutos(data))
-  }, [])
+  if (mode === 'select') return <ModeSelect onSelect={setMode} />;
 
-  // CREATE
-  async function adicionar() {
-    if (!nome || !preco) return
-    const res = await fetch('/api/produtos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, preco: Number(preco) }),
-    })
-    const novo: Produto = await res.json()
-    setProdutos((prev) => [...prev, novo])
-    setNome('')
-    setPreco('')
-  }
-
-  // DELETE
-  async function remover(id: number) {
-    await fetch(`/api/produtos/${id}`, { method: 'DELETE' })
-    setProdutos((prev) => prev.filter((p) => p.id !== id))
-  }
-
-  return (
-    <>
-    <div style={{ maxWidth: 500, margin: '40px auto', fontFamily: 'sans-serif' }}>
-      <h1>Produtos</h1>
-
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        <input placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} />
-        <input placeholder="Preço" type="number" value={preco} onChange={(e) => setPreco(e.target.value)} />
-        <button onClick={adicionar}>Adicionar</button>
+  if (mode === 'immersive') {
+    return (
+      <div style={{
+        height: '100vh',
+        background: '#0a0a1a',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'Inter, sans-serif',
+        color: '#e0e0f0',
+        fontSize: 32,
+        flexDirection: 'column',
+        gap: 24,
+      }}>
+        Hello, world!
+        <button
+          onClick={() => setMode('select')}
+          style={{
+            background: 'transparent',
+            border: '1px solid #333366',
+            borderRadius: 8,
+            color: '#555',
+            fontSize: 13,
+            padding: '6px 16px',
+            cursor: 'pointer',
+          }}
+        >
+          ← Voltar
+        </button>
       </div>
+    );
+  }
 
-      <ul>
-        {produtos.map((p) => (
-          <li key={p.id} style={{ marginBottom: 8 }}>
-            {p.nome} — R$ {p.preco}{' '}
-            <button onClick={() => remover(p.id)}>remover</button>
-          </li>
-        ))}
-      </ul>
-    </div>
+  const goHome = () => setPage('home');
 
-        <div>        
-          cesta
-        </div>
-  </>
-  )
+  if (page === 'bohr-model')        return <BohrModelSimulation         onBack={goHome} />;
+  if (page === 'molecular-geometry') return <MolecularGeometrySimulation onBack={goHome} />;
+  if (page === 'dna-helix')         return <DnaHelixSimulation          onBack={goHome} />;
+  if (page === 'simple-pendulum')   return <PendulumSimulation          onBack={goHome} />;
+  if (page === 'mechanical-waves')  return <WavesSimulation             onBack={goHome} />;
+  if (page === 'projectile-motion') return <ProjectileSimulation        onBack={goHome} />;
+  if (page === 'planetary-motion')  return <SolarSystemSimulation       onBack={goHome} />;
+
+  return <Home onNavigate={(id) => setPage(id as Page)} />;
 }
