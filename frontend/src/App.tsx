@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ModeSelect from './pages/ModeSelect';
 import Home from './pages/Home';
+import Placeholder from './pages/Placeholder';
 import BohrModelSimulation         from './simulations/chemistry/BohrModel/index';
 import MolecularGeometrySimulation from './simulations/chemistry/MolecularGeometry/index';
 import DnaHelixSimulation          from './simulations/biology/DnaHelix/index';
@@ -9,10 +10,13 @@ import WavesSimulation             from './simulations/physics/Waves/index';
 import ProjectileSimulation        from './simulations/physics/Projectile/index';
 import SolarSystemSimulation       from './simulations/physics/SolarSystem/index';
 
-type Mode = 'select' | 'normal' | 'immersive';
+type Theme = 'dark' | 'light';
 
 type Page =
+  | 'select'
   | 'home'
+  | 'immersive'
+  | 'sobre'
   | 'bohr-model'
   | 'molecular-geometry'
   | 'dna-helix'
@@ -22,53 +26,46 @@ type Page =
   | 'planetary-motion';
 
 export default function App() {
-  const [mode, setMode] = useState<Mode>('select');
-  const [page, setPage] = useState<Page>('home');
+  const [theme, setTheme] = useState<Theme>('dark');
+  const [page,  setPage ] = useState<Page>('select');
 
-  if (mode === 'select') return <ModeSelect onSelect={setMode} />;
+  useEffect(() => {
+    document.documentElement.classList.toggle('light', theme === 'light');
+  }, [theme]);
 
-  if (mode === 'immersive') {
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+  const goHome      = () => setPage('home');
+
+  if (page === 'select')
     return (
-      <div style={{
-        height: '100vh',
-        background: '#0a0a1a',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: 'Inter, sans-serif',
-        color: '#e0e0f0',
-        fontSize: 32,
-        flexDirection: 'column',
-        gap: 24,
-      }}>
-        Hello, world!
-        <button
-          onClick={() => setMode('select')}
-          style={{
-            background: 'transparent',
-            border: '1px solid #333366',
-            borderRadius: 8,
-            color: '#555',
-            fontSize: 13,
-            padding: '6px 16px',
-            cursor: 'pointer',
-          }}
-        >
-          ← Voltar
-        </button>
-      </div>
+      <ModeSelect
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onSelect={(mode) => setPage(mode === 'normal' ? 'home' : 'immersive')}
+      />
     );
-  }
 
-  const goHome = () => setPage('home');
+  if (page === 'immersive')
+    return <Placeholder title="Modo Imersivo" onBack={() => setPage('select')} />;
 
-  if (page === 'bohr-model')        return <BohrModelSimulation         onBack={goHome} />;
+  if (page === 'sobre')
+    return <Placeholder title="Sobre" onBack={goHome} />;
+
+  if (page === 'bohr-model')         return <BohrModelSimulation         onBack={goHome} />;
   if (page === 'molecular-geometry') return <MolecularGeometrySimulation onBack={goHome} />;
-  if (page === 'dna-helix')         return <DnaHelixSimulation          onBack={goHome} />;
-  if (page === 'simple-pendulum')   return <PendulumSimulation          onBack={goHome} />;
-  if (page === 'mechanical-waves')  return <WavesSimulation             onBack={goHome} />;
-  if (page === 'projectile-motion') return <ProjectileSimulation        onBack={goHome} />;
-  if (page === 'planetary-motion')  return <SolarSystemSimulation       onBack={goHome} />;
+  if (page === 'dna-helix')          return <DnaHelixSimulation          onBack={goHome} />;
+  if (page === 'simple-pendulum')    return <PendulumSimulation          onBack={goHome} />;
+  if (page === 'mechanical-waves')   return <WavesSimulation             onBack={goHome} />;
+  if (page === 'projectile-motion')  return <ProjectileSimulation        onBack={goHome} />;
+  if (page === 'planetary-motion')   return <SolarSystemSimulation       onBack={goHome} />;
 
-  return <Home onNavigate={(id) => setPage(id as Page)} />;
+  return (
+    <Home
+      onNavigate={(id) => setPage(id as Page)}
+      onGoImmersive={() => setPage('immersive')}
+      onGoSobre={() => setPage('sobre')}
+      theme={theme}
+      onToggleTheme={toggleTheme}
+    />
+  );
 }

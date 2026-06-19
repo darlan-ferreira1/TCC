@@ -4,6 +4,7 @@ export interface SimulationMeta {
   description: string;
   category: 'Química' | 'Física' | 'Biologia';
   available: boolean;
+  thumbnail?: string; // caminho relativo a /public, ex: '/thumbnails/bohr-model.png'
 }
 
 export const simulations: SimulationMeta[] = [
@@ -31,7 +32,7 @@ export const simulations: SimulationMeta[] = [
   {
     id: 'projectile-motion',
     title: 'Lançamento de Projétil',
-    description: 'Visualize a trajetória parabólica com controle de ângulo e velocidade inicial. Marcadores de alcance e altura máxima.',
+    description: 'Visualize a trajetória parabólica com controle de ângulo e velocidade inicial.',
     category: 'Física',
     available: true,
   },
