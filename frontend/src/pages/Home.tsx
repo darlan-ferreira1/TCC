@@ -1,154 +1,513 @@
+import { useState } from 'react';
 import { simulations, type SimulationMeta } from '../simulations/registry';
 
-const CATEGORY_COLORS: Record<string, string> = {
-  Química: '#3498db',
-  Física:  '#9b59b6',
-  Biologia:'#2ecc71',
+const CATEGORY_ACCENT: Record<string, string> = {
+  Química: 'var(--accent-quimica)',
+  Física:  'var(--accent-fisica)',
+  Biologia:'var(--accent-bio)',
 };
+
+const CATEGORY_GRADIENT: Record<string, string> = {
+  Química: 'linear-gradient(135deg, #0d2a4a 0%, #1a4a7a 50%, #0d2a4a 100%)',
+  Física:  'linear-gradient(135deg, #1a0d2e 0%, #3a1a5a 50%, #1a0d2e 100%)',
+  Biologia:'linear-gradient(135deg, #0d2a1a 0%, #1a4a2e 50%, #0d2a1a 100%)',
+};
+
+const ALL_CATEGORIES = ['Todas', 'Química', 'Física', 'Biologia'] as const;
 
 interface Props {
   onNavigate: (id: string) => void;
+  onGoImmersive: () => void;
+  onGoSobre: () => void;
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
 }
 
-export default function Home({ onNavigate }: Props) {
-  const categories = [...new Set(simulations.map((s) => s.category))];
+export default function Home({ onNavigate, onGoImmersive, onGoSobre, theme, onToggleTheme }: Props) {
+  const [activeCategory, setActiveCategory] = useState<string>('Todas');
+  const [search, setSearch] = useState('');
+
+  const filtered = simulations.filter((s) => {
+    const matchCat = activeCategory === 'Todas' || s.category === activeCategory;
+    const matchSearch =
+      s.title.toLowerCase().includes(search.toLowerCase()) ||
+      s.description.toLowerCase().includes(search.toLowerCase());
+    return matchCat && matchSearch;
+  });
+
+  const available = filtered.filter((s) => s.available);
+  const soon      = filtered.filter((s) => !s.available);
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#0a0a1a',
-      color: '#e0e0f0',
-      fontFamily: 'Inter, sans-serif',
-      padding: '48px 32px',
-    }}>
-      <header style={{ maxWidth: 900, margin: '0 auto 48px' }}>
-        <h1 style={{ fontSize: 36, fontWeight: 700, color: '#fff', marginBottom: 8 }}>
-          Simulações Científicas 3D
-        </h1>
-        <p style={{ color: '#888', fontSize: 16 }}>
-          Experimentos interativos com física real — explore, ajuste parâmetros e observe em tempo real.
-        </p>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+
+      {/* ── Navbar ── */}
+      <header style={{
+        background: 'var(--bg-surface)',
+        borderBottom: '1px solid var(--border)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+      }}>
+        <div style={{
+          maxWidth: 1152,
+          margin: '0 auto',
+          padding: '0 24px',
+          height: 60,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          {/* Logo */}
+          <span style={{
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 700,
+            fontSize: '1.35rem',
+            color: 'var(--accent-fisica)',
+            letterSpacing: '-0.01em',
+          }}>
+            CLARA<span style={{ color: 'var(--text-muted)', fontWeight: 400, fontStyle: 'italic' }}>.js</span>
+          </span>
+
+          {/* Nav links */}
+          <nav style={{ display: 'flex', alignItems: 'center', gap: 32, fontSize: 14 }}>
+            {[
+              { label: 'Simulações',    onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
+              { label: 'Modo Imersivo', onClick: onGoImmersive },
+              { label: 'Sobre',         onClick: onGoSobre },
+            ].map(({ label, onClick }) => (
+              <button
+                key={label}
+                onClick={onClick}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                  fontSize: 14,
+                  fontFamily: 'Inter, sans-serif',
+                  transition: 'color 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+
+          {/* Theme toggle */}
+          <button
+            onClick={onToggleTheme}
+            title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+            style={{
+              background: 'var(--bg-surface2)',
+              border: '1px solid var(--border)',
+              borderRadius: 8,
+              padding: '6px 12px',
+              cursor: 'pointer',
+              color: 'var(--text-muted)',
+              fontSize: 18,
+              display: 'flex',
+              alignItems: 'center',
+              transition: 'border-color 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-hover)')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+        </div>
       </header>
 
-      <main style={{ maxWidth: 900, margin: '0 auto' }}>
-        {categories.map((category) => (
-          <section key={category} style={{ marginBottom: 40 }}>
-            <h2 style={{
-              fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: 2,
-              color: CATEGORY_COLORS[category] ?? '#aaa',
-              textTransform: 'uppercase',
-              marginBottom: 16,
-              borderBottom: `1px solid #1a1a3a`,
-              paddingBottom: 8,
-            }}>
-              {category}
-            </h2>
+      {/* ── Hero ── */}
+      <section style={{
+        background: 'var(--bg-surface)',
+        borderBottom: '1px solid var(--border)',
+        padding: '64px 24px',
+      }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
+          <p style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 11,
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            color: 'var(--accent-fisica)',
+            marginBottom: 16,
+          }}>
+            Simulações Científicas Interativas
+          </p>
+          <h1 style={{
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 700,
+            fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+            lineHeight: 1.15,
+            color: 'var(--text)',
+            marginBottom: 20,
+          }}>
+            Explore a ciência<br />
+            <em style={{ color: 'var(--accent-fisica)', fontStyle: 'italic' }}>em três dimensões.</em>
+          </h1>
+          <p style={{
+            fontSize: 16,
+            color: 'var(--text-muted)',
+            lineHeight: 1.7,
+            maxWidth: 480,
+            margin: '0 auto 36px',
+          }}>
+            Física, Química e Biologia com simulações 3D de física real — ajuste parâmetros e observe em tempo real.
+          </p>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-              gap: 16,
-            }}>
-              {simulations
-                .filter((s) => s.category === category)
-                .map((sim) => (
-                  <SimulationCard
-                    key={sim.id}
-                    sim={sim}
-                    accentColor={CATEGORY_COLORS[category] ?? '#aaa'}
-                    onNavigate={onNavigate}
-                  />
-                ))}
+          {/* Search bar */}
+          <div style={{ position: 'relative', maxWidth: 440, margin: '0 auto' }}>
+            <svg style={{
+              position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+              width: 18, height: 18, color: 'var(--text-muted)',
+            }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar simulações…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: '100%',
+                background: 'var(--bg)',
+                border: '1px solid var(--border)',
+                borderRadius: 12,
+                padding: '12px 16px 12px 44px',
+                fontSize: 14,
+                color: 'var(--text)',
+                outline: 'none',
+                transition: 'border-color 0.15s',
+              }}
+              onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent-fisica)')}
+              onBlur={e  => (e.currentTarget.style.borderColor = 'var(--border)')}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Stats bar ── */}
+      <div style={{
+        background: 'var(--bg-surface2)',
+        borderBottom: '1px solid var(--border)',
+        padding: '16px 24px',
+      }}>
+        <div style={{
+          maxWidth: 1152,
+          margin: '0 auto',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: '12px 48px',
+        }}>
+          {[
+            { value: '7',          label: 'Simulações disponíveis' },
+            { value: '3',          label: 'Áreas do conhecimento'  },
+            { value: 'Física real', label: 'Motor de simulação'    },
+            { value: '3D',         label: 'WebGL interativo'       },
+          ].map(({ value, label }) => (
+            <div key={label} style={{ textAlign: 'center' }}>
+              <div style={{
+                fontFamily: "'Playfair Display', serif",
+                fontWeight: 700,
+                fontSize: '1.3rem',
+                color: 'var(--accent-fisica)',
+              }}>{value}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{label}</div>
             </div>
-          </section>
-        ))}
+          ))}
+        </div>
+      </div>
+
+      {/* ── Conteúdo principal ── */}
+      <main style={{ maxWidth: 1152, margin: '0 auto', padding: '48px 24px' }}>
+
+        {/* Filtros + contagem */}
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16,
+          marginBottom: 32,
+        }}>
+          <div>
+            <h2 style={{
+              fontFamily: "'Playfair Display', serif",
+              fontWeight: 600,
+              fontSize: '1.35rem',
+              color: 'var(--text)',
+              marginBottom: 2,
+            }}>
+              Experimentos
+            </h2>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+              {available.length} disponíve{available.length !== 1 ? 'is' : 'l'}
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {ALL_CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                style={{
+                  padding: '6px 16px',
+                  borderRadius: 99,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  border: '1px solid',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  background:  activeCategory === cat ? 'var(--accent-fisica)' : 'var(--bg-surface)',
+                  color:       activeCategory === cat ? '#fff' : 'var(--text-muted)',
+                  borderColor: activeCategory === cat ? 'var(--accent-fisica)' : 'var(--border)',
+                }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Grid */}
+        {available.length === 0 && soon.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-muted)' }}>
+            <p style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.2rem' }}>
+              Nenhuma simulação encontrada
+            </p>
+            <p style={{ fontSize: 13, marginTop: 8 }}>Tente outra busca ou categoria.</p>
+          </div>
+        ) : (
+          <>
+            {available.length > 0 && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: 20,
+                marginBottom: soon.length > 0 ? 48 : 0,
+              }}>
+                {available.map((sim) => (
+                  <SimCard key={sim.id} sim={sim} onClick={() => onNavigate(sim.id)} />
+                ))}
+              </div>
+            )}
+
+            {soon.length > 0 && (
+              <>
+                <h3 style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  color: 'var(--text-faint)',
+                  marginBottom: 16,
+                }}>
+                  Em breve
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                  gap: 20,
+                }}>
+                  {soon.map((sim) => (
+                    <SimCard key={sim.id} sim={sim} onClick={() => {}} />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )}
       </main>
+
+      {/* ── Footer ── */}
+      <footer style={{
+        background: 'var(--bg-surface)',
+        borderTop: '1px solid var(--border)',
+        padding: '32px 24px',
+        marginTop: 16,
+      }}>
+        <div style={{
+          maxWidth: 1152,
+          margin: '0 auto',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16,
+        }}>
+          <span style={{
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 700,
+            fontSize: '1.1rem',
+            color: 'var(--accent-fisica)',
+          }}>
+            CLARA<span style={{ color: 'var(--text-muted)', fontWeight: 400, fontStyle: 'italic' }}>.js</span>
+          </span>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+            © 2026 CLARA.js — TCC Darlan Ferreira
+          </p>
+          <div style={{ display: 'flex', gap: 24, fontSize: 13, color: 'var(--text-muted)' }}>
+            <button onClick={onGoSobre}     style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, fontSize: 13 }}>Sobre</button>
+            <button onClick={onGoImmersive} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, fontSize: 13 }}>Modo Imersivo</button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
 
-function SimulationCard({
-  sim,
-  accentColor,
-  onNavigate,
-}: {
-  sim: SimulationMeta;
-  accentColor: string;
-  onNavigate: (id: string) => void;
-}) {
+/* ──────────────── SimCard ──────────────── */
+function SimCard({ sim, onClick }: { sim: SimulationMeta; onClick: () => void }) {
+  const accent   = CATEGORY_ACCENT[sim.category]   ?? '#aaa';
+  const gradient = CATEGORY_GRADIENT[sim.category] ?? 'linear-gradient(135deg, #111 0%, #222 100%)';
+  const available = sim.available;
+
   return (
     <button
-      onClick={() => sim.available && onNavigate(sim.id)}
-      disabled={!sim.available}
+      onClick={available ? onClick : undefined}
+      disabled={!available}
       style={{
-        background: '#111130',
-        border: `1px solid ${sim.available ? '#222244' : '#1a1a2e'}`,
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
         borderRadius: 12,
-        padding: '20px 20px 16px',
+        overflow: 'hidden',
         textAlign: 'left',
-        cursor: sim.available ? 'pointer' : 'default',
-        opacity: sim.available ? 1 : 0.5,
-        transition: 'border-color 0.2s, transform 0.15s',
+        cursor: available ? 'pointer' : 'default',
+        opacity: available ? 1 : 0.5,
+        transition: 'border-color 0.2s, transform 0.15s, box-shadow 0.2s',
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
+        width: '100%',
       }}
       onMouseEnter={(e) => {
-        if (!sim.available) return;
-        (e.currentTarget as HTMLButtonElement).style.borderColor = accentColor;
-        (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)';
+        if (!available) return;
+        const el = e.currentTarget;
+        el.style.borderColor = accent;
+        el.style.transform = 'translateY(-3px)';
+        el.style.boxShadow = `0 8px 24px ${accent}33`;
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.borderColor = '#222244';
-        (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
+        const el = e.currentTarget;
+        el.style.borderColor = 'var(--border)';
+        el.style.transform = 'translateY(0)';
+        el.style.boxShadow = 'none';
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      {/* Thumbnail */}
+      <div style={{ position: 'relative', aspectRatio: '16/9', overflow: 'hidden' }}>
+        {sim.thumbnail ? (
+          <img
+            src={sim.thumbnail}
+            alt={sim.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+        ) : (
+          <div style={{
+            width: '100%',
+            height: '100%',
+            background: gradient,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <CategoryIcon category={sim.category} color={accent} />
+          </div>
+        )}
+
         <span style={{
-          fontSize: 11,
+          position: 'absolute',
+          top: 10,
+          left: 10,
+          background: `${accent}22`,
+          border: `1px solid ${accent}66`,
+          color: accent,
+          fontSize: 10,
           fontWeight: 600,
-          letterSpacing: 1,
-          color: accentColor,
+          letterSpacing: '0.1em',
           textTransform: 'uppercase',
+          padding: '3px 8px',
+          borderRadius: 6,
+          fontFamily: "'JetBrains Mono', monospace",
+          backdropFilter: 'blur(6px)',
         }}>
           {sim.category}
         </span>
-        {!sim.available && (
+
+        {!available && (
           <span style={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-muted)',
             fontSize: 10,
             fontWeight: 600,
-            letterSpacing: 0.5,
-            color: '#555',
-            background: '#1a1a2e',
-            border: '1px solid #222',
-            borderRadius: 4,
-            padding: '2px 6px',
+            padding: '3px 8px',
+            borderRadius: 6,
           }}>
             EM BREVE
           </span>
         )}
       </div>
 
-      <h3 style={{ fontSize: 17, fontWeight: 600, color: '#e0e0f0', margin: 0 }}>
-        {sim.title}
-      </h3>
-
-      <p style={{ fontSize: 13, color: '#666', margin: 0, lineHeight: 1.5 }}>
-        {sim.description}
-      </p>
-
-      {sim.available && (
-        <span style={{
-          marginTop: 4,
-          fontSize: 12,
-          color: accentColor,
-          fontWeight: 500,
-        }}>
-          Abrir simulação →
-        </span>
-      )}
+      {/* Body */}
+      <div style={{ padding: '16px 18px 18px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', lineHeight: 1.3 }}>
+          {sim.title}
+        </h3>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.55, flex: 1 }}>
+          {sim.description}
+        </p>
+        {available && (
+          <span style={{ fontSize: 12, color: accent, fontWeight: 500, marginTop: 4 }}>
+            Abrir simulação →
+          </span>
+        )}
+      </div>
     </button>
+  );
+}
+
+function CategoryIcon({ category, color }: { category: string; color: string }) {
+  const s: React.CSSProperties = { opacity: 0.7, color };
+
+  if (category === 'Física') return (
+    <svg width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" style={s}>
+      <ellipse cx="12" cy="12" rx="10" ry="4" />
+      <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)" />
+      <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+    </svg>
+  );
+
+  if (category === 'Química') return (
+    <svg width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" style={s}>
+      <circle cx="12" cy="12" r="3" />
+      <circle cx="12" cy="4"  r="1.5" /><circle cx="12" cy="20" r="1.5" />
+      <circle cx="4"  cy="12" r="1.5" /><circle cx="20" cy="12" r="1.5" />
+      <line x1="12" y1="7"  x2="12" y2="9"  />
+      <line x1="12" y1="15" x2="12" y2="17" />
+      <line x1="7"  y1="12" x2="9"  y2="12" />
+      <line x1="15" y1="12" x2="17" y2="12" />
+    </svg>
+  );
+
+  return (
+    <svg width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" style={s}>
+      <path d="M12 3c0 0-4 4-4 9s4 9 4 9 4-4 4-9-4-9-4-9z" />
+      <path d="M3 12h18" />
+      <path d="M5 7.5c2 1.5 5 2.5 7 2.5s5-1 7-2.5" />
+      <path d="M5 16.5c2-1.5 5-2.5 7-2.5s5 1 7 2.5" />
+    </svg>
   );
 }
