@@ -3,8 +3,12 @@ import ModeSelect from './pages/ModeSelect';
 import Home from './pages/Home';
 import Placeholder from './pages/Placeholder';
 import BohrModelSimulation         from './simulations/chemistry/BohrModel/index';
+import XRBohrModelSimulation       from './simulations/chemistry/xrBhorModel/index';
+import ARBohrModelSimulation       from './simulations/chemistry/arBohrModel/index';
 import MolecularGeometrySimulation from './simulations/chemistry/MolecularGeometry/index';
 import DnaHelixSimulation          from './simulations/biology/DnaHelix/index';
+import XRDnaHelixSimulation        from './simulations/biology/xrDnaHelix/index';
+import ARDnaHelixSimulation        from './simulations/biology/arDnaHelix/index';
 import PendulumSimulation          from './simulations/physics/Pendulum/index';
 import WavesSimulation             from './simulations/physics/Waves/index';
 import ProjectileSimulation        from './simulations/physics/Projectile/index';
@@ -18,8 +22,12 @@ type Page =
   | 'immersive'
   | 'sobre'
   | 'bohr-model'
+  | 'xr-bohr-model'
+  | 'ar-bohr-model'
   | 'molecular-geometry'
   | 'dna-helix'
+  | 'xr-dna-helix'
+  | 'ar-dna-helix'
   | 'simple-pendulum'
   | 'mechanical-waves'
   | 'projectile-motion'
@@ -52,6 +60,10 @@ export default function App() {
     return <Placeholder title="Sobre" onBack={goHome} />;
 
   if (page === 'bohr-model')         return <BohrModelSimulation         onBack={goHome} />;
+  if (page === 'xr-bohr-model')     return <XRBohrModelSimulation       onBack={goHome} />;
+  if (page === 'ar-bohr-model')     return <ARBohrModelSimulation       onBack={goHome} />;
+  if (page === 'xr-dna-helix')      return <XRDnaHelixSimulation        onBack={goHome} />;
+  if (page === 'ar-dna-helix')      return <ARDnaHelixSimulation        onBack={goHome} />;
   if (page === 'molecular-geometry') return <MolecularGeometrySimulation onBack={goHome} />;
   if (page === 'dna-helix')          return <DnaHelixSimulation          onBack={goHome} />;
   if (page === 'simple-pendulum')    return <PendulumSimulation          onBack={goHome} />;
