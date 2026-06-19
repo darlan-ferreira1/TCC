@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { simulations, type SimulationMeta } from '../simulations/registry';
+
+const MOBILE_BREAKPOINT = 640;
 
 const CATEGORY_ACCENT: Record<string, string> = {
   Química: 'var(--accent-quimica)',
@@ -26,6 +28,26 @@ interface Props {
 export default function Home({ onNavigate, onGoImmersive, onGoSobre, theme, onToggleTheme }: Props) {
   const [activeCategory, setActiveCategory] = useState<string>('Todas');
   const [search, setSearch] = useState('');
+  const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BREAKPOINT);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [menuOpen]);
 
   const filtered = simulations.filter((s) => {
     const matchCat = activeCategory === 'Todas' || s.category === activeCategory;
@@ -65,59 +87,158 @@ export default function Home({ onNavigate, onGoImmersive, onGoSobre, theme, onTo
             fontSize: '1.35rem',
             color: 'var(--accent-fisica)',
             letterSpacing: '-0.01em',
+            flexShrink: 0,
           }}>
             CLARA<span style={{ color: 'var(--text-muted)', fontWeight: 400, fontStyle: 'italic' }}>.js</span>
           </span>
 
-          {/* Nav links */}
-          <nav style={{ display: 'flex', alignItems: 'center', gap: 32, fontSize: 14 }}>
-            {[
-              { label: 'Simulações',    onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
-              { label: 'Modo Imersivo', onClick: onGoImmersive },
-              { label: 'Sobre',         onClick: onGoSobre },
-            ].map(({ label, onClick }) => (
+          {isMobile ? (
+            /* ── Hamburger ── */
+            <div ref={menuRef} style={{ position: 'relative' }}>
               <button
-                key={label}
-                onClick={onClick}
+                onClick={() => setMenuOpen((o) => !o)}
+                aria-label="Menu"
                 style={{
                   background: 'none',
-                  border: 'none',
-                  padding: 0,
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  padding: '6px 10px',
                   cursor: 'pointer',
                   color: 'var(--text-muted)',
-                  fontSize: 14,
-                  fontFamily: 'Inter, sans-serif',
-                  transition: 'color 0.15s',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 4,
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
               >
-                {label}
+                <span style={{ display: 'block', width: 18, height: 2, background: 'currentColor', borderRadius: 2 }} />
+                <span style={{ display: 'block', width: 18, height: 2, background: 'currentColor', borderRadius: 2 }} />
+                <span style={{ display: 'block', width: 18, height: 2, background: 'currentColor', borderRadius: 2 }} />
               </button>
-            ))}
-          </nav>
 
-          {/* Theme toggle */}
-          <button
-            onClick={onToggleTheme}
-            title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
-            style={{
-              background: 'var(--bg-surface2)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              padding: '6px 12px',
-              cursor: 'pointer',
-              color: 'var(--text-muted)',
-              fontSize: 18,
-              display: 'flex',
-              alignItems: 'center',
-              transition: 'border-color 0.15s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-hover)')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
-          >
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
+              {menuOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: 0,
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 12,
+                  padding: '8px 0',
+                  minWidth: 180,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                  zIndex: 100,
+                }}>
+                  {[
+                    { label: 'Simulações',    onClick: () => { setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); } },
+                    { label: 'Modo Imersivo', onClick: () => { setMenuOpen(false); onGoImmersive(); } },
+                    { label: 'Sobre',         onClick: () => { setMenuOpen(false); onGoSobre(); } },
+                  ].map(({ label, onClick }) => (
+                    <button
+                      key={label}
+                      onClick={onClick}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        textAlign: 'left',
+                        background: 'none',
+                        border: 'none',
+                        padding: '10px 20px',
+                        cursor: 'pointer',
+                        color: 'var(--text-muted)',
+                        fontSize: 14,
+                        fontFamily: 'Inter, sans-serif',
+                        transition: 'color 0.15s, background 0.15s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'var(--bg-surface2)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none'; }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+
+                  <div style={{ borderTop: '1px solid var(--border)', margin: '8px 0' }} />
+
+                  <button
+                    onClick={() => { setMenuOpen(false); onToggleTheme(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      width: '100%',
+                      textAlign: 'left',
+                      background: 'none',
+                      border: 'none',
+                      padding: '10px 20px',
+                      cursor: 'pointer',
+                      color: 'var(--text-muted)',
+                      fontSize: 14,
+                      fontFamily: 'Inter, sans-serif',
+                      transition: 'color 0.15s, background 0.15s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'var(--bg-surface2)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none'; }}
+                  >
+                    <span style={{ fontSize: 16 }}>{theme === 'dark' ? '☀️' : '🌙'}</span>
+                    {theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Nav links */}
+              <nav style={{ display: 'flex', alignItems: 'center', gap: 32, fontSize: 14 }}>
+                {[
+                  { label: 'Simulações',    onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
+                  { label: 'Modo Imersivo', onClick: onGoImmersive },
+                  { label: 'Sobre',         onClick: onGoSobre },
+                ].map(({ label, onClick }) => (
+                  <button
+                    key={label}
+                    onClick={onClick}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: 'pointer',
+                      color: 'var(--text-muted)',
+                      fontSize: 14,
+                      fontFamily: 'Inter, sans-serif',
+                      transition: 'color 0.15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </nav>
+
+              {/* Theme toggle */}
+              <button
+                onClick={onToggleTheme}
+                title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+                style={{
+                  background: 'var(--bg-surface2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                  fontSize: 18,
+                  display: 'flex',
+                  alignItems: 'center',
+                  transition: 'border-color 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-hover)')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+              >
+                {theme === 'dark' ? '☀️' : '🌙'}
+              </button>
+            </>
+          )}
         </div>
       </header>
 
