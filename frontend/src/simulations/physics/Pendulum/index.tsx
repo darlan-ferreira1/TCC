@@ -6,9 +6,9 @@ const DEG = Math.PI / 180;
 
 const DEFAULTS = { L: 1.5, g: 9.8, theta0Deg: 45 };
 
-interface Props { onBack: () => void; }
+interface Props { onBack: () => void; theme: 'dark' | 'light'; }
 
-export default function PendulumSimulation({ onBack }: Props) {
+export default function PendulumSimulation({ onBack, theme }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef  = useRef<PendulumScene | null>(null);
 
@@ -18,23 +18,38 @@ export default function PendulumSimulation({ onBack }: Props) {
 
   const T = period({ L, g });
 
+  const dark = theme === 'dark';
+  const c = {
+    bg:          dark ? '#0a0a1a'              : '#f0f0f8',
+    text:        dark ? '#e0e0f0'              : '#1a1a2e',
+    muted:       dark ? '#aaa'                 : '#555',
+    faint:       dark ? '#555'                 : '#999',
+    label:       dark ? '#888'                 : '#666',
+    panelBg:     dark ? '#111130'              : '#e0e0ef',
+    panelBorder: dark ? '#222244'              : '#c0c0d8',
+    btnBg:       dark ? 'rgba(17,17,48,0.8)'  : 'rgba(240,240,250,0.85)',
+    btnBorder:   dark ? '#333366'              : '#9999cc',
+    sceneBg:     dark ? 0x0a0a1a              : 0xf0f0f8,
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    sceneRef.current = createPendulumScene(canvas, {
-      L: DEFAULTS.L,
-      g: DEFAULTS.g,
-      theta0: DEFAULTS.theta0Deg * DEG,
-    });
+    sceneRef.current = createPendulumScene(
+      canvas,
+      { L: DEFAULTS.L, g: DEFAULTS.g, theta0: DEFAULTS.theta0Deg * DEG },
+      c.sceneBg,
+    );
     return () => { sceneRef.current?.dispose(); sceneRef.current = null; };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme]);
 
   function push(newL: number, newG: number, newDeg: number) {
     sceneRef.current?.update({ L: newL, g: newG, theta0: newDeg * DEG });
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0a0a1a', color: '#e0e0f0', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: c.bg, color: c.text, fontFamily: 'Inter, sans-serif' }}>
       <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
 
@@ -42,8 +57,8 @@ export default function PendulumSimulation({ onBack }: Props) {
           onClick={onBack}
           style={{
             position: 'absolute', top: 16, right: 20,
-            background: 'rgba(17,17,48,0.8)', border: '1px solid #333366',
-            borderRadius: 8, color: '#aaa', fontSize: 13, padding: '6px 14px',
+            background: c.btnBg, border: `1px solid ${c.btnBorder}`,
+            borderRadius: 8, color: c.muted, fontSize: 13, padding: '6px 14px',
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
             backdropFilter: 'blur(4px)',
           }}
@@ -53,18 +68,18 @@ export default function PendulumSimulation({ onBack }: Props) {
 
         <div style={{ position: 'absolute', top: 16, left: 20, pointerEvents: 'none' }}>
           <span style={{ fontSize: 32, fontWeight: 700, color: '#9b59b6', lineHeight: 1 }}>Pêndulo</span>
-          <div style={{ fontSize: 14, color: '#aaa', marginTop: 2 }}>
-            T = 2π√(L/g) ≈ <strong style={{ color: '#e0e0f0' }}>{T.toFixed(3)} s</strong>
+          <div style={{ fontSize: 14, color: c.muted, marginTop: 2 }}>
+            T = 2π√(L/g) ≈ <strong style={{ color: c.text }}>{T.toFixed(3)} s</strong>
           </div>
         </div>
       </div>
 
       <div style={{
-        padding: '16px 24px', background: '#111130', borderTop: '1px solid #222244',
+        padding: '16px 24px', background: c.panelBg, borderTop: `1px solid ${c.panelBorder}`,
         display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-end',
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 12, color: '#888', letterSpacing: 1 }}>
+          <label style={{ fontSize: 12, color: c.label, letterSpacing: 1 }}>
             COMPRIMENTO L: {L.toFixed(1)} m
           </label>
           <input
@@ -75,7 +90,7 @@ export default function PendulumSimulation({ onBack }: Props) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 12, color: '#888', letterSpacing: 1 }}>
+          <label style={{ fontSize: 12, color: c.label, letterSpacing: 1 }}>
             GRAVIDADE g: {g.toFixed(1)} m/s²
           </label>
           <input
@@ -86,7 +101,7 @@ export default function PendulumSimulation({ onBack }: Props) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 12, color: '#888', letterSpacing: 1 }}>
+          <label style={{ fontSize: 12, color: c.label, letterSpacing: 1 }}>
             ÂNGULO INICIAL θ₀: {theta0Deg}°
           </label>
           <input
@@ -96,11 +111,11 @@ export default function PendulumSimulation({ onBack }: Props) {
           />
         </div>
 
-        <div style={{ marginLeft: 'auto', textAlign: 'right', fontSize: 13, color: '#aaa' }}>
+        <div style={{ marginLeft: 'auto', textAlign: 'right', fontSize: 13, color: c.muted }}>
           <div>
             Período: <span style={{ color: '#9b59b6', fontWeight: 600 }}>{T.toFixed(3)} s</span>
           </div>
-          <div style={{ fontSize: 11, marginTop: 4, color: '#555' }}>
+          <div style={{ fontSize: 11, marginTop: 4, color: c.faint }}>
             aproximação de pequenos ângulos
           </div>
         </div>

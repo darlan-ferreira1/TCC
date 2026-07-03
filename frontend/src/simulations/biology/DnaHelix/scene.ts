@@ -24,12 +24,16 @@ export interface DnaScene {
   dispose(): void;
 }
 
-export function createDnaScene(canvas: HTMLCanvasElement, config: DnaSceneConfig): DnaScene {
+export function createDnaScene(
+  canvas: HTMLCanvasElement,
+  config: DnaSceneConfig,
+  bgColor = 0x0a0a1a,
+): DnaScene {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0a0a1a);
+  scene.background = new THREE.Color(bgColor);
 
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
   camera.position.set(0, 0, 14);

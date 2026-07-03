@@ -59,17 +59,17 @@ export default function App() {
   if (page === 'sobre')
     return <Placeholder title="Sobre" onBack={goHome} />;
 
-  if (page === 'bohr-model')         return <BohrModelSimulation         onBack={goHome} />;
+  if (page === 'bohr-model')         return <BohrModelSimulation         onBack={goHome} theme={theme} />;
   if (page === 'xr-bohr-model')     return <XRBohrModelSimulation       onBack={goHome} />;
   if (page === 'ar-bohr-model')     return <ARBohrModelSimulation       onBack={goHome} />;
   if (page === 'xr-dna-helix')      return <XRDnaHelixSimulation        onBack={goHome} />;
   if (page === 'ar-dna-helix')      return <ARDnaHelixSimulation        onBack={goHome} />;
-  if (page === 'molecular-geometry') return <MolecularGeometrySimulation onBack={goHome} />;
-  if (page === 'dna-helix')          return <DnaHelixSimulation          onBack={goHome} />;
-  if (page === 'simple-pendulum')    return <PendulumSimulation          onBack={goHome} />;
-  if (page === 'mechanical-waves')   return <WavesSimulation             onBack={goHome} />;
-  if (page === 'projectile-motion')  return <ProjectileSimulation        onBack={goHome} />;
-  if (page === 'planetary-motion')   return <SolarSystemSimulation       onBack={goHome} />;
+  if (page === 'molecular-geometry') return <MolecularGeometrySimulation onBack={goHome} theme={theme} />;
+  if (page === 'dna-helix')          return <DnaHelixSimulation          onBack={goHome} theme={theme} />;
+  if (page === 'simple-pendulum')    return <PendulumSimulation          onBack={goHome} theme={theme} />;
+  if (page === 'mechanical-waves')   return <WavesSimulation             onBack={goHome} theme={theme} />;
+  if (page === 'projectile-motion')  return <ProjectileSimulation        onBack={goHome} theme={theme} />;
+  if (page === 'planetary-motion')   return <SolarSystemSimulation       onBack={goHome} theme={theme} />;
 
   return (
     <Home

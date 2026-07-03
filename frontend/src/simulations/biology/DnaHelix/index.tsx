@@ -6,26 +6,42 @@ const DEFAULT_SPEED = 0.15; // voltas por segundo
 
 interface Props {
   onBack: () => void;
+  theme: 'dark' | 'light';
 }
 
-export default function DnaHelixSimulation({ onBack }: Props) {
+export default function DnaHelixSimulation({ onBack, theme }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef<DnaScene | null>(null);
   const [basePairs, setBasePairs] = useState(DEFAULT_BASE_PAIRS);
   const [speed, setSpeed] = useState(DEFAULT_SPEED);
 
+  const dark = theme === 'dark';
+  const c = {
+    bg:          dark ? '#0a0a1a'             : '#f0f0f8',
+    text:        dark ? '#e0e0f0'             : '#1a1a2e',
+    muted:       dark ? '#aaa'                : '#555',
+    label:       dark ? '#888'                : '#666',
+    panelBg:     dark ? '#111130'             : '#e0e0ef',
+    panelBorder: dark ? '#222244'             : '#c0c0d8',
+    btnBg:       dark ? 'rgba(17,17,48,0.8)' : 'rgba(240,240,250,0.85)',
+    btnBorder:   dark ? '#333366'             : '#9999cc',
+    sceneBg:     dark ? 0x0a0a1a             : 0xf0f0f8,
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    sceneRef.current = createDnaScene(canvas, {
-      basePairs: DEFAULT_BASE_PAIRS,
-      rotationSpeed: DEFAULT_SPEED,
-    });
+    sceneRef.current = createDnaScene(
+      canvas,
+      { basePairs: DEFAULT_BASE_PAIRS, rotationSpeed: DEFAULT_SPEED },
+      c.sceneBg,
+    );
     return () => {
       sceneRef.current?.dispose();
       sceneRef.current = null;
     };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme]);
 
   function handleBasePairsChange(value: number) {
     setBasePairs(value);
@@ -38,7 +54,7 @@ export default function DnaHelixSimulation({ onBack }: Props) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0a0a1a', color: '#e0e0f0', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: c.bg, color: c.text, fontFamily: 'Inter, sans-serif' }}>
       <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
 
@@ -46,10 +62,10 @@ export default function DnaHelixSimulation({ onBack }: Props) {
           onClick={onBack}
           style={{
             position: 'absolute', top: 16, right: 20,
-            background: 'rgba(17,17,48,0.8)',
-            border: '1px solid #333366',
+            background: c.btnBg,
+            border: `1px solid ${c.btnBorder}`,
             borderRadius: 8,
-            color: '#aaa',
+            color: c.muted,
             fontSize: 13,
             padding: '6px 14px',
             cursor: 'pointer',
@@ -64,7 +80,7 @@ export default function DnaHelixSimulation({ onBack }: Props) {
 
         <div style={{ position: 'absolute', top: 16, left: 20, pointerEvents: 'none' }}>
           <span style={{ fontSize: 32, fontWeight: 700, color: '#2ecc71', lineHeight: 1 }}>DNA</span>
-          <div style={{ fontSize: 14, color: '#aaa', marginTop: 2 }}>
+          <div style={{ fontSize: 14, color: c.muted, marginTop: 2 }}>
             Dupla Hélice · {basePairs} pares de base
           </div>
         </div>
@@ -72,15 +88,15 @@ export default function DnaHelixSimulation({ onBack }: Props) {
 
       <div style={{
         padding: '16px 24px',
-        background: '#111130',
-        borderTop: '1px solid #222244',
+        background: c.panelBg,
+        borderTop: `1px solid ${c.panelBorder}`,
         display: 'flex',
         flexWrap: 'wrap',
         gap: 20,
         alignItems: 'flex-end',
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 12, color: '#888', letterSpacing: 1 }}>
+          <label style={{ fontSize: 12, color: c.label, letterSpacing: 1 }}>
             PARES DE BASE: {basePairs}
           </label>
           <input
@@ -91,7 +107,7 @@ export default function DnaHelixSimulation({ onBack }: Props) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 12, color: '#888', letterSpacing: 1 }}>
+          <label style={{ fontSize: 12, color: c.label, letterSpacing: 1 }}>
             ROTAÇÃO: {speed.toFixed(2)} vol/s
           </label>
           <input
@@ -110,7 +126,7 @@ export default function DnaHelixSimulation({ onBack }: Props) {
           ].map(({ color, label }) => (
             <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
               <div style={{ width: 12, height: 12, borderRadius: '50%', background: color }} />
-              <span style={{ color: '#aaa' }}>{label}</span>
+              <span style={{ color: c.muted }}>{label}</span>
             </div>
           ))}
         </div>

@@ -45,12 +45,13 @@ export function createSolarSystemScene(
   canvas: HTMLCanvasElement,
   config: SolarSystemConfig,
   onTimeUpdate?: (t: number) => void,
+  bgColor = 0x020408,
 ): SolarSystemScene {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x020408);
+  scene.background = new THREE.Color(bgColor);
 
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 600);
   camera.position.set(8, 28, 42);
