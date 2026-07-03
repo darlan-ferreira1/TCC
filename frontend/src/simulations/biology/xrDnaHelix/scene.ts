@@ -55,13 +55,16 @@ export function createXRDnaScene(container: HTMLDivElement): XRDnaScene {
   renderer.xr.addEventListener('sessionend',   () => { controls.enabled = true; });
 
   // ── Iluminação ──
-  scene.add(new THREE.AmbientLight(0x112211, 0.8));
-  const topLight = new THREE.DirectionalLight(0x88ffaa, 1.4);
+  scene.add(new THREE.AmbientLight(0xffffff, 2.0));
+  const topLight = new THREE.DirectionalLight(0xffffff, 2.5);
   topLight.position.set(0, 20, 0);
   scene.add(topLight);
-  const sideLight = new THREE.PointLight(0x2ecc71, 3, 60);
+  const sideLight = new THREE.PointLight(0x2ecc71, 6, 80);
   sideLight.position.set(6, 0, -6);
   scene.add(sideLight);
+  const fillLight = new THREE.DirectionalLight(0xffffff, 1.5);
+  fillLight.position.set(-6, 0, 6);
+  scene.add(fillLight);
 
   // ── Partículas de fundo ──
   const bgPositions = new Float32Array(3000);

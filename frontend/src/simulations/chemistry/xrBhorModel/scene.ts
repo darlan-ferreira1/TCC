@@ -72,13 +72,16 @@ export function createXRBohrScene(container: HTMLDivElement): XRBohrScene {
   renderer.xr.addEventListener('sessionend',   () => { controls.enabled = true; });
 
   // ── Iluminação ──
-  scene.add(new THREE.AmbientLight(0x223344, 0.9));
-  const nucleusLight = new THREE.PointLight(0x6688ff, 4, 120);
+  scene.add(new THREE.AmbientLight(0xffffff, 1.8));
+  const nucleusLight = new THREE.PointLight(0x6688ff, 10, 120);
   nucleusLight.position.copy(ATOM_POS);
   scene.add(nucleusLight);
-  const rimLight = new THREE.DirectionalLight(0x9b59b6, 1.2);
+  const rimLight = new THREE.DirectionalLight(0xaaaaff, 2.5);
   rimLight.position.set(-5, 10, 5);
   scene.add(rimLight);
+  const fillLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  fillLight.position.set(5, -8, -5);
+  scene.add(fillLight);
 
   // ── Estrelas ──
   const starPositions = new Float32Array(3000);
