@@ -24,12 +24,16 @@ export interface MolScene {
   dispose(): void;
 }
 
-export function createMolScene(canvas: HTMLCanvasElement, config: MolSceneConfig): MolScene {
+export function createMolScene(
+  canvas: HTMLCanvasElement,
+  config: MolSceneConfig,
+  bgColor = 0x0a0a1a,
+): MolScene {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0a0a1a);
+  scene.background = new THREE.Color(bgColor);
 
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
   camera.position.set(0, 1.5, 7);

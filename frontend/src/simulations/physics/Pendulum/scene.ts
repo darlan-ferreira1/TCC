@@ -31,12 +31,13 @@ export interface PendulumScene {
 export function createPendulumScene(
   canvas: HTMLCanvasElement,
   config: PendulumSceneConfig,
+  bgColor = 0x0a0a1a,
 ): PendulumScene {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0a0a1a);
+  scene.background = new THREE.Color(bgColor);
 
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
   camera.position.set(0, -0.5, 8);

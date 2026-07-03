@@ -54,13 +54,17 @@ export interface BohrScene {
   dispose(): void;
 }
 
-export function createBohrScene(canvas: HTMLCanvasElement, initialConfig: BohrSceneConfig): BohrScene {
+export function createBohrScene(
+  canvas: HTMLCanvasElement,
+  initialConfig: BohrSceneConfig,
+  bgColor?: number,
+): BohrScene {
   const colors: BohrSceneColors = { ...DEFAULT_COLORS, ...initialConfig.colors };
 
   // --- Renderer ---
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setClearColor(colors.background);
+  renderer.setClearColor(bgColor ?? colors.background);
 
   // --- Cena e câmera ---
   const scene = new THREE.Scene();

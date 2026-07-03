@@ -38,9 +38,10 @@ function parseShells(input: string): number[] | null {
 
 interface Props {
   onBack: () => void;
+  theme: 'dark' | 'light';
 }
 
-export default function BohrModelSimulation({ onBack }: Props) {
+export default function BohrModelSimulation({ onBack, theme }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef<BohrScene | null>(null);
 
@@ -51,21 +52,34 @@ export default function BohrModelSimulation({ onBack }: Props) {
 
   const element = ELEMENTS[selectedIndex];
 
-  // Inicializa a cena Three.js uma vez
+  const dark = theme === 'dark';
+  const c = {
+    bg:          dark ? "#0a0a1a"             : "#f0f0f8",
+    text:        dark ? "#e0e0f0"             : "#1a1a2e",
+    muted:       dark ? "#aaa"                : "#555",
+    label:       dark ? "#888"                : "#666",
+    panelBg:     dark ? "#111130"             : "#e0e0ef",
+    panelBorder: dark ? "#222244"             : "#c0c0d8",
+    btnBg:       dark ? "rgba(17,17,48,0.8)" : "rgba(240,240,250,0.85)",
+    btnBorder:   dark ? "#333366"             : "#9999cc",
+    inputBg:     dark ? "#1a1a3a"             : "#f8f8ff",
+    inputBorder: dark ? "#333366"             : "#9999cc",
+    sceneBg:     dark ? 0x0a0a1a             : 0xf0f0f8,
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const [, , protons, neutrons, shells] = ELEMENTS[selectedIndex];
-    sceneRef.current = createBohrScene(canvas, { protons, neutrons, shells, speedFactor: speed });
+    sceneRef.current = createBohrScene(canvas, { protons, neutrons, shells, speedFactor: speed }, c.sceneBg);
     setShellsInput(shellsToString(shells));
     return () => {
       sceneRef.current?.dispose();
       sceneRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [theme]);
 
-  // Quando troca de elemento, atualiza a cena
   function handleElementChange(index: number) {
     setSelectedIndex(index);
     const [, , protons, neutrons, shells] = ELEMENTS[index];
@@ -75,7 +89,6 @@ export default function BohrModelSimulation({ onBack }: Props) {
     sceneRef.current?.update(cfg);
   }
 
-  // Quando edita a distribuição manualmente
   function handleShellsChange(value: string) {
     setShellsInput(value);
     const parsed = parseShells(value);
@@ -96,22 +109,17 @@ export default function BohrModelSimulation({ onBack }: Props) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#0a0a1a", color: "#e0e0f0", fontFamily: "Inter, sans-serif" }}>
-      {/* Canvas ocupa todo o espaço disponível */}
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: c.bg, color: c.text, fontFamily: "Inter, sans-serif" }}>
       <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
-        <canvas
-          ref={canvasRef}
-          style={{ width: "100%", height: "100%", display: "block" }}
-        />
-        {/* Botão voltar */}
+        <canvas ref={canvasRef} style={{ width: "100%", height: "100%", display: "block" }} />
         <button
           onClick={onBack}
           style={{
             position: "absolute", top: 16, right: 20,
-            background: "rgba(17,17,48,0.8)",
-            border: "1px solid #333366",
+            background: c.btnBg,
+            border: `1px solid ${c.btnBorder}`,
             borderRadius: 8,
-            color: "#aaa",
+            color: c.muted,
             fontSize: 13,
             padding: "6px 14px",
             cursor: "pointer",
@@ -124,35 +132,32 @@ export default function BohrModelSimulation({ onBack }: Props) {
           ← Voltar
         </button>
 
-        {/* Legenda do elemento sobre o canvas */}
         <div style={{ position: "absolute", top: 16, left: 20, pointerEvents: "none" }}>
           <span style={{ fontSize: 48, fontWeight: 700, color: "#3498db", lineHeight: 1 }}>{element[0]}</span>
-          <div style={{ fontSize: 14, color: "#aaa", marginTop: 2 }}>
+          <div style={{ fontSize: 14, color: c.muted, marginTop: 2 }}>
             {element[1]} · Z={element[2]} · A={element[2] + element[3]}
           </div>
         </div>
       </div>
 
-      {/* Painel de controles em DOM normal, fora do canvas WebGL */}
       <div style={{
         padding: "16px 24px",
-        background: "#111130",
-        borderTop: "1px solid #222244",
+        background: c.panelBg,
+        borderTop: `1px solid ${c.panelBorder}`,
         display: "flex",
         flexWrap: "wrap",
         gap: 20,
         alignItems: "flex-end",
       }}>
-        {/* Seletor de elemento */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label style={{ fontSize: 12, color: "#888", letterSpacing: 1 }}>ELEMENTO</label>
+          <label style={{ fontSize: 12, color: c.label, letterSpacing: 1 }}>ELEMENTO</label>
           <select
             value={selectedIndex}
             onChange={(e) => handleElementChange(Number(e.target.value))}
             style={{
-              background: "#1a1a3a",
-              color: "#e0e0f0",
-              border: "1px solid #333366",
+              background: c.inputBg,
+              color: c.text,
+              border: `1px solid ${c.inputBorder}`,
               borderRadius: 6,
               padding: "6px 10px",
               fontSize: 14,
@@ -167,9 +172,8 @@ export default function BohrModelSimulation({ onBack }: Props) {
           </select>
         </div>
 
-        {/* Distribuição eletrônica manual */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label style={{ fontSize: 12, color: "#888", letterSpacing: 1 }}>
+          <label style={{ fontSize: 12, color: c.label, letterSpacing: 1 }}>
             DISTRIBUIÇÃO ELETRÔNICA (ex: 2, 8, 1)
           </label>
           <input
@@ -177,9 +181,9 @@ export default function BohrModelSimulation({ onBack }: Props) {
             value={shellsInput}
             onChange={(e) => handleShellsChange(e.target.value)}
             style={{
-              background: "#1a1a3a",
-              color: inputError ? "#e74c3c" : "#e0e0f0",
-              border: `1px solid ${inputError ? "#e74c3c" : "#333366"}`,
+              background: c.inputBg,
+              color: inputError ? "#e74c3c" : c.text,
+              border: `1px solid ${inputError ? "#e74c3c" : c.inputBorder}`,
               borderRadius: 6,
               padding: "6px 10px",
               fontSize: 14,
@@ -191,9 +195,8 @@ export default function BohrModelSimulation({ onBack }: Props) {
           )}
         </div>
 
-        {/* Velocidade */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label style={{ fontSize: 12, color: "#888", letterSpacing: 1 }}>
+          <label style={{ fontSize: 12, color: c.label, letterSpacing: 1 }}>
             VELOCIDADE: {speed.toFixed(1)}×
           </label>
           <input
@@ -207,7 +210,6 @@ export default function BohrModelSimulation({ onBack }: Props) {
           />
         </div>
 
-        {/* Legenda de cores */}
         <div style={{ display: "flex", gap: 16, marginLeft: "auto", alignItems: "center" }}>
           {[
             { color: "#e74c3c", label: "Próton" },
@@ -216,7 +218,7 @@ export default function BohrModelSimulation({ onBack }: Props) {
           ].map(({ color, label }) => (
             <div key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
               <div style={{ width: 12, height: 12, borderRadius: "50%", background: color }} />
-              <span style={{ color: "#aaa" }}>{label}</span>
+              <span style={{ color: c.muted }}>{label}</span>
             </div>
           ))}
         </div>

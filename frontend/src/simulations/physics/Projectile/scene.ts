@@ -36,12 +36,13 @@ const MAX_TRAIL = 500;
 export function createProjectileScene(
   canvas: HTMLCanvasElement,
   config: ProjectileSceneConfig,
+  bgColor = 0x0a0a1a,
 ): ProjectileScene {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0a0a1a);
+  scene.background = new THREE.Color(bgColor);
 
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 2000);
 
