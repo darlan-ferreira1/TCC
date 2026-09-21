@@ -86,6 +86,13 @@ export const simulations: SimulationMeta[] = [
     available: true,
   },
   {
+    id: 'frog-dissection',
+    title: 'Dissecação Guiada por Gestos',
+    description: 'Abra e dissecte um sapo virtual usando gestos de pinça capturados pela webcam via MediaPipe — sem controle, sem mouse.',
+    category: 'Biologia',
+    available: true,
+  },
+  {
     id: 'cell-division',
     title: 'Divisão Celular',
     description: 'Acompanhe as fases da mitose e meiose com animação 3D dos cromossomos e fuso mitótico.',
