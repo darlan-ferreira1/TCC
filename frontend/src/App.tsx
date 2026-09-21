@@ -9,6 +9,7 @@ import MolecularGeometrySimulation from './simulations/chemistry/MolecularGeomet
 import DnaHelixSimulation          from './simulations/biology/DnaHelix/index';
 import XRDnaHelixSimulation        from './simulations/biology/xrDnaHelix/index';
 import ARDnaHelixSimulation        from './simulations/biology/arDnaHelix/index';
+import FrogDissectionSimulation    from './simulations/biology/FrogDissection/index';
 import PendulumSimulation          from './simulations/physics/Pendulum/index';
 import WavesSimulation             from './simulations/physics/Waves/index';
 import ProjectileSimulation        from './simulations/physics/Projectile/index';
@@ -28,6 +29,7 @@ type Page =
   | 'dna-helix'
   | 'xr-dna-helix'
   | 'ar-dna-helix'
+  | 'frog-dissection'
   | 'simple-pendulum'
   | 'mechanical-waves'
   | 'projectile-motion'
@@ -64,6 +66,7 @@ export default function App() {
   if (page === 'ar-bohr-model')     return <ARBohrModelSimulation       onBack={goHome} />;
   if (page === 'xr-dna-helix')      return <XRDnaHelixSimulation        onBack={goHome} />;
   if (page === 'ar-dna-helix')      return <ARDnaHelixSimulation        onBack={goHome} />;
+  if (page === 'frog-dissection')   return <FrogDissectionSimulation    onBack={goHome} />;
   if (page === 'molecular-geometry') return <MolecularGeometrySimulation onBack={goHome} theme={theme} />;
   if (page === 'dna-helix')          return <DnaHelixSimulation          onBack={goHome} theme={theme} />;
   if (page === 'simple-pendulum')    return <PendulumSimulation          onBack={goHome} theme={theme} />;
