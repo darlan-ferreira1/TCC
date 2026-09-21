@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 
 export default defineConfig({
+  base: '/TCC/',
   plugins: [react(), tailwindcss(), basicSsl()],
   server: {
     proxy: {
