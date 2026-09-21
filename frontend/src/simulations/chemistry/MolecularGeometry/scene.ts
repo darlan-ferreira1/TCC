@@ -123,11 +123,9 @@ export function createMolScene(
   handleResize();
 
   let raf = 0;
-  let last = 0;
 
-  function animate(ts: number) {
+  function animate() {
     raf = requestAnimationFrame(animate);
-    last = ts;
     controls.update();
     renderer.render(scene, camera);
   }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { createDnaScene, type DnaScene, type DnaSceneConfig } from './scene';
+import { createDnaScene, type DnaScene } from './scene';
 
 const DEFAULT_BASE_PAIRS = 20;
 const DEFAULT_SPEED = 0.15; // voltas por segundo
