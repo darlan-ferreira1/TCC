@@ -1,29 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createBohrScene, type BohrScene, type BohrSceneConfig } from "./scene";
-
-// Elementos pré-definidos: [símbolo, nome, prótons, nêutrons, distribuição eletrônica]
-const ELEMENTS: [string, string, number, number, number[]][] = [
-  ["H",  "Hidrogênio",  1,  0,  [1]],
-  ["He", "Hélio",       2,  2,  [2]],
-  ["Li", "Lítio",       3,  4,  [2, 1]],
-  ["Be", "Berílio",     4,  5,  [2, 2]],
-  ["B",  "Boro",        5,  6,  [2, 3]],
-  ["C",  "Carbono",     6,  6,  [2, 4]],
-  ["N",  "Nitrogênio",  7,  7,  [2, 5]],
-  ["O",  "Oxigênio",    8,  8,  [2, 6]],
-  ["F",  "Flúor",       9,  10, [2, 7]],
-  ["Ne", "Neônio",      10, 10, [2, 8]],
-  ["Na", "Sódio",       11, 12, [2, 8, 1]],
-  ["Mg", "Magnésio",    12, 12, [2, 8, 2]],
-  ["Al", "Alumínio",    13, 14, [2, 8, 3]],
-  ["Si", "Silício",     14, 14, [2, 8, 4]],
-  ["P",  "Fósforo",     15, 16, [2, 8, 5]],
-  ["S",  "Enxofre",     16, 16, [2, 8, 6]],
-  ["Cl", "Cloro",       17, 18, [2, 8, 7]],
-  ["Ar", "Argônio",     18, 22, [2, 8, 8]],
-  ["K",  "Potássio",    19, 20, [2, 8, 8, 1]],
-  ["Ca", "Cálcio",      20, 20, [2, 8, 8, 2]],
-];
+import { ELEMENTS } from "./elements";
 
 function shellsToString(shells: number[]): string {
   return shells.join(", ");

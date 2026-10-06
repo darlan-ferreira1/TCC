@@ -108,11 +108,10 @@ updateElectronPositions(currentConfig.shells, simTime);
 
 ## 8. Limitações e problemas conhecidos
 
-- **Vazamento de memória de GPU** (D2): `buildOrbitAndElectrons` chama `orbitsGroup.clear()` mas não faz `dispose()` das geometrias de órbita criadas a cada `update`. Como mexer no slider de velocidade também chama `update` → `rebuild`, arrastar o slider cria dezenas de geometrias não liberadas. As variantes XR/AR já corrigem isso com `orbitDisposables`.
+- ~~**Vazamento de memória de GPU** (D2)~~ — **resolvido em 06/10/2026** (ver §10): as geometrias das órbitas agora são liberadas a cada `update`.
 - `update` reconstrói o átomo inteiro até quando só a velocidade muda.
-- `setPixelRatio(window.devicePixelRatio)` sem limite (os outros experimentos limitam a 2).
-- `Clock.getDelta()` sem teto: ao voltar de outra aba os elétrons "pulam".
-- A tabela de elementos está copiada também em `xrBhorModel/scene.ts` e `arBohrModel/scene.ts` (D3).
+- ~~`setPixelRatio` sem limite~~ e ~~`Clock.getDelta()` sem teto~~ — **resolvidos** pela migração para o `hostInPage` (ver §10).
+- ~~Tabela de elementos copiada em três arquivos~~ — **resolvido**: agora é `elements.ts` (ver §10). A construção do átomo continua duplicada nas variantes XR/AR (D3).
 
 ## 9. Ideias para o TCC2
 
@@ -120,3 +119,38 @@ updateElectronPositions(currentConfig.shells, simTime);
 - Separar `setSpeed()` de `update()` para não reconstruir a geometria.
 - Validar a distribuição pela regra 2n² e avisar quando o aluno digita algo impossível.
 - Transições de nível: clicar num elétron e "excitar" para outra camada, emitindo um fóton com a cor da linha espectral (série de Balmer para o hidrogênio).
+
+## 10. Sala interativa (Museu Virtual) e contrato montável
+
+Desde 06/10/2026 o Modelo de Bohr é um **experimento montável** (`core/mountable.ts`) e tem uma **sala interativa** no Museu Virtual (`sala.ts`). Ver `ARQUITETURA.md`, seção 22.
+
+### O que mudou
+
+- **`scene.ts`**: núcleo, órbitas e elétrons foram para `bohrModel.mount(root)`; o avanço dos elétrons virou `tick(dt)`. `createBohrScene(canvas, config, bg)` manteve a assinatura e virou `hostInPage(...)` com a câmera (0, 8, 18), zoom 3–60 e a luz ambiente 0,4 da página.
+- **A luz pontual do núcleo foi para dentro do experimento** (antes era da cena). Critério usado: luz que faz parte do fenômeno ("o núcleo ilumina o átomo") é do experimento; luz de ambiente é do hospedeiro. Assim, na sala do museu o átomo continua se iluminando sozinho.
+- **Correções que vieram de graça com a migração**:
+  - **D2 resolvido**: as geometrias das órbitas agora são liberadas a cada `update` (antes vazavam memória de GPU a cada mexida no slider).
+  - **D19 resolvido**: o `hostInPage` limita o `pixelRatio` a 2, como os demais experimentos.
+  - O passo de tempo passou a ter teto de 50 ms (antes, ao voltar de outra aba, os elétrons "pulavam").
+- **Tabela de elementos única** (`elements.ts`): a tabela dos 20 elementos estava copiada em `BohrModel/index.tsx`, `xrBhorModel/scene.ts` e `arBohrModel/scene.ts`. Agora as três variantes **e** a sala importam o mesmo arquivo (−68/+7 linhas nos três arquivos; parte do débito D3). Este é o único caso em que um `index.tsx` foi tocado: só para importar a tabela em vez de declará-la.
+- `physics.ts` não mudou.
+
+Tamanho do `scene.ts`: 257 → 239 linhas (−18), já contando a correção do vazamento.
+
+### A sala (`sala.ts`, 40 linhas)
+
+| Item | Valor |
+|---|---|
+| Sala | 10 × 10 m, pé-direito 5 m |
+| Posição | núcleo flutuando a 2,3 m do chão (acima da cabeça) |
+| Escala | 0,1 → camada 1 com 20 cm de raio, camada 4 (K, Ca) com 3,2 m |
+| Experiência | o aluno anda **por dentro** das órbitas e vê os elétrons passarem ao redor — a ideia da variante VR, agora também no PC e no celular |
+| Camada A — HUD | elemento (H a Ca, de `elements.ts`) e velocidade (0,1×–4×) |
+| Camada B | nenhuma |
+
+### Como este experimento mexe na arquitetura
+
+- Mostrou que o `sala.ts` pode ter controles **diferentes** dos da página: a página aceita uma distribuição eletrônica digitada à mão; a sala só oferece a lista de elementos. `toConfig` traduz a escolha ("C") na configuração completa (prótons, nêutrons, camadas).
+- Forçou a regra "luz do fenômeno é do experimento; luz de ambiente é do hospedeiro", registrada na seção 22.
+- Foi o experimento em que a migração mais **pagou dívida técnica** (D2, D19 e parte de D3).
+- As variantes `xrBhorModel`/`arBohrModel` continuam no contrato antigo; candidatas a serem substituídas pela sala quando o museu ganhar VR/AR.

@@ -1,5 +1,5 @@
 interface Props {
-  onSelect: (mode: 'normal' | 'immersive') => void;
+  onSelect: (mode: 'gallery' | 'museum') => void;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
 }
@@ -58,18 +58,18 @@ export default function ModeSelect({ onSelect, theme, onToggleTheme }: Props) {
       {/* Cards de modo */}
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
         <ModeCard
-          title="Modo Normal"
-          description="Acesse a galeria de simulações e explore cada experimento individualmente com controles e painéis de parâmetros."
+          title="Galeria"
+          description="Todos os experimentos em cards: escolha um e explore com controles, painéis de parâmetros, teoria e detalhes de como foi feito."
           accent="var(--accent-quimica)"
           icon="⚗️"
-          onClick={() => onSelect('normal')}
+          onClick={() => onSelect('gallery')}
         />
         <ModeCard
-          title="Modo Imersivo"
-          description="Experiência em tela cheia sem distrações, otimizada para uso em sala de aula ou apresentações."
+          title="Museu Virtual"
+          description="Caminhe pelo Museu CLARA.js em primeira pessoa e entre nas salas interativas dos experimentos. Funciona no computador e no celular."
           accent="var(--accent-fisica)"
           icon="🔭"
-          onClick={() => onSelect('immersive')}
+          onClick={() => onSelect('museum')}
         />
       </div>
     </div>

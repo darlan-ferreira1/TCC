@@ -92,3 +92,32 @@ O laço de animação só faz `controls.update()` + `render` — a molécula é 
 - Modo "construir": o aluno escolhe nº de ligantes e de pares solitários, e o sistema deduz a geometria (tabela AXₙEₘ).
 - Exibir o ângulo medido entre duas ligações clicadas (raycaster + produto escalar).
 - Testes unitários: para cada molécula, verificar por produto escalar que os ângulos gerados batem com `bondAngleDeg` (±0,1°).
+
+## 9. Sala interativa (Museu Virtual) e contrato montável
+
+Desde 06/10/2026 a Geometria Molecular é um **experimento montável** (`core/mountable.ts`) e tem uma **sala interativa** no Museu Virtual (`sala.ts`). Ver `ARQUITETURA.md`, seção 22.
+
+### O que mudou no `scene.ts`
+
+- A construção da molécula (`moleculeGroup`, átomos, ligações) foi para `molecularGeometry.mount(root)`. `tick` não faz nada — a molécula é estática.
+- `createMolScene(canvas, config, bg)` manteve a assinatura e virou `hostInPage(...)` com a mesma câmera (0; 1,5; 7), os mesmos limites de zoom (2–20) e as mesmas três luzes. `index.tsx` e `physics.ts` não mudaram.
+- O `dispose` ficou mais simples: o `scene.traverse` redundante que existia antes sumiu, porque o experimento só libera o que ele mesmo criou.
+
+Tamanho: 151 → 123 linhas (−28).
+
+### A sala (`sala.ts`, 35 linhas)
+
+| Item | Valor |
+|---|---|
+| Sala | 8 × 8 m |
+| Posição | sobre um pedestal (raio 1 m, altura 0,8 m), centro da molécula a 2 m do chão |
+| Escala | 0,5 (a maior molécula, SF₆/PCl₅, fica com ~2 m de diâmetro) |
+| Giro automático | 0,4 rad/s em Y — o aluno vê todos os lados sem precisar dar a volta (mas pode) |
+| Camada A — HUD | seleção da molécula (as 7 de `physics.ts`, com fórmula, nome e geometria) |
+| Camada B | nenhuma |
+
+### Como este experimento mexe na arquitetura
+
+- É o caso **mínimo**: experimento estático, um único controle do tipo `select`. Mostra o custo-base de dar uma sala a um experimento: **35 linhas**, só de dados (sala, escala, giro, pedestal e a lista de opções).
+- Exercitou dois recursos genéricos da sala que não precisam de código no experimento: `spin` (giro automático) e `pedestal` (desenha o pedestal e bloqueia a passagem).
+- O `select` do HUD é gerado a partir de `MOLECULES` — a mesma tabela que alimenta o select da página. Uma molécula nova em `physics.ts` aparece nos dois lugares.

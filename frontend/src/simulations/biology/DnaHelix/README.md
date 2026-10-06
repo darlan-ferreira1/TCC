@@ -93,3 +93,31 @@ e as variantes chamam `computeDnaHelix(bp, 3.75, 0.85)` (VR) ou `computeDnaHelix
 - Sulcos maior/menor (defasagem ~150° em vez de 180°) e 10,5 pb/volta.
 - Sequência digitável (ex.: `ATGCGTA…`) com cores por base e as pontes de hidrogênio.
 - Base para os experimentos "Replicação do DNA" já previstos no `registry.ts` (`available: false`).
+
+## 10. Sala interativa (Museu Virtual) e contrato montável
+
+Desde 06/10/2026 a Dupla Hélice é um **experimento montável** (`core/mountable.ts`) e tem uma **sala interativa** no Museu Virtual (`sala.ts`). Ver `ARQUITETURA.md`, seção 22.
+
+### O que mudou no `scene.ts`
+
+- A hélice (tubos, esferas, degraus, `dnaGroup`) foi para `dnaHelix.mount(root)`; a rotação contínua virou `tick(dt)`.
+- `createDnaScene(canvas, config, bg)` manteve a assinatura e virou `hostInPage(...)`. As luzes **padrão** do `hostInPage` são exatamente as que esta cena usava (ambiente 0,5 + direcional 1,2 em (5, 10, 8)), então nem foi preciso passá-las. `index.tsx` e `physics.ts` não mudaram.
+
+Tamanho: 160 → 133 linhas (−27).
+
+### A sala (`sala.ts`, 29 linhas)
+
+| Item | Valor |
+|---|---|
+| Sala | 8 × 8 m, pé-direito 5 m |
+| Posição | centro da hélice a 2,4 m do chão |
+| Escala | 0,3 (40 pares de base → ~4,1 m de altura, ~1 m de diâmetro) |
+| Colisão | círculo de 0,7 m: o aluno rodeia a hélice, mas não a atravessa |
+| Camada A — HUD | pares de base (4–40) e rotação (0–0,5 volta/s) — os mesmos controles da página |
+| Camada B | nenhuma |
+
+### Como este experimento mexe na arquitetura
+
+- O `sala.ts` mais curto dos quatro (29 linhas): os controles do HUD são os mesmos da página e mapeiam 1-para-1 para a configuração (`toConfig` só converte para número).
+- Exercitou `obstacleRadius` (colisão sem pedestal).
+- **Relação com as variantes `xrDnaHelix`/`arDnaHelix`**: elas continuam com a matemática da hélice duplicada (débito D3). A sala interativa já é, na prática, a "hélice em escala humana" que a variante VR oferece; quando o museu ganhar VR (etapa 4), as variantes podem ser aposentadas em favor da sala, e a duplicação some junto.
