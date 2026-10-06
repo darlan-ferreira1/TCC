@@ -191,3 +191,9 @@ if (flapProgress > 0,35) órgãos ficam visíveis;
 - Generalizar `PinchState` em uma interface `InputSource` usada também pelo *hand tracking* do WebXR — a mesma cena funcionaria com mãos reais num headset.
 - Medir latência de ponta a ponta (quadro da câmera → cursor na tela) e FPS de inferência em diferentes máquinas: dado quantitativo forte para a monografia.
 - Auto-hospedar o WASM e o `.task` em `public/` para funcionar offline.
+
+## 10. Rastreamento de mão compartilhado (06/10/2026)
+
+O carregamento do MediaPipe e a detecção dos 21 pontos da mão saíram deste `gestures.ts` e foram para o módulo comum `core/handTracking.ts`, usado também por "Você é o Móvel" e "Lei de Boyle com as Mãos". Aqui ficou só a regra **específica** da dissecação: transformar os pontos da mão num `PinchState` (razão polegar–indicador / palma, histerese, espelhamento).
+
+O `index.tsx` e o `scene.ts` desta pasta **não mudaram**: o `createHandTracker()` manteve a mesma assinatura, só que agora por dentro usa o rastreador comum. Os experimentos novos já usam `coverMapping` para alinhar desenho e vídeo; a dissecação ainda não (débito D16 continua aqui).

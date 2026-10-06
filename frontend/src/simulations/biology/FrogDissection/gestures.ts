@@ -1,4 +1,8 @@
-// Rastreamento de mão via MediaPipe Tasks Vision.
+// Detecção do gesto de pinça para a Dissecação.
+//
+// O rastreamento das mãos em si mora em core/handTracking.ts (compartilhado
+// com outros experimentos de webcam); aqui fica só a regra específica desta
+// simulação: transformar os pontos da mão num PinchState.
 //
 // Detecta o gesto de pinça (polegar + indicador) e expõe a posição do "ponto
 // de pinça" já convertida para coordenadas normalizadas de câmera (NDC, -1..1)
@@ -8,10 +12,9 @@
 // Histerese (PINCH_ENTER < PINCH_EXIT): evita que a pinça "trepide" entre
 // aberta/fechada quando a distância dos dedos está bem na borda do limiar.
 
-import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
-
-const WASM_BASE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm';
-const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
+import {
+  createHandLandmarkTracker, mirrorX, INDEX_TIP, MIDDLE_MCP, THUMB_TIP, WRIST,
+} from '../../../core/handTracking';
 
 const PINCH_ENTER = 0.35;
 const PINCH_EXIT = 0.45;
@@ -29,29 +32,22 @@ export interface HandTracker {
 }
 
 export async function createHandTracker(): Promise<HandTracker> {
-  const fileset = await FilesetResolver.forVisionTasks(WASM_BASE);
-  const landmarker = await HandLandmarker.createFromOptions(fileset, {
-    baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
-    runningMode: 'VIDEO',
-    numHands: 1,
-  });
-
+  const tracker = await createHandLandmarkTracker(1);
   let wasPinching = false;
 
   return {
     detect(video, timestampMs) {
-      const result = landmarker.detectForVideo(video, timestampMs);
-      const hand = result.landmarks[0];
+      const hand = tracker.detect(video, timestampMs)[0];
 
       if (!hand) {
         wasPinching = false;
         return { tracking: false, pinching: false, x: 0, y: 0 };
       }
 
-      const thumb = hand[4];
-      const index = hand[8];
-      const wrist = hand[0];
-      const midMcp = hand[9];
+      const thumb = hand[THUMB_TIP];
+      const index = hand[INDEX_TIP];
+      const wrist = hand[WRIST];
+      const midMcp = hand[MIDDLE_MCP];
 
       const pinchDist = Math.hypot(thumb.x - index.x, thumb.y - index.y);
       const handScale = Math.hypot(wrist.x - midMcp.x, wrist.y - midMcp.y) || 1;
@@ -66,12 +62,12 @@ export async function createHandTracker(): Promise<HandTracker> {
       return {
         tracking: true,
         pinching,
-        x: (1 - midX) * 2 - 1,
+        x: mirrorX(midX) * 2 - 1,
         y: -(midY * 2 - 1),
       };
     },
     dispose() {
-      landmarker.close();
+      tracker.dispose();
     },
   };
 }
