@@ -9,9 +9,9 @@ const PLANET_COLORS = [
 
 const DEFAULT_SPEED = 1.5;
 
-interface Props { onBack: () => void; theme: 'dark' | 'light'; }
+interface Props { theme: 'dark' | 'light'; }
 
-export default function SolarSystemSimulation({ onBack, theme }: Props) {
+export default function SolarSystemSimulation({ theme }: Props) {
   const canvasRef     = useRef<HTMLCanvasElement>(null);
   const sceneRef      = useRef<SolarSystemScene | null>(null);
   const timeDisplayRef = useRef<HTMLSpanElement>(null);
@@ -56,19 +56,6 @@ export default function SolarSystemSimulation({ onBack, theme }: Props) {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: c.bg, color: c.text, fontFamily: 'Inter, sans-serif' }}>
       <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
-
-        <button
-          onClick={onBack}
-          style={{
-            position: 'absolute', top: 16, right: 20,
-            background: c.btnBg, border: `1px solid ${c.btnBorder}`,
-            borderRadius: 8, color: c.muted, fontSize: 13, padding: '6px 14px',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          ← Voltar
-        </button>
 
         <div style={{ position: 'absolute', top: 16, left: 20, pointerEvents: 'none' }}>
           <span style={{ fontSize: 32, fontWeight: 700, color: '#f39c12', lineHeight: 1 }}>Sistema Solar</span>

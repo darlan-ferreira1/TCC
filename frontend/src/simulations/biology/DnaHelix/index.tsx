@@ -5,11 +5,10 @@ const DEFAULT_BASE_PAIRS = 20;
 const DEFAULT_SPEED = 0.15; // voltas por segundo
 
 interface Props {
-  onBack: () => void;
   theme: 'dark' | 'light';
 }
 
-export default function DnaHelixSimulation({ onBack, theme }: Props) {
+export default function DnaHelixSimulation({ theme }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef<DnaScene | null>(null);
   const [basePairs, setBasePairs] = useState(DEFAULT_BASE_PAIRS);
@@ -57,26 +56,6 @@ export default function DnaHelixSimulation({ onBack, theme }: Props) {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: c.bg, color: c.text, fontFamily: 'Inter, sans-serif' }}>
       <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
-
-        <button
-          onClick={onBack}
-          style={{
-            position: 'absolute', top: 16, right: 20,
-            background: c.btnBg,
-            border: `1px solid ${c.btnBorder}`,
-            borderRadius: 8,
-            color: c.muted,
-            fontSize: 13,
-            padding: '6px 14px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          ← Voltar
-        </button>
 
         <div style={{ position: 'absolute', top: 16, left: 20, pointerEvents: 'none' }}>
           <span style={{ fontSize: 32, fontWeight: 700, color: '#2ecc71', lineHeight: 1 }}>DNA</span>

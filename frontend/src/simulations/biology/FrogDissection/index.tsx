@@ -2,17 +2,13 @@ import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { createDissectionScene, ORGAN_DEFS, type DissectionScene } from './scene';
 import { createHandTracker, type HandTracker, type PinchState } from './gestures';
 
-interface Props {
-  onBack: () => void;
-}
-
 interface PointerState {
   down: boolean;
   x: number;
   y: number;
 }
 
-export default function FrogDissectionSimulation({ onBack }: Props) {
+export default function FrogDissectionSimulation() {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const sceneRef = useRef<DissectionScene | null>(null);
@@ -129,20 +125,6 @@ export default function FrogDissectionSimulation({ onBack }: Props) {
             background: '#020d06',
           }}
         />
-
-        <button
-          onClick={onBack}
-          style={{
-            position: 'absolute', top: 16, right: 20, zIndex: 10,
-            background: 'rgba(2,13,6,0.75)', border: '1px solid #1a3322',
-            borderRadius: 8, color: '#aaa', fontSize: 13,
-            padding: '6px 14px', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 6,
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          ← Voltar
-        </button>
 
         <div style={{
           position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 10,

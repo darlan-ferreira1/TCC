@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createARBohrScene, AR_ELEMENTS, type ARBohrScene } from './scene';
 
-interface Props {
-  onBack: () => void;
-}
-
-export default function ARBohrModelSimulation({ onBack }: Props) {
+export default function ARBohrModelSimulation() {
   const containerRef = useRef<HTMLDivElement>(null);
   const arBtnRef     = useRef<HTMLDivElement>(null);
   const sceneRef     = useRef<ARBohrScene | null>(null);
@@ -45,20 +41,6 @@ export default function ARBohrModelSimulation({ onBack }: Props) {
 
       {/* Canvas AR — ocupa todo o espaço disponível */}
       <div ref={containerRef} style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-
-        <button
-          onClick={onBack}
-          style={{
-            position: 'absolute', top: 16, right: 20,
-            background: 'rgba(5,5,20,0.75)', border: '1px solid #333366',
-            borderRadius: 8, color: '#aaa', fontSize: 13,
-            padding: '6px 14px', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 6,
-            backdropFilter: 'blur(4px)', zIndex: 10,
-          }}
-        >
-          ← Voltar
-        </button>
 
         {/* Badge AR */}
         <div style={{
