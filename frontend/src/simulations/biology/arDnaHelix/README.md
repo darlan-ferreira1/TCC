@@ -4,59 +4,47 @@
 |---|---|
 | **id** (`registry.ts`) | `ar-dna-helix` |
 | **Área** | Biologia — Biologia molecular |
-| **Modalidade** | **AR** (WebXR `immersive-ar`) com fallback desktop |
-| **Arquivos** | `scene.ts` (210 linhas) · `index.tsx` (130) — sem `physics.ts` |
-| **Dependências** | `three`, `ARButton`, `OrbitControls`, `react` |
-| **Requer** | Android com ARCore + Chrome, HTTPS |
+| **Modalidade** | **Realidade aumentada** (WebXR `immersive-ar` + hit-test + dom-overlay), com prévia 3D no navegador |
+| **Arquivos** | `ar.ts` (20 linhas) — só a definição; a página e o hospedeiro AR são genéricos (`src/ar/`) |
+| **Reaproveita** | `DnaHelix/scene.ts` (conteúdo montável) e `DnaHelix/sala.ts` (controles) |
+| **Requer** | Celular Android com Chrome e ARCore; HTTPS. O Safari do iPhone não suporta AR pela web (aparece um aviso) |
 
 ## 1. Objetivo pedagógico
 
-Colocar uma hélice de DNA do tamanho de uma pessoa no ambiente real (sala de aula) para o aluno caminhar ao redor dela olhando pela câmera do celular.
+Colocar uma hélice de DNA sobre a mesa ou o chão e observá-la de perto: o aluno caminha ao redor, aproxima o celular dos pares de base e muda o tamanho da molécula com os dedos.
 
-## 2. Modelo científico
+## 2. Como usar
 
-Mesma hélice paramétrica do desktop (ver `DnaHelix/README.md`), reimplementada em `computeHelix` com escala de sala:
+1. Toque em **Iniciar AR** e permita o uso da câmera.
+2. Mova o celular devagar, apontando para o chão ou uma mesa, até aparecer o **anel branco** (retícula).
+3. **Toque na tela** para colocar a hélice ali.
+4. Gestos: **arrastar** move; **pinça** redimensiona (20% a 500%); **girar com dois dedos** gira. Botões: **↺ Reposicionar**, **⚙ Ajustes** (pares de base e rotação) e **✕ Sair**.
 
-| Constante | Desktop | VR | AR (este) |
-|---|---|---|---|
-| Raio | 1,5 | 3,75 m | **0,40 m** (80 cm de diâmetro) |
-| Subida por pb | 0,34 | 0,85 m | **0,09 m** |
-| Pares padrão | 20 | 14 | **16** → 1,44 m de altura |
-| Esfera / tubo / degrau | 0,13 / 0,07 / 0,05 | ×2,5 | 0,055 / 0,030 / 0,020 m |
-| Posição | origem | (0, 0, −6) | **(0, 0, −1,5)** |
-| Rotação | slider | 0,15 volta/s | 0,2 volta/s |
+## 3. Modelo científico
 
-## 3. Arquitetura
+A mesma hélice B-DNA da página (10 pares por volta, 0,34 por par, fitas defasadas 180°). Ver `DnaHelix/README.md` e a aba **Teoria**.
 
-Igual à do `arBohrModel`: container, `arButton` exposto ao React, `setBasePairs` (React → cena) e `onBasePairsChange` (cena → React), `setAnimationLoop`, fundo transparente na sessão AR.
+## 4. Como foi feito
 
-## 4. Pontos específicos de AR
+Até 06/10/2026 esta pasta tinha um `scene.ts` (210 linhas) e um `index.tsx` (112 linhas) próprios, com a matemática da hélice **reimplementada** (débito D3), a hélice fixa 1,5 m à frente do celular e centrada no nível do chão (metade dela ficava "enterrada", débito D22).
 
-- `WebGLRenderer({ alpha: true })`; `setClearColor(0x000000, 0)` no `sessionstart` para a câmera real aparecer por trás.
-- `HemisphereLight` (céu branco, chão esverdeado) + direcional suave — iluminação neutra para combinar com o ambiente.
-- Sem painel 3D: a informação fica no HTML do `index.tsx`.
-- Toque na tela = `selectstart` do controlador 0 = +2 pares.
+Agora a hélice é exibida pelo **hospedeiro AR genérico** (`src/ar/scene.ts`, `hostInAR`). Esta pasta só declara:
 
-## 5. Interação
+```ts
+export const ar: ARDefinition<DnaSceneConfig> = {
+  experiment: dnaHelix,        // o mesmo conteúdo da página e do museu
+  controls: sala.controls,     // os mesmos controles da sala interativa
+  toConfig: sala.toConfig,
+  scale: 0.08,                 // 20 pares → ~54 cm de altura
+  lift: 0.3,                   // centro 30 cm acima da superfície (a hélice "nasce" apoiada)
+  previewDistance: 1.3,
+};
+```
 
-| Contexto | Entrada | Efeito |
-|---|---|---|
-| Fora da sessão | Slider (6–30, passo 2), mouse | Pares de base / orbitar |
-| Fora da sessão | Botão "START AR" | Inicia AR |
-| Sessão AR | Toque | +2 pares |
-| Sessão AR | Andar | Explorar ao redor |
+Com isso a duplicação da matemática da hélice **acabou** nesta variante e o problema do "meio enterrado" também. Ver `ARQUITETURA.md`, seção 23.
 
-## 6. Limitações e problemas conhecidos
+## 5. Limitações
 
-- **Slider não aparece durante a sessão AR** (D4, verificar em aparelho): o comentário em `scene.ts` diz "Slider HTML também funciona durante a sessão AR", mas o `ARButton` foi criado sem `domOverlay` apontando para o painel React. Ver correção em `arBohrModel/README.md §7`.
-- Em celular só existe um "controlador" (o toque): é possível aumentar os pares, mas não diminuir dentro da sessão.
-- A hélice está centralizada em y = 0, que no *reference space* `local-floor` é o **chão**: metade inferior (−0,72 m a 0) fica abaixo do piso. O comentário diz "quase chão a cabeça", o que só vale se a origem estiver na altura do celular (`local`). Verificar em aparelho; possivelmente usar `DNA_POS.y = 0,72`.
-- Sem *hit-test* nem âncoras.
-- Matemática da hélice duplicada (D3).
-
-## 7. Ideias para o TCC2
-
-- *Hit-test* para posicionar a hélice no chão real com um toque.
-- `dom-overlay` para controles na sessão.
-- Gesto de pinça com dois dedos na tela para escalar a hélice.
-- Comparar FPS e conforto (questionário) entre AR (este) e VR (`xrDnaHelix`) — dado para a avaliação.
+- Só Android + Chrome com ARCore.
+- O `lift` é fixo: com muitos pares de base (até 40) a hélice fica mais alta e a parte de baixo pode atravessar a superfície. Basta diminuir com a pinça ou reduzir os pares.
+- Sem âncoras do WebXR e sem estimativa de luz.
