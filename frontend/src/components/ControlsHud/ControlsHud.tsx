@@ -1,10 +1,11 @@
-// HUD de ajustes da sala (camada A da sala interativa).
+// Painel de ajustes gerado a partir de ControlDef (core/controls.ts). Usado pelo
+// Museu Virtual (HUD da sala interativa, camada A) e pelas páginas de AR.
 //
 // Não conhece nenhum experimento: desenha qualquer lista de ControlDef
 // (core/controls.ts). É o "hospedeiro" dos controles no Museu Virtual — a
 // página do experimento continua com seus sliders próprios em JSX.
 
-import type { ControlDef, ControlValue, ControlValues } from '../core/controls';
+import type { ControlDef, ControlValue, ControlValues } from '../../core/controls';
 
 interface Props {
   title: string;

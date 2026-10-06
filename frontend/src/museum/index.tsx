@@ -5,7 +5,7 @@ import type { InteractiveRoom } from './interactiveRoom';
 import type { ControlValue } from '../core/controls';
 import { simulations } from '../simulations/registry';
 import TouchControls from './TouchControls';
-import ControlsHud from './ControlsHud';
+import ControlsHud from '../components/ControlsHud/ControlsHud';
 
 // As portas são geradas a partir do registro: todo experimento disponível ganha
 // uma porta, sem nenhuma configuração extra.

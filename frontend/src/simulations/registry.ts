@@ -34,7 +34,7 @@ export const simulations: SimulationMeta[] = [
   {
     id: 'ar-bohr-model',
     title: 'Modelo de Bohr — AR',
-    description: 'Veja o átomo projetado no mundo real pela câmera do seu celular. Aproxime-se e caminhe pelos orbitais eletrônicos.',
+    description: 'Posicione o átomo sobre uma mesa ou o chão pela câmera do celular e ajuste com os dedos: arraste, aumente e gire.',
     category: 'Química',
     available: true,
     folder: 'chemistry/arBohrModel',
@@ -47,6 +47,15 @@ export const simulations: SimulationMeta[] = [
     category: 'Química',
     available: true,
     folder: 'chemistry/MolecularGeometry',
+  },
+  {
+    id: 'ar-molecular-geometry',
+    title: 'Geometria Molecular — AR',
+    description: 'Posicione moléculas em 3D sobre a sua mesa pela câmera do celular e observe as geometrias VSEPR de todos os ângulos.',
+    category: 'Química',
+    available: true,
+    folder: 'chemistry/arMolecularGeometry',
+    theoryFolder: 'chemistry/MolecularGeometry',
   },
   {
     id: 'simple-pendulum',
@@ -100,7 +109,7 @@ export const simulations: SimulationMeta[] = [
   {
     id: 'ar-dna-helix',
     title: 'Dupla Hélice de DNA — AR',
-    description: 'Projete uma hélice de DNA de 1,4 m de altura no ambiente ao redor pela câmera do celular. Caminhe ao redor da estrutura.',
+    description: 'Coloque a hélice de DNA sobre uma superfície real pela câmera do celular, redimensione com pinça e caminhe ao redor dela.',
     category: 'Biologia',
     available: true,
     folder: 'biology/arDnaHelix',

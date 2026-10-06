@@ -1,17 +1,19 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import ModeSelect from './pages/ModeSelect';
 import Home from './pages/Home';
-import Placeholder from './pages/Placeholder';
+import About from './pages/About';
 import ExperimentShell from './components/ExperimentShell/ExperimentShell';
+import ARExperiment from './ar/index';
+import { ar as bohrAR } from './simulations/chemistry/arBohrModel/ar';
+import { ar as dnaAR } from './simulations/biology/arDnaHelix/ar';
+import { ar as molAR } from './simulations/chemistry/arMolecularGeometry/ar';
 import VirtualMuseum from './museum/index';
 import { simulations } from './simulations/registry';
 import BohrModelSimulation         from './simulations/chemistry/BohrModel/index';
 import XRBohrModelSimulation       from './simulations/chemistry/xrBhorModel/index';
-import ARBohrModelSimulation       from './simulations/chemistry/arBohrModel/index';
 import MolecularGeometrySimulation from './simulations/chemistry/MolecularGeometry/index';
 import DnaHelixSimulation          from './simulations/biology/DnaHelix/index';
 import XRDnaHelixSimulation        from './simulations/biology/xrDnaHelix/index';
-import ARDnaHelixSimulation        from './simulations/biology/arDnaHelix/index';
 import FrogDissectionSimulation    from './simulations/biology/FrogDissection/index';
 import PendulumSimulation          from './simulations/physics/Pendulum/index';
 import WavesSimulation             from './simulations/physics/Waves/index';
@@ -28,6 +30,7 @@ const PAGES = [
   'bohr-model',
   'xr-bohr-model',
   'ar-bohr-model',
+  'ar-molecular-geometry',
   'molecular-geometry',
   'dna-helix',
   'xr-dna-helix',
@@ -46,11 +49,12 @@ type Page = (typeof PAGES)[number];
 const EXPERIMENTS: Partial<Record<Page, (theme: Theme) => ReactNode>> = {
   'bohr-model':         (theme) => <BohrModelSimulation theme={theme} />,
   'xr-bohr-model':      ()      => <XRBohrModelSimulation />,
-  'ar-bohr-model':      ()      => <ARBohrModelSimulation />,
+  'ar-bohr-model':      ()      => <ARExperiment def={bohrAR} title="Modelo de Bohr" />,
+  'ar-molecular-geometry': ()   => <ARExperiment def={molAR} title="Geometria Molecular" />,
   'molecular-geometry': (theme) => <MolecularGeometrySimulation theme={theme} />,
   'dna-helix':          (theme) => <DnaHelixSimulation theme={theme} />,
   'xr-dna-helix':       ()      => <XRDnaHelixSimulation />,
-  'ar-dna-helix':       ()      => <ARDnaHelixSimulation />,
+  'ar-dna-helix':       ()      => <ARExperiment def={dnaAR} title="Dupla Hélice de DNA" />,
   'frog-dissection':    ()      => <FrogDissectionSimulation />,
   'simple-pendulum':    (theme) => <PendulumSimulation theme={theme} />,
   'mechanical-waves':   (theme) => <WavesSimulation theme={theme} />,
@@ -136,7 +140,7 @@ export default function App() {
     );
 
   if (page === 'sobre')
-    return <Placeholder title="Sobre" onBack={goHome} />;
+    return <About onBack={goHome} onGoGallery={() => navigate('home')} onGoMuseum={() => navigate('museu')} />;
 
   const renderExperiment = EXPERIMENTS[page];
   if (renderExperiment)
