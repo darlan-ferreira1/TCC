@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import ModeSelect from './pages/ModeSelect';
 import Home from './pages/Home';
 import Placeholder from './pages/Placeholder';
+import ExperimentShell from './components/ExperimentShell/ExperimentShell';
+import { simulations } from './simulations/registry';
 import BohrModelSimulation         from './simulations/chemistry/BohrModel/index';
 import XRBohrModelSimulation       from './simulations/chemistry/xrBhorModel/index';
 import ARBohrModelSimulation       from './simulations/chemistry/arBohrModel/index';
@@ -37,6 +39,23 @@ const PAGES = [
 ] as const;
 
 type Page = (typeof PAGES)[number];
+
+// Experimentos: id → como renderizar. Todos são envolvidos pela mesma moldura
+// (ExperimentShell), que fornece os botões Teoria / Como foi feito / Voltar.
+const EXPERIMENTS: Partial<Record<Page, (theme: Theme) => ReactNode>> = {
+  'bohr-model':         (theme) => <BohrModelSimulation theme={theme} />,
+  'xr-bohr-model':      ()      => <XRBohrModelSimulation />,
+  'ar-bohr-model':      ()      => <ARBohrModelSimulation />,
+  'molecular-geometry': (theme) => <MolecularGeometrySimulation theme={theme} />,
+  'dna-helix':          (theme) => <DnaHelixSimulation theme={theme} />,
+  'xr-dna-helix':       ()      => <XRDnaHelixSimulation />,
+  'ar-dna-helix':       ()      => <ARDnaHelixSimulation />,
+  'frog-dissection':    ()      => <FrogDissectionSimulation />,
+  'simple-pendulum':    (theme) => <PendulumSimulation theme={theme} />,
+  'mechanical-waves':   (theme) => <WavesSimulation theme={theme} />,
+  'projectile-motion':  (theme) => <ProjectileSimulation theme={theme} />,
+  'planetary-motion':   (theme) => <SolarSystemSimulation theme={theme} />,
+};
 
 // Roteamento por hash: cada página tem uma URL própria (#/home, #/simple-pendulum…),
 // então o histórico do navegador (botão voltar/avançar) e links diretos funcionam.
@@ -112,18 +131,14 @@ export default function App() {
   if (page === 'sobre')
     return <Placeholder title="Sobre" onBack={goHome} />;
 
-  if (page === 'bohr-model')         return <BohrModelSimulation         onBack={goHome} theme={theme} />;
-  if (page === 'xr-bohr-model')     return <XRBohrModelSimulation       onBack={goHome} />;
-  if (page === 'ar-bohr-model')     return <ARBohrModelSimulation       onBack={goHome} />;
-  if (page === 'xr-dna-helix')      return <XRDnaHelixSimulation        onBack={goHome} />;
-  if (page === 'ar-dna-helix')      return <ARDnaHelixSimulation        onBack={goHome} />;
-  if (page === 'frog-dissection')   return <FrogDissectionSimulation    onBack={goHome} />;
-  if (page === 'molecular-geometry') return <MolecularGeometrySimulation onBack={goHome} theme={theme} />;
-  if (page === 'dna-helix')          return <DnaHelixSimulation          onBack={goHome} theme={theme} />;
-  if (page === 'simple-pendulum')    return <PendulumSimulation          onBack={goHome} theme={theme} />;
-  if (page === 'mechanical-waves')   return <WavesSimulation             onBack={goHome} theme={theme} />;
-  if (page === 'projectile-motion')  return <ProjectileSimulation        onBack={goHome} theme={theme} />;
-  if (page === 'planetary-motion')   return <SolarSystemSimulation       onBack={goHome} theme={theme} />;
+  const renderExperiment = EXPERIMENTS[page];
+  if (renderExperiment)
+    return (
+      // key: ao trocar de experimento a moldura é recriada (painel fecha).
+      <ExperimentShell key={page} meta={simulations.find((s) => s.id === page)} onBack={goHome}>
+        {renderExperiment(theme)}
+      </ExperimentShell>
+    );
 
   return (
     <Home

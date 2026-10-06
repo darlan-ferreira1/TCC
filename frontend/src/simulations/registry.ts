@@ -5,6 +5,12 @@ export interface SimulationMeta {
   category: 'Química' | 'Física' | 'Biologia';
   available: boolean;
   thumbnail?: string; // caminho relativo a /public, ex: '/thumbnails/bohr-model.png'
+  // Pasta do experimento dentro de src/simulations/. A moldura (ExperimentShell)
+  // carrega dali o teoria.md (botão Teoria) e o README.md (botão Como foi feito).
+  folder?: string;
+  // Pasta de onde vem o teoria.md quando a teoria é compartilhada com outra
+  // variante (ex.: Bohr VR/AR usam a teoria do Bohr desktop). Padrão: folder.
+  theoryFolder?: string;
 }
 
 export const simulations: SimulationMeta[] = [
@@ -14,6 +20,7 @@ export const simulations: SimulationMeta[] = [
     description: 'Visualize a estrutura atômica dos primeiros 20 elementos com elétrons orbitando o núcleo em tempo real.',
     category: 'Química',
     available: true,
+    folder: 'chemistry/BohrModel',
   },
   {
     id: 'xr-bohr-model',
@@ -21,6 +28,8 @@ export const simulations: SimulationMeta[] = [
     description: 'Mergulhe dentro do átomo em realidade virtual. Elétrons orbitam ao seu redor em escala real. Requer headset VR.',
     category: 'Química',
     available: true,
+    folder: 'chemistry/xrBhorModel',
+    theoryFolder: 'chemistry/BohrModel',
   },
   {
     id: 'ar-bohr-model',
@@ -28,6 +37,8 @@ export const simulations: SimulationMeta[] = [
     description: 'Veja o átomo projetado no mundo real pela câmera do seu celular. Aproxime-se e caminhe pelos orbitais eletrônicos.',
     category: 'Química',
     available: true,
+    folder: 'chemistry/arBohrModel',
+    theoryFolder: 'chemistry/BohrModel',
   },
   {
     id: 'molecular-geometry',
@@ -35,6 +46,7 @@ export const simulations: SimulationMeta[] = [
     description: 'Visualize as geometrias VSEPR em 3D: angular, tetraédrica, piramidal, octaédrica e mais.',
     category: 'Química',
     available: true,
+    folder: 'chemistry/MolecularGeometry',
   },
   {
     id: 'simple-pendulum',
@@ -42,6 +54,7 @@ export const simulations: SimulationMeta[] = [
     description: 'Simule o movimento oscilatório de um pêndulo com física real, ajustando comprimento e gravidade.',
     category: 'Física',
     available: true,
+    folder: 'physics/Pendulum',
   },
   {
     id: 'projectile-motion',
@@ -49,6 +62,7 @@ export const simulations: SimulationMeta[] = [
     description: 'Visualize a trajetória parabólica com controle de ângulo e velocidade inicial.',
     category: 'Física',
     available: true,
+    folder: 'physics/Projectile',
   },
   {
     id: 'planetary-motion',
@@ -56,6 +70,7 @@ export const simulations: SimulationMeta[] = [
     description: 'Todos os 8 planetas em órbita com períodos reais relativos. Sol ilumina com falloff gravitacional.',
     category: 'Física',
     available: true,
+    folder: 'physics/SolarSystem',
   },
   {
     id: 'mechanical-waves',
@@ -63,6 +78,7 @@ export const simulations: SimulationMeta[] = [
     description: 'Visualize propagação, reflexão e interferência de ondas em diferentes meios.',
     category: 'Física',
     available: true,
+    folder: 'physics/Waves',
   },
   {
     id: 'dna-helix',
@@ -70,6 +86,7 @@ export const simulations: SimulationMeta[] = [
     description: 'Visualize a estrutura tridimensional da dupla hélice com pares de bases A-T e G-C em rotação contínua.',
     category: 'Biologia',
     available: true,
+    folder: 'biology/DnaHelix',
   },
   {
     id: 'xr-dna-helix',
@@ -77,6 +94,8 @@ export const simulations: SimulationMeta[] = [
     description: 'Explore a hélice de DNA em escala humana em realidade virtual. A estrutura tem mais de 10 metros de altura. Requer headset VR.',
     category: 'Biologia',
     available: true,
+    folder: 'biology/xrDnaHelix',
+    theoryFolder: 'biology/DnaHelix',
   },
   {
     id: 'ar-dna-helix',
@@ -84,6 +103,8 @@ export const simulations: SimulationMeta[] = [
     description: 'Projete uma hélice de DNA de 1,4 m de altura no ambiente ao redor pela câmera do celular. Caminhe ao redor da estrutura.',
     category: 'Biologia',
     available: true,
+    folder: 'biology/arDnaHelix',
+    theoryFolder: 'biology/DnaHelix',
   },
   {
     id: 'frog-dissection',
@@ -91,6 +112,7 @@ export const simulations: SimulationMeta[] = [
     description: 'Abra e dissecte um sapo virtual usando gestos de pinça capturados pela webcam via MediaPipe — sem controle, sem mouse.',
     category: 'Biologia',
     available: true,
+    folder: 'biology/FrogDissection',
   },
   {
     id: 'cell-division',

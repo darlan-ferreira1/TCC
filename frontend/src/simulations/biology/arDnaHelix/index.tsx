@@ -4,11 +4,7 @@ import { createARDnaScene, type ARDnaScene } from './scene';
 const MIN_BP = 6;
 const MAX_BP = 30;
 
-interface Props {
-  onBack: () => void;
-}
-
-export default function ARDnaHelixSimulation({ onBack }: Props) {
+export default function ARDnaHelixSimulation() {
   const containerRef = useRef<HTMLDivElement>(null);
   const arBtnRef     = useRef<HTMLDivElement>(null);
   const sceneRef     = useRef<ARDnaScene | null>(null);
@@ -45,20 +41,6 @@ export default function ARDnaHelixSimulation({ onBack }: Props) {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#020d06', color: '#e0e0f0', fontFamily: 'Inter, sans-serif' }}>
 
       <div ref={containerRef} style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-
-        <button
-          onClick={onBack}
-          style={{
-            position: 'absolute', top: 16, right: 20,
-            background: 'rgba(2,13,6,0.75)', border: '1px solid #1a3322',
-            borderRadius: 8, color: '#aaa', fontSize: 13,
-            padding: '6px 14px', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 6,
-            backdropFilter: 'blur(4px)', zIndex: 10,
-          }}
-        >
-          ← Voltar
-        </button>
 
         {/* Badge AR */}
         <div style={{

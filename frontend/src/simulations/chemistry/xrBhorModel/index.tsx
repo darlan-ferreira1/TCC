@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createXRBohrScene, XR_ELEMENTS, type XRBohrScene } from './scene';
 
-interface Props {
-  onBack: () => void;
-}
-
-export default function XRBohrModelSimulation({ onBack }: Props) {
+export default function XRBohrModelSimulation() {
   const containerRef = useRef<HTMLDivElement>(null);
   const vrBtnRef     = useRef<HTMLDivElement>(null);
   const sceneRef     = useRef<XRBohrScene | null>(null);
@@ -47,21 +43,6 @@ export default function XRBohrModelSimulation({ onBack }: Props) {
 
       {/* Canvas XR */}
       <div ref={containerRef} style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-
-        {/* Botão Voltar */}
-        <button
-          onClick={onBack}
-          style={{
-            position: 'absolute', top: 16, right: 20,
-            background: 'rgba(5,5,20,0.8)', border: '1px solid #333366',
-            borderRadius: 8, color: '#aaa', fontSize: 13,
-            padding: '6px 14px', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 6,
-            backdropFilter: 'blur(4px)', zIndex: 10,
-          }}
-        >
-          ← Voltar
-        </button>
 
         {/* Badge XR */}
         <div style={{
