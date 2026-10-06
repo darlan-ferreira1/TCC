@@ -114,3 +114,41 @@ Qualquer mudança chama `update()`, que **reinicia** a oscilação a partir do r
 - Mostrar o período **medido** na simulação (contar cruzamentos de θ = 0) ao lado do teórico — ótimo para um gráfico na monografia.
 - Adicionar amortecimento `−b·ω` e gráfico θ(t) em tempo real.
 - Teste unitário: energia `E = ½L²ω² + gL(1 − cos θ)` deve variar < 1% após 10⁴ passos.
+
+## 10. Sala interativa (Museu Virtual) e contrato montável
+
+Desde 06/10/2026 o Pêndulo é um **experimento montável** (`core/mountable.ts`) e tem uma **sala interativa** no Museu Virtual (`sala.ts`). Ver `ARQUITETURA.md`, seção 22.
+
+### O que mudou no `scene.ts`
+
+- O conteúdo (pivô, haste, massa, estado físico) foi para `pendulum.mount(root)`. Renderer, câmera, OrbitControls, luzes e laço saíram: agora vêm do hospedeiro.
+- `createPendulumScene(canvas, config, bg)` **manteve a assinatura** e virou uma chamada a `hostInPage(...)` com a câmera e as luzes que a página sempre usou. Por isso `index.tsx` e `physics.ts` não mudaram nenhuma linha.
+- **Subpasso de integração**: antes, o teto de 20 ms no `dt` era garantido pelo laço próprio. Como o laço agora é do hospedeiro (que limita a 50 ms), o próprio `tick` divide passos maiores em pedaços de até 20 ms. Resultado: a precisão do integrador não depende mais de quem hospeda (verificado: `tick(0,1)` = 5 × `tick(0,02)`).
+- Ganhou dois métodos extras, usados só pela sala: `grab(θ)` (segura a massa num ângulo e pausa a física) e `release()` (solta a partir do repouso), além de expor `bob` (o objeto da massa).
+
+Tamanho: 142 → 146 linhas, mesmo ganhando o subpasso e o `grab/release`.
+
+### A sala (`sala.ts`, 71 linhas)
+
+| Item | Valor |
+|---|---|
+| Sala | 8 × 9 m, pé-direito 4,8 m |
+| Posição do pivô | 3,8 m do chão (com L = 3 m a massa passa a 0,8 m do chão) |
+| Escala | 1 (o pêndulo já é modelado em metros) |
+| Camada A — HUD | Comprimento L (0,5–3 m), gravidade g (1–20 m/s²), ângulo inicial θ₀ (−170° a 170°) |
+| Camada B — interação | **Pegar a massa**: mirar nela e segurar E (ou o botão no celular); arrastar define o ângulo; soltar larga o pêndulo do repouso |
+
+Como a interação funciona: o raio da mira (centro da tela) é cruzado com o **plano de oscilação** (plano vertical que passa pelo pivô); o ponto de cruzamento, convertido para as coordenadas locais do pêndulo, vira o ângulo `θ = atan2(x, −y)`, limitado a ±170°. A massa é considerada "na mira" se o raio passa a menos de 35 cm dela e ela está a menos de 6 m.
+
+É o único dos quatro experimentos com camada B: soltar o pêndulo com a mão é a forma mais natural de definir θ₀, e mostra na prática que o período não depende do ângulo (para ângulos pequenos).
+
+### Como este experimento mexe na arquitetura
+
+- É o **piloto** da migração: provou que dá para separar conteúdo de infraestrutura sem tocar em `physics.ts` nem em `index.tsx`.
+- É o único que exercita **todas** as peças da sala interativa: `tick` com estado físico, HUD (camada A) e interação direta (camada B, `RoomInteraction`).
+- Revelou uma consequência não óbvia da migração: garantias que dependiam do laço próprio (o teto de `dt`) precisam migrar para dentro do experimento.
+
+### Limitações da sala
+
+- O pivô flutua (não há viga nem suporte desenhado).
+- A interação usa o plano de oscilação fixo (plano XY da sala): olhando o pêndulo exatamente de lado, o arrasto fica impreciso.

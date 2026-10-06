@@ -3,6 +3,7 @@ import ModeSelect from './pages/ModeSelect';
 import Home from './pages/Home';
 import Placeholder from './pages/Placeholder';
 import ExperimentShell from './components/ExperimentShell/ExperimentShell';
+import VirtualMuseum from './museum/index';
 import { simulations } from './simulations/registry';
 import BohrModelSimulation         from './simulations/chemistry/BohrModel/index';
 import XRBohrModelSimulation       from './simulations/chemistry/xrBhorModel/index';
@@ -22,7 +23,7 @@ type Theme = 'dark' | 'light';
 const PAGES = [
   'select',
   'home',
-  'immersive',
+  'museu',
   'sobre',
   'bohr-model',
   'xr-bohr-model',
@@ -121,12 +122,18 @@ export default function App() {
       <ModeSelect
         theme={theme}
         onToggleTheme={toggleTheme}
-        onSelect={(mode) => navigate(mode === 'normal' ? 'home' : 'immersive')}
+        onSelect={(mode) => navigate(mode === 'gallery' ? 'home' : 'museu')}
       />
     );
 
-  if (page === 'immersive')
-    return <Placeholder title="Modo Imersivo" onBack={() => goBack('select')} />;
+  if (page === 'museu')
+    return (
+      <VirtualMuseum
+        theme={theme}
+        onEnter={(id) => { if (isPage(id)) navigate(id); }}
+        onBack={() => goBack('select')}
+      />
+    );
 
   if (page === 'sobre')
     return <Placeholder title="Sobre" onBack={goHome} />;
@@ -143,7 +150,7 @@ export default function App() {
   return (
     <Home
       onNavigate={(id) => { if (isPage(id)) navigate(id); }}
-      onGoImmersive={() => navigate('immersive')}
+      onGoMuseum={() => navigate('museu')}
       onGoSobre={() => navigate('sobre')}
       theme={theme}
       onToggleTheme={toggleTheme}

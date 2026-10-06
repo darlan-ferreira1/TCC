@@ -19,13 +19,13 @@ const ALL_CATEGORIES = ['Todas', 'Química', 'Física', 'Biologia'] as const;
 
 interface Props {
   onNavigate: (id: string) => void;
-  onGoImmersive: () => void;
+  onGoMuseum: () => void;
   onGoSobre: () => void;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
 }
 
-export default function Home({ onNavigate, onGoImmersive, onGoSobre, theme, onToggleTheme }: Props) {
+export default function Home({ onNavigate, onGoMuseum, onGoSobre, theme, onToggleTheme }: Props) {
   const [activeCategory, setActiveCategory] = useState<string>('Todas');
   const [search, setSearch] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BREAKPOINT);
@@ -132,7 +132,7 @@ export default function Home({ onNavigate, onGoImmersive, onGoSobre, theme, onTo
                 }}>
                   {[
                     { label: 'Simulações',    onClick: () => { setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); } },
-                    { label: 'Modo Imersivo', onClick: () => { setMenuOpen(false); onGoImmersive(); } },
+                    { label: 'Museu Virtual', onClick: () => { setMenuOpen(false); onGoMuseum(); } },
                     { label: 'Sobre',         onClick: () => { setMenuOpen(false); onGoSobre(); } },
                   ].map(({ label, onClick }) => (
                     <button
@@ -192,7 +192,7 @@ export default function Home({ onNavigate, onGoImmersive, onGoSobre, theme, onTo
               <nav style={{ display: 'flex', alignItems: 'center', gap: 32, fontSize: 14 }}>
                 {[
                   { label: 'Simulações',    onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
-                  { label: 'Modo Imersivo', onClick: onGoImmersive },
+                  { label: 'Museu Virtual', onClick: onGoMuseum },
                   { label: 'Sobre',         onClick: onGoSobre },
                 ].map(({ label, onClick }) => (
                   <button
@@ -475,7 +475,7 @@ export default function Home({ onNavigate, onGoImmersive, onGoSobre, theme, onTo
           </p>
           <div style={{ display: 'flex', gap: 24, fontSize: 13, color: 'var(--text-muted)' }}>
             <button onClick={onGoSobre}     style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, fontSize: 13 }}>Sobre</button>
-            <button onClick={onGoImmersive} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, fontSize: 13 }}>Modo Imersivo</button>
+            <button onClick={onGoMuseum} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, fontSize: 13 }}>Museu Virtual</button>
           </div>
         </div>
       </footer>
