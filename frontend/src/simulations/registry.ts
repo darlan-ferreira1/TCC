@@ -58,6 +58,14 @@ export const simulations: SimulationMeta[] = [
     theoryFolder: 'chemistry/MolecularGeometry',
   },
   {
+    id: 'boyle-law',
+    title: 'Lei de Boyle com as Mãos',
+    description: 'Comprima um gás com as próprias mãos diante da webcam e veja a pressão subir: P·V constante, medido ao vivo com MediaPipe.',
+    category: 'Química',
+    available: true,
+    folder: 'chemistry/BoyleHands',
+  },
+  {
     id: 'simple-pendulum',
     title: 'Pêndulo Simples',
     description: 'Simule o movimento oscilatório de um pêndulo com física real, ajustando comprimento e gravidade.',
@@ -72,6 +80,14 @@ export const simulations: SimulationMeta[] = [
     category: 'Física',
     available: true,
     folder: 'physics/Projectile',
+  },
+  {
+    id: 'hand-kinematics',
+    title: 'Você é o Móvel',
+    description: 'Mova a mão diante da webcam e veja os gráficos de posição e velocidade se formarem ao vivo. Desafios de MU e MUV com nota.',
+    category: 'Física',
+    available: true,
+    folder: 'physics/HandKinematics',
   },
   {
     id: 'planetary-motion',

@@ -18,6 +18,8 @@ import FrogDissectionSimulation    from './simulations/biology/FrogDissection/in
 import PendulumSimulation          from './simulations/physics/Pendulum/index';
 import WavesSimulation             from './simulations/physics/Waves/index';
 import ProjectileSimulation        from './simulations/physics/Projectile/index';
+import HandKinematicsSimulation    from './simulations/physics/HandKinematics/index';
+import BoyleHandsSimulation        from './simulations/chemistry/BoyleHands/index';
 import SolarSystemSimulation       from './simulations/physics/SolarSystem/index';
 
 type Theme = 'dark' | 'light';
@@ -40,6 +42,8 @@ const PAGES = [
   'mechanical-waves',
   'projectile-motion',
   'planetary-motion',
+  'hand-kinematics',
+  'boyle-law',
 ] as const;
 
 type Page = (typeof PAGES)[number];
@@ -60,6 +64,8 @@ const EXPERIMENTS: Partial<Record<Page, (theme: Theme) => ReactNode>> = {
   'mechanical-waves':   (theme) => <WavesSimulation theme={theme} />,
   'projectile-motion':  (theme) => <ProjectileSimulation theme={theme} />,
   'planetary-motion':   (theme) => <SolarSystemSimulation theme={theme} />,
+  'hand-kinematics':    (theme) => <HandKinematicsSimulation theme={theme} />,
+  'boyle-law':          (theme) => <BoyleHandsSimulation theme={theme} />,
 };
 
 // Roteamento por hash: cada página tem uma URL própria (#/home, #/simple-pendulum…),
