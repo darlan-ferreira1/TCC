@@ -1,92 +1,147 @@
 # CLARA.js
 
-Plataforma web de simulações científicas interativas em 3D — Física, Química e Biologia — desenvolvida como TCC. Cada experimento roda com física real (integração numérica própria) renderizada em Three.js, com variantes AR/VR via WebXR para alguns temas.
+**Centro de Laboratórios para Aprendizagem e Representação Analítica** — uma plataforma web de laboratórios virtuais de Física, Química e Biologia, desenvolvida como Trabalho de Conclusão de Curso (TCC) em Ciência da Computação.
+
+Os experimentos rodam inteiramente no navegador, sem instalação e sem servidor: no computador, no celular, em realidade aumentada, em realidade virtual e com interação por gestos pela webcam.
 
 Site publicado: https://darlan-ferreira1.github.io/TCC/
 
+## A proposta
+
+A contribuição do trabalho para a Ciência da Computação é a **arquitetura de software** da plataforma: uma forma de organizar experimentos científicos para que **o mesmo modelo** funcione em diferentes formas de apresentação e de interação. O site é a prova de conceito dessa arquitetura.
+
+## Como explorar
+
+| Modo | O que é |
+|---|---|
+| **Galeria** | Todos os experimentos em cards, com busca e filtro por área. Cada experimento tem controles de parâmetros e dois botões: **Teoria** (o conteúdo para o aluno) e **Como foi feito** (a documentação técnica). |
+| **Museu Virtual** | O **Museu CLARA.js**: um ambiente 3D em primeira pessoa (WASD + mouse no computador, joystick na tela do celular). Cada porta leva à **sala interativa** de um experimento, onde ele aparece em tamanho real e pode ser ajustado (Tab / ⚙). |
+
+## Experimentos
+
+| Área | Experimento | Modalidades |
+|---|---|---|
+| Física | Pêndulo Simples | Página · Sala interativa |
+| Física | Lançamento de Projétil | Página |
+| Física | Sistema Solar | Página |
+| Física | Ondas Mecânicas | Página |
+| Física | **Você é o Móvel** (cinemática com a mão) | Webcam (MediaPipe) |
+| Química | Modelo de Bohr | Página · Sala interativa · VR · AR |
+| Química | Geometria Molecular (VSEPR) | Página · Sala interativa · AR |
+| Química | **Lei de Boyle com as Mãos** | Webcam (MediaPipe) |
+| Biologia | Dupla Hélice de DNA | Página · Sala interativa · VR · AR |
+| Biologia | Dissecação Guiada por Gestos | Webcam (MediaPipe) |
+
+- **Realidade aumentada:** aponte o celular para o chão ou uma mesa, toque para posicionar o objeto e ajuste com os dedos (arrastar, pinça, girar). Requer Android com Chrome e ARCore.
+- **Realidade virtual:** requer um headset compatível com WebXR.
+- **Webcam:** sem câmera, o mouse funciona como alternativa.
+
+Cada pasta de experimento tem um `README.md` explicando em detalhe como ele foi feito e um `teoria.md` com o conteúdo para o aluno. Os dois aparecem dentro do próprio site.
+
 ## Stack
 
-- **React 19** + **TypeScript** — UI e composição de páginas
-- **Vite 8** — dev server e build
-- **Three.js** — renderização 3D e WebXR (AR/VR)
-- **Tailwind CSS 4** (`@tailwindcss/vite`) — utilitário de estilo, combinado com CSS custom properties para o tema
-- **@vitejs/plugin-basic-ssl** — HTTPS no dev server (necessário para APIs de câmera/WebXR fora de `localhost`)
-- Deploy automático para **GitHub Pages** via GitHub Actions
+- **React 19** + **TypeScript**: interface e composição das páginas
+- **Vite 8**: servidor de desenvolvimento e build
+- **Three.js**: renderização 3D (WebGL)
+- **WebXR**: realidade virtual e aumentada (`immersive-vr`, `immersive-ar` com hit-test e dom-overlay)
+- **MediaPipe Tasks Vision**: rastreamento das mãos pela webcam, direto no dispositivo
+- **marked**: renderiza os textos em Markdown (Teoria / Como foi feito)
+- **@vitejs/plugin-basic-ssl**: HTTPS no servidor de desenvolvimento (câmera e WebXR exigem contexto seguro)
+- Deploy automático no **GitHub Pages** via GitHub Actions
 
-Não há roteador (`react-router` etc.) nem gerenciador de estado global — a navegação é feita com `useState` simples em `App.tsx`, e cada simulação é isolada em sua própria pasta.
+## Arquitetura
 
-## Estrutura de pastas
+### Experimentos em três camadas
 
-```
-src/
-├── App.tsx                  # "router" — máquina de estados de página + tema global
-├── main.tsx                 # entry point
-├── index.css                # variáveis CSS de tema (dark/light) + import Tailwind
-├── pages/
-│   ├── ModeSelect.tsx        # tela inicial: Modo Normal vs Modo Imersivo
-│   ├── Home.tsx               # galeria de simulações (busca, filtro por categoria)
-│   └── Placeholder.tsx        # placeholder para páginas ainda não implementadas
-├── components/ui/             # componentes de card/detalhe (não usados atualmente pelo fluxo principal)
-└── simulations/
-    ├── registry.ts             # fonte única de verdade dos metadados de cada experimento
-    ├── physics/
-    │   ├── Pendulum/
-    │   ├── Projectile/
-    │   ├── SolarSystem/
-    │   └── Waves/
-    ├── chemistry/
-    │   ├── BohrModel/            + xrBhorModel/ + arBohrModel/
-    │   └── MolecularGeometry/
-    └── biology/
-        └── DnaHelix/              + xrDnaHelix/ + arDnaHelix/
-```
-
-### Padrão de cada simulação
-
-Toda simulação "normal" segue a mesma convenção de 3 arquivos:
+Cada experimento fica numa pasta própria em `src/simulations/<área>/<Nome>/`:
 
 | Arquivo | Responsabilidade |
 |---|---|
-| `physics.ts` | Matemática pura (integração numérica, sem nenhuma dependência do Three.js). Ex.: `stepPendulum`, `period`. |
-| `scene.ts` | Setup do Three.js: câmera, luzes, meshes, loop de animação via `requestAnimationFrame`, e uma função `dispose()` para limpar geometrias/materiais/renderer. Expõe `createXScene(canvas, config) → { update(config), dispose() }`. |
-| `index.tsx` | Componente React: monta o `<canvas>`, guarda a cena em um `useRef`, sincroniza os controles de UI (sliders) com `scene.update(...)`, e desmonta a cena no `useEffect` cleanup. |
+| `physics.ts` | **Domínio**: equações, integradores e tabelas. TypeScript puro, sem Three.js nem React, testável isoladamente. |
+| `scene.ts` | **Apresentação**: monta o experimento em 3D (Three.js) ou 2D (canvas). Não conhece React. |
+| `index.tsx` | **Página**: componente React com os controles; cria a cena, repassa os parâmetros e a libera ao sair. |
+| `teoria.md` / `README.md` | Conteúdo para o aluno e documentação técnica. |
 
-Esse desacoplamento existe para que a física seja testável isoladamente e a cena não precise saber nada sobre React.
+### Contrato montável e hospedeiros
 
-As variantes **XR** (`xrDnaHelix`, `xrBhorModel`) e **AR** (`arDnaHelix`, `arBohrModel`) seguem o mesmo padrão, mas `scene.ts` usa `VRButton`/`ARButton` de `three/examples/jsm/webxr/` e o loop de animação roda via `renderer.setAnimationLoop` (obrigatório em sessões WebXR, ao invés de `requestAnimationFrame` puro). O componente React só injeta o botão de entrada (`vrButton`/`arButton`) num container próprio.
+Os experimentos mais recentes seguem um **contrato montável** (`src/core/mountable.ts`): o experimento só sabe montar seus objetos num grupo (`mount`), avançar no tempo (`tick`), reagir a parâmetros (`update`) e se liberar (`dispose`). Renderer, câmera, luzes e laço de animação são fornecidos por quem o **hospeda**:
 
-### Registro de simulações
+```
+                    ┌─► hostInPage        página do experimento (Galeria)
+experimento ────────┼─► sala interativa   Museu Virtual        (sala.ts)
+(mount/tick/...)    └─► hostInAR          realidade aumentada  (ar.ts)
+```
 
-`src/simulations/registry.ts` é a única fonte de verdade sobre quais experimentos existem, sua categoria e se já estão disponíveis (`available: boolean`). A `Home.tsx` renderiza a galeria e os filtros a partir desse array — simulações com `available: false` aparecem em "Em breve" sem link ativo.
+Assim, o mesmo Modelo de Bohr aparece na página, no Museu Virtual e em AR sem duplicar código. Dar AR ou uma sala a um experimento montável custa um arquivo de definição curto (`ar.ts` ou `sala.ts`).
 
-**Para adicionar uma nova simulação:**
-1. Criar a pasta em `src/simulations/<área>/<Nome>/` com `physics.ts` (se aplicável), `scene.ts` e `index.tsx`.
-2. Registrar os metadados em `registry.ts`.
-3. Importar o componente e adicionar o `id` ao union type `Page` + ao bloco de `if`s em `App.tsx`.
+### Estrutura de pastas
 
-### Tema
+```
+src/
+├── App.tsx                 # roteamento por hash (#/simple-pendulum) + tema
+├── main.tsx                # ponto de entrada
+├── index.css               # variáveis de tema (escuro/claro)
+├── pages/
+│   ├── ModeSelect.tsx      # tela inicial: Galeria × Museu Virtual
+│   ├── Home.tsx            # Galeria (busca, filtro por área)
+│   └── About.tsx           # página Sobre
+├── core/
+│   ├── mountable.ts        # contrato montável
+│   ├── hostInPage.ts       # hospedeiro "página"
+│   ├── controls.ts         # controles declarativos (ControlDef)
+│   └── handTracking.ts     # rastreamento de mãos (MediaPipe), comum aos experimentos de webcam
+├── components/
+│   ├── ExperimentShell/    # moldura de todo experimento: Teoria / Como foi feito / Voltar
+│   ├── ControlsHud/        # painel de ajustes gerado a partir de ControlDef
+│   └── handInput/          # gancho React que abre a webcam e o rastreador
+├── museum/                 # Museu Virtual (planta, salas, controles de toque)
+├── ar/                     # hospedeiro de realidade aumentada (hit-test, gestos)
+└── simulations/
+    ├── registry.ts         # fonte única dos metadados dos experimentos
+    ├── physics/            # Pendulum, Projectile, SolarSystem, Waves, HandKinematics
+    ├── chemistry/          # BohrModel, MolecularGeometry, BoyleHands
+    │                       #   + xrBhorModel (VR), arBohrModel, arMolecularGeometry (AR)
+    └── biology/            # DnaHelix, FrogDissection
+                            #   + xrDnaHelix (VR), arDnaHelix (AR)
+```
 
-Dark é o tema padrão. `index.css` define duas paletas de custom properties (`:root` e `.light`), e `App.tsx` alterna a classe `.light` no `<html>` via `toggleTheme`. Os componentes de UI usam `var(--bg)`, `var(--text)` etc. diretamente em `style={{}}` (não há CSS Modules/styled-components). As cenas Three.js recebem a cor de fundo já resolvida (hex) como prop, pois não enxergam CSS.
+### Registro e navegação
+
+- `src/simulations/registry.ts` é a fonte única dos experimentos: título, área, disponibilidade e pasta. A Galeria, as portas do Museu Virtual e os textos de Teoria / Como foi feito são gerados a partir dele.
+- A navegação usa **hash + History API** (`#/bohr-model`): o botão voltar do navegador funciona, e cada experimento tem link direto. Usa-se hash porque o GitHub Pages não redireciona rotas desconhecidas para o `index.html`.
+- As salas interativas (`sala.ts`) são descobertas automaticamente: basta o arquivo existir na pasta do experimento.
+
+### Adicionar um experimento
+
+1. Criar `src/simulations/<área>/<Nome>/` com `physics.ts`, `scene.ts`, `index.tsx`, `teoria.md` e `README.md`.
+2. Adicionar a entrada em `registry.ts` (com `folder`).
+3. Importar em `App.tsx` e adicionar o id a `PAGES` e à tabela `EXPERIMENTS`.
+4. Opcional, se o experimento for montável: `sala.ts` (sala no Museu Virtual) e/ou uma variante com `ar.ts` (realidade aumentada).
 
 ## Rodando localmente
 
+Dentro de `frontend/`:
+
 ```bash
 npm install
-npm run dev      # HTTPS em https://localhost:5173 (plugin-basic-ssl gera certificado autoassinado)
-npm run build    # tsc -b && vite build → dist/
-npm run preview  # serve o build de produção localmente
+npm run dev              # https://localhost:5173/TCC/ (certificado autoassinado)
+npm run dev -- --host    # idem, acessível por outros aparelhos da rede (ex.: celular)
+npm run build            # tsc -b && vite build → dist/
+npm run preview          # serve o build de produção localmente
 npm run lint
 ```
 
-HTTPS é necessário para testar captura de câmera (AR) fora do `localhost` puro; em `localhost` o navegador já trata como contexto seguro mesmo em HTTP, mas o projeto mantém HTTPS ligado por padrão para replicar o comportamento em rede local (ex.: testar no celular via IP).
+O endereço tem `/TCC/` no final porque o `vite.config.ts` define `base: '/TCC/'` (o site é publicado como *project page* do GitHub Pages). Ao abrir no celular, aceite o aviso de certificado. Para testar AR, prefira o site publicado, que tem HTTPS válido.
 
 ## Deploy (GitHub Pages)
 
-Workflow em `.github/workflows/deploy.yml`: a cada push na `main`, builda `frontend/` com `npm ci && npm run build` e publica `frontend/dist` via `actions/deploy-pages`. Não é necessário rodar nenhum comando manual — a única configuração feita uma vez foi apontar **Settings → Pages → Source: GitHub Actions** no repositório.
+O workflow `.github/workflows/deploy.yml` roda a cada push na `main`: instala as dependências, executa `npm run build` em `frontend/` e publica `frontend/dist` no GitHub Pages. Nenhum comando manual é necessário.
 
-Ponto de atenção: `vite.config.ts` define `base: '/TCC/'` porque o site é servido como *project page* (`darlan-ferreira1.github.io/TCC/`), não como *user page* na raiz. Se o repositório for renomeado, esse valor precisa mudar junto.
+Se o repositório for renomeado, o `base` do `vite.config.ts` precisa mudar junto.
 
-## Débitos conhecidos
+## Limitações conhecidas
 
-- `src/components/ui/ExperimentCard.tsx` e `ExperimentDetails.tsx` não são usados pelo fluxo atual (a `Home.tsx` implementa o card inline) — candidatos a remoção ou a uma futura migração da galeria para usá-los.
-- O bundle de produção está acima de 500 kB (aviso do Vite) por concentrar Three.js + todas as simulações num único chunk; `React.lazy` por simulação resolveria isso quando a lista crescer.
+- **Realidade aumentada:** só no Android com Chrome e ARCore (o Safari do iPhone não implementa WebXR AR).
+- **Experimentos de webcam:** o modelo do MediaPipe é baixado de CDN na primeira vez; sem internet, o mouse funciona como alternativa.
+- **Bundle:** o pacote de produção passa de 500 kB por concentrar Three.js e todos os experimentos num único arquivo; carregar cada experimento sob demanda (`React.lazy`) resolveria.
+- **Código não utilizado:** `src/components/ui/ExperimentCard.tsx` e `ExperimentDetails.tsx` não são usados pelo fluxo atual.
