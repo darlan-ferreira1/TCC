@@ -21,6 +21,7 @@ export const sala: InteractiveRoom<MolSceneConfig> = {
     scale: 0.5,
     spin: 0.4,
     pedestal: { radius: 1.0, height: 0.8 },
+    inspect: { distance: 4 },
   },
   controls: [
     {

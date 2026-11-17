@@ -25,6 +25,7 @@ export const sala: InteractiveRoom<PendulumSceneConfig, MountedPendulum> = {
     depth: 9,
     wallHeight: 4.8,
     place: [0, 3.8, -1.5],
+    inspect: { target: [0, 2.4, -1.5], distance: 5 },
   },
   controls: [
     { id: 'L', label: 'Comprimento L', kind: 'range', min: 0.5, max: 3, step: 0.1, unit: 'm', default: 1.5 },

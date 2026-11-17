@@ -9,8 +9,9 @@
 import * as THREE from 'three';
 import type { ControlValues } from '../core/controls';
 import type { InteractiveRoom, RoomInteraction } from './interactiveRoom';
-import { buildPedestal, buildShell, Tracker } from './builders';
-import { computeLayout, computeRoomLayout, type DoorEntry, type MuseumLayout, type Obstacle } from './layout';
+import { buildEasel, buildInfoIcon, buildPedestal, buildShell, Tracker } from './builders';
+import type { InfoContent, RoomContent } from './info';
+import { computeLayout, computeRoomLayout, computeWingLayout, EXHIBIT_RADIUS, type DoorEntry, type MuseumLayout, type Obstacle } from './layout';
 
 export interface Level {
   group: THREE.Group;
@@ -20,6 +21,28 @@ export interface Level {
   tick(dt: number): void;
   setControls(values: ControlValues): void;
   dispose(): void;
+  // Só nas salas: o experimento e para onde olhar no modo "inspecionar".
+  inspect?: { root: THREE.Group; target: THREE.Vector3; distance: number };
+}
+
+export type OpenInfo = (content: InfoContent) => void;
+
+const INFO_REACH = 5; // m — distância máxima para ler um "i" ou quadro
+
+// Interação de "apertar para ler": a mira sobre `obj` abre o pop-up.
+function infoInteraction(obj: THREE.Object3D, content: InfoContent, openInfo: OpenInfo, radius: number): RoomInteraction {
+  const p = new THREE.Vector3();
+  return {
+    prompt: `ler: ${content.title}`,
+    hold: false,
+    isTarget(ray) {
+      obj.getWorldPosition(p);
+      return ray.distanceToPoint(p) < radius && ray.origin.distanceTo(p) < INFO_REACH;
+    },
+    press() { openInfo(content); },
+    drag() { /* nada */ },
+    release() { /* nada */ },
+  };
 }
 
 export function buildHall(entries: DoorEntry[]): Level {
@@ -52,7 +75,72 @@ export function buildHall(entries: DoorEntry[]): Level {
   };
 }
 
-export function buildRoom(def: InteractiveRoom, title: string, color: number, values: ControlValues): Level {
+// Peça decorativa no pedestal central de uma ala: monta os objetos em `group`
+// (já posicionado no topo do pedestal) e devolve a animação.
+export type Centerpiece = (group: THREE.Group, t: Tracker) => (dt: number) => void;
+
+// Ala temática: um salão menor, com as portas das salas de um tema e a porta
+// de volta ao salão principal. Mesma interface Level do salão e das salas.
+export interface WingExtras {
+  miniatures?: Record<string, Centerpiece>;    // id da porta → miniatura no pedestal
+  content?: Record<string, RoomContent>;       // id da porta → textos
+  openInfo?: OpenInfo;
+}
+
+export function buildWing(entries: DoorEntry[], title: string, color: number, centerpiece?: Centerpiece, extras: WingExtras = {}): Level {
+  const t = new Tracker();
+  const layout = computeWingLayout(entries, title, color);
+  const group = new THREE.Group();
+  const { doorMaterials } = buildShell(group, layout, t);
+  const interactions: RoomInteraction[] = [];
+  const animations: ((dt: number) => void)[] = [];
+
+  // Pedestais ao lado das portas: miniatura da sala + "i" com o resumo.
+  for (const ex of layout.exhibits ?? []) {
+    const h = 1.0;
+    buildPedestal(group, t, ex.x, ex.z, EXHIBIT_RADIUS, h);
+    const mini = extras.miniatures?.[ex.doorId];
+    if (mini) {
+      const top = new THREE.Group();
+      top.position.set(ex.x, h, ex.z);
+      top.rotation.y = Math.atan2(ex.normal.x, ex.normal.z);
+      group.add(top);
+      animations.push(mini(top, t));
+    }
+    const resumo = extras.content?.[ex.doorId]?.resumo;
+    if (resumo && extras.openInfo) {
+      const icon = buildInfoIcon(t, color);
+      icon.position.set(ex.x + ex.normal.x * 0.35, 0.75, ex.z + ex.normal.z * 0.35);
+      group.add(icon);
+      interactions.push(infoInteraction(icon, resumo, extras.openInfo, 0.3));
+    }
+  }
+
+  const [pedestal] = layout.obstacles;
+  buildPedestal(group, t, pedestal.x, pedestal.z, pedestal.r, 1.0);
+  const top = new THREE.Group();
+  top.position.set(pedestal.x, 1.0, pedestal.z);
+  group.add(top);
+  const animate = centerpiece?.(top, t);
+
+  return {
+    group,
+    layout,
+    doorMaterials,
+    interactions,
+    tick(dt) {
+      animate?.(dt);
+      animations.forEach((a) => a(dt));
+    },
+    setControls() { /* a ala não tem controles */ },
+    dispose() { t.dispose(); },
+  };
+}
+
+export function buildRoom(
+  def: InteractiveRoom, title: string, color: number, values: ControlValues,
+  exitTitle?: string, content?: RoomContent, openInfo?: OpenInfo,
+): Level {
   const t = new Tracker();
   const spec = def.room;
   const [px, py, pz] = spec.place;
@@ -61,7 +149,13 @@ export function buildRoom(def: InteractiveRoom, title: string, color: number, va
   const blockRadius = spec.pedestal?.radius ?? spec.obstacleRadius;
   if (blockRadius) obstacles.push({ x: px, z: pz, r: blockRadius });
 
-  const layout = computeRoomLayout({ width: spec.width, depth: spec.depth, obstacles }, title, color);
+  // Quadros (Teoria, História…) em cavaletes dos dois lados de quem entra,
+  // virados para o ponto de entrada.
+  const easelSpots = [-1, 1].map((side) => ({ x: side * Math.min(2.6, spec.width / 2 - 1), z: spec.depth / 2 - 3 }));
+  const quadros = content && openInfo ? content.quadros.slice(0, easelSpots.length) : [];
+  quadros.forEach((_, i) => obstacles.push({ ...easelSpots[i], r: 0.45 }));
+
+  const layout = computeRoomLayout({ width: spec.width, depth: spec.depth, obstacles }, title, color, exitTitle);
   const group = new THREE.Group();
   const { doorMaterials } = buildShell(group, layout, t, spec.wallHeight);
   if (spec.pedestal) buildPedestal(group, t, px, pz, spec.pedestal.radius, spec.pedestal.height);
@@ -73,7 +167,27 @@ export function buildRoom(def: InteractiveRoom, title: string, color: number, va
   group.add(root);
 
   const mounted = def.experiment.mount({ root }, def.toConfig(values));
-  const interactions = def.interactions?.(mounted, root) ?? [];
+  const interactions = [...(def.interactions?.(mounted, root) ?? [])];
+
+  const entry = { x: 0, z: spec.depth / 2 - 2 }; // onde o visitante aparece
+  quadros.forEach((q, i) => {
+    const spot = easelSpots[i];
+    const easel = buildEasel(t, q.title, color);
+    easel.position.set(spot.x, 0, spot.z);
+    easel.rotation.y = Math.atan2(entry.x - spot.x, entry.z - spot.z);
+    group.add(easel);
+    interactions.push(infoInteraction(easel.children[0], q, openInfo!, 0.6));
+  });
+
+  if (content && openInfo) {
+    const [ix, iy, iz] = spec.infoAt ?? [px + 1.5, 1.6, pz + 2];
+    const icon = buildInfoIcon(t, color);
+    icon.position.set(ix, iy, iz);
+    group.add(icon);
+    interactions.push(infoInteraction(icon, content.observar, openInfo, 0.3));
+  }
+
+  const [tx, ty, tz] = spec.inspect?.target ?? spec.place;
 
   return {
     group,
@@ -89,5 +203,6 @@ export function buildRoom(def: InteractiveRoom, title: string, color: number, va
       mounted.dispose();
       t.dispose();
     },
+    inspect: { root, target: new THREE.Vector3(tx, ty, tz), distance: spec.inspect?.distance ?? 5 },
   };
 }

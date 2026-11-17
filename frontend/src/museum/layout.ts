@@ -57,7 +57,16 @@ export interface MuseumLayout {
   doors: DoorPlacement[];
   signs: WallSign[];
   obstacles: Obstacle[];
+  exhibits?: Exhibit[]; // pedestais com miniatura ao lado das portas (alas)
 }
+
+// Pedestal com a miniatura da sala, ao lado da porta dela.
+export interface Exhibit extends Vec2 {
+  doorId: string;
+  normal: Vec2; // para onde fica a frente (para dentro da sala)
+}
+
+export const EXHIBIT_RADIUS = 0.28;
 
 export interface SpawnPoint extends Vec2 {
   lookX: number;
@@ -195,11 +204,12 @@ export function computeRoomLayout(
   spec: { width: number; depth: number; obstacles: Obstacle[] },
   title: string,
   color: number,
+  exitTitle = 'Voltar ao museu',
 ): MuseumLayout {
   const { width, depth } = spec;
   const exit: DoorPlacement = {
     id: EXIT_DOOR_ID,
-    title: 'Voltar ao museu',
+    title: exitTitle,
     category: '',
     color: 0x8888aa,
     wall: 'near',
@@ -208,4 +218,60 @@ export function computeRoomLayout(
   };
   const sign: WallSign = { text: title, color, ...pointOnWall('far', 0, width, depth), ...WALL_GEOMETRY.far };
   return { width, depth, doors: [exit], signs: [sign], obstacles: spec.obstacles };
+}
+
+// ── Alas temáticas (museus dentro do museu) ──
+//
+// Uma ala é um salão menor, aberto por uma porta do salão principal, com as
+// salas de um tema em ordem (uma linha do tempo, por exemplo). As portas
+// seguem as paredes em volta do visitante: esquerda (de perto para o fundo),
+// fundo (da esquerda para a direita) e direita (do fundo para perto). A porta
+// de saída fica no meio da parede "near", como nas salas.
+
+const WING_WALLS: Wall[] = ['left', 'far', 'right'];
+
+export function computeWingLayout(entries: DoorEntry[], title: string, color: number): MuseumLayout {
+  // Divide as portas entre as três paredes, na ordem (5 portas → 2, 2, 1).
+  const perWall = WING_WALLS.map((_, i) => Math.floor(entries.length / 3) + (i < entries.length % 3 ? 1 : 0));
+  const side = Math.max(wallLength(perWall[0]), wallLength(perWall[2]));
+  const width = Math.max(wallLength(perWall[1]), wallLength(1) + DOOR_SPACING); // cabe a porta de saída
+  const depth = side;
+
+  const doors: DoorPlacement[] = [];
+  let next = 0;
+  WING_WALLS.forEach((wall, i) => {
+    const count = perWall[i];
+    const { rotationY, normal } = WALL_GEOMETRY[wall];
+    for (let j = 0; j < count; j++) {
+      const t = (j - (count - 1) / 2) * DOOR_SPACING;
+      doors.push({ ...entries[next++], wall, ...pointOnWall(wall, t, width, depth), rotationY, normal });
+    }
+  });
+
+  doors.push({
+    id: EXIT_DOOR_ID,
+    title: 'Voltar ao salão principal',
+    category: '',
+    color: 0x8888aa,
+    wall: 'near',
+    ...pointOnWall('near', 0, width, depth),
+    ...WALL_GEOMETRY.near,
+  });
+  const sign: WallSign = { text: title, color, ...pointOnWall('far', 0, width, depth), ...WALL_GEOMETRY.far };
+
+  // Um pedestal à direita de cada porta (de quem olha para ela), um pouco
+  // para dentro da sala. Fica fora do caminho da porta e entre duas portas.
+  const exhibits: Exhibit[] = doors
+    .filter((d) => d.id !== EXIT_DOOR_ID)
+    .map((d) => {
+      const tangent = { x: d.normal.z, z: -d.normal.x }; // da esquerda para a direita, olhando a parede
+      return {
+        doorId: d.id,
+        x: d.x + d.normal.x * 0.9 + tangent.x * 1.4,
+        z: d.z + d.normal.z * 0.9 + tangent.z * 1.4,
+        normal: d.normal,
+      };
+    });
+  const obstacles = [PEDESTAL, ...exhibits.map((e) => ({ x: e.x, z: e.z, r: EXHIBIT_RADIUS }))];
+  return { width, depth, doors, signs: [sign], obstacles, exhibits };
 }

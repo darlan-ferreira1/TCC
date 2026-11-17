@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { createMuseumScene, type MuseumScene, type RoomInfo } from './scene';
+import { createMuseumScene, type MuseumScene, type RoomInfo, type WingInfo } from './scene';
+import { WINGS, WING_DOORS, WING_ROOMS, WINGS_CATEGORY } from './alas';
+import { CONTEUDO } from './conteudo';
+import { MINIATURAS } from './miniaturas';
+import type { InfoContent } from './info';
+import InfoPopup from './InfoPopup';
 import { EXIT_DOOR_ID, type DoorEntry, type DoorPlacement } from './layout';
 import type { InteractiveRoom } from './interactiveRoom';
 import { stepControl, type ControlValue } from '../core/controls';
@@ -37,6 +42,11 @@ const DOOR_ENTRIES: DoorEntry[] = simulations
     color: CATEGORY_COLOR[s.category] ?? 0x888888,
   }));
 
+// Alas temáticas (protótipo, ver alas.ts): as portas delas ficam numa parede
+// própria do salão, e as salas novas entram na mesma tabela de salas.
+const HALL_ENTRIES: DoorEntry[] = [...DOOR_ENTRIES, ...WING_DOORS];
+const ALL_ROOMS: Record<string, InteractiveRoom> = { ...ROOMS, ...WING_ROOMS };
+
 // Guarda por qual porta o aluno saiu, para ele reaparecer na frente dela ao
 // voltar do experimento (o componente é desmontado durante o experimento,
 // então isso fica fora do estado do React).
@@ -49,8 +59,9 @@ const KEYBOARD_HELP = [
   ['W A S D', 'andar'],
   ['Mouse', 'olhar ao redor'],
   ['Shift', 'correr'],
-  ['E', 'entrar na porta / segurar objeto'],
+  ['E', 'entrar na porta / segurar objeto / ler o "i"'],
   ['Tab', 'ajustes (dentro de uma sala)'],
+  ['I', 'inspecionar o experimento (dentro de uma sala)'],
   ['Esc', 'pausar'],
 ];
 
@@ -59,10 +70,11 @@ const TOUCH_HELP = [
   ['Arrastar', 'olhar ao redor'],
   ['Tocar no aviso', 'entrar na porta / segurar objeto'],
   ['⚙', 'ajustes (dentro de uma sala)'],
+  ['🔍', 'inspecionar o experimento'],
   ['❚❚', 'pausar'],
 ];
 
-const GAMEPAD_HELP = 'Controle: analógico esquerdo anda, direito olha, A entra ou segura, Start abre os ajustes, Select pausa. Aperte A para começar.';
+const GAMEPAD_HELP = 'Controle: analógico esquerdo anda, direito olha, A entra, segura ou lê o i, Start abre os ajustes, Y inspeciona, Select pausa. Aperte A para começar.';
 const GAMEPAD_HUD_HINT = 'Controle: ↑ ↓ escolhe, ← → ajusta, B fecha.';
 
 const kbdStyle = {
@@ -76,7 +88,9 @@ const roundButton = {
 } as const;
 
 function doorPrompt(door: DoorPlacement): string {
-  if (door.id === EXIT_DOOR_ID) return 'Voltar ao museu';
+  if (door.id === EXIT_DOOR_ID) return door.title;
+  if (door.category === WINGS_CATEGORY) return `Entrar no ${door.title}`;
+  if (!(door.id in ALL_ROOMS)) return `Abrir o experimento ${door.title}`;
   return `Entrar na sala ${door.title}`;
 }
 
@@ -97,7 +111,13 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   const [padPlaying, setPadPlaying] = useState(false);
   const [nearDoor, setNearDoor] = useState<DoorPlacement | null>(null);
   const [interaction, setInteraction] = useState<string | null>(null);
+  const [interactionHold, setInteractionHold] = useState(true);
+  const [info, setInfo] = useState<InfoContent | null>(null); // pop-up de texto aberto
+  const [infoPage, setInfoPage] = useState(0);
+  const [inspecting, setInspecting] = useState(false);
   const [room, setRoom] = useState<RoomInfo | null>(null);
+  const [wing, setWing] = useState<WingInfo | null>(null);
+  const wingRef = useRef<WingInfo | null>(null);
   const [hudOpen, setHudOpen] = useState(false);
   const [padFocus, setPadFocus] = useState(0); // linha do HUD selecionada pelo controle
   const padHudInput = useRef<((direction: GamepadDirection) => void) | null>(null);
@@ -123,8 +143,11 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
     const container = containerRef.current;
     if (!container) return;
     const s = createMuseumScene(container, {
-      entries: DOOR_ENTRIES,
-      rooms: ROOMS,
+      entries: HALL_ENTRIES,
+      rooms: ALL_ROOMS,
+      wings: WINGS,
+      content: CONTEUDO,
+      miniatures: MINIATURAS,
       spawnDoorId: lastDoorId,
       background: theme === 'dark' ? 0x0a0a1a : 0xcfd6e6,
     });
@@ -132,6 +155,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
     s.onGamepadAction = (action) => {
       if (action === 'resume') {
         setHudOpen(false);
+        setInfo(null);
         setPadPlaying(true);
       } else if (action === 'menu') {
         setPadFocus(0);
@@ -146,14 +170,29 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
     };
     s.onGamepadHud = (direction) => padHudInput.current?.(direction);
     s.onNearDoorChange = setNearDoor;
-    s.onInteractionChange = setInteraction;
+    s.onInteractionChange = (prompt, hold) => {
+      setInteraction(prompt);
+      setInteractionHold(hold);
+    };
+    s.onInfo = (content) => {
+      setInfo(content);
+      setInfoPage(0);
+      s.unlock(); // solta o mouse para clicar nas setas
+    };
+    s.onInspectChange = setInspecting;
     s.onRoomChange = (r) => {
       setRoom(r);
       setHudOpen(false);
-      if (r) lastDoorId = r.id;
+      // Dentro de uma ala, a porta "de volta" no salão é a da ala.
+      if (r) lastDoorId = wingRef.current?.id ?? r.id;
+    };
+    s.onWingChange = (w) => {
+      wingRef.current = w;
+      setWing(w);
+      if (w) lastDoorId = w.id;
     };
     s.onEnter = (id) => {
-      lastDoorId = id;
+      lastDoorId = wingRef.current?.id ?? id;
       onEnter(id);
     };
     sceneRef.current = s;
@@ -164,12 +203,16 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   // Com o HUD aberto, o controle navega nele; fora dele, só move a cena
   // enquanto se está jogando com o controle.
   useEffect(() => {
-    sceneRef.current?.setGamepadMode(room && hudOpen ? 'hud' : padPlaying ? 'play' : 'off');
-  }, [room, padPlaying, hudOpen, theme]);
+    sceneRef.current?.setGamepadMode((room && hudOpen) || info ? 'hud' : padPlaying ? 'play' : 'off');
+  }, [room, padPlaying, hudOpen, info, theme]);
 
   // ↑ ↓ escolhe o parâmetro; ← → altera o valor dele.
   useEffect(() => {
     padHudInput.current = (direction) => {
+      if (info) { // pop-up de texto: ← → passam as páginas
+        if (direction === 'left' || direction === 'right') turnPage(direction === 'right' ? 1 : -1);
+        return;
+      }
       const count = room?.controls.length ?? 0;
       if (!room || count === 0) return;
       setPadPlaying(true);
@@ -199,8 +242,40 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
     return () => document.removeEventListener('keydown', onKey);
   }, [room, locked, hudOpen]);
 
+  function turnPage(step: number) {
+    if (!info) return;
+    setInfoPage((p) => Math.min(Math.max(p + step, 0), info.pages.length - 1));
+  }
+
+  // Fecha o pop-up de texto. No desktop, volta a travar o mouse (dentro do clique).
+  function closeInfo() {
+    setInfo(null);
+    if (!IS_TOUCH && !padPlaying) sceneRef.current?.lock();
+  }
+
+  function exitInspect() {
+    sceneRef.current?.setInspect(false);
+    if (!IS_TOUCH && !padPlaying) sceneRef.current?.lock();
+  }
+
+  // Teclado com o pop-up aberto: ← → passam as páginas, Esc fecha.
+  // No modo inspecionar, Esc volta para a sala.
+  useEffect(() => {
+    if (!info && !inspecting) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (info && (e.code === 'ArrowRight' || e.code === 'KeyD')) turnPage(1);
+      else if (info && (e.code === 'ArrowLeft' || e.code === 'KeyA')) turnPage(-1);
+      else if (e.code === 'Escape') {
+        if (info) setInfo(null);
+        else sceneRef.current?.setInspect(false);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  });
+
   const showHud = room && hudOpen;
-  const showGameUi = playing && !showHud;
+  const showGameUi = playing && !showHud && !info && !inspecting;
 
   return (
     <div style={{ position: 'relative', height: '100vh', overflow: 'hidden', background: 'var(--bg)', fontFamily: 'Inter, sans-serif' }}>
@@ -217,6 +292,11 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
             position: 'absolute', top: 'calc(12px + env(safe-area-inset-top, 0px))', right: 12,
             display: 'flex', gap: 8,
           }}>
+            {room && (
+              <button onClick={() => sceneRef.current?.setInspect(true)} aria-label="Inspecionar" style={roundButton}>
+                🔍
+              </button>
+            )}
             {room && (
               <button onClick={() => { sceneRef.current?.setTouchMove(0, 0); setHudOpen(true); }} aria-label="Ajustes" style={roundButton}>
                 ⚙
@@ -238,8 +318,21 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
           {(!IS_TOUCH || padPlaying) && (
             <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>
               <kbd style={{ ...kbdStyle, fontSize: 11 }}>{padPlaying ? 'Start' : 'Tab'}</kbd> ajustes
+              {' · '}
+              <kbd style={{ ...kbdStyle, fontSize: 11 }}>{padPlaying ? 'Y' : 'I'}</kbd> inspecionar
             </div>
           )}
+        </div>
+      )}
+
+      {/* Nome da ala (fora das salas) */}
+      {showGameUi && !room && wing && (
+        <div style={{
+          position: 'absolute', top: 'calc(14px + env(safe-area-inset-top, 0px))', left: 16,
+          color: '#e0e0f0', textShadow: '0 1px 4px rgba(0,0,0,0.8)', pointerEvents: 'none',
+        }}>
+          <div style={{ fontSize: 11, letterSpacing: '0.12em', opacity: 0.7, textTransform: 'uppercase' }}>Ala</div>
+          <div style={{ fontSize: 17, fontWeight: 700 }}>{wing.title}</div>
         </div>
       )}
 
@@ -282,10 +375,46 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
           {!touchPlaying && <kbd style={kbdStyle}>{padPlaying ? 'A' : 'E'}</kbd>}
           <span>
             {interaction
-              ? (touchPlaying ? `Segure aqui para ${interaction}` : `Segure para ${interaction}`)
+              ? (interactionHold
+                  ? (touchPlaying ? `Segure aqui para ${interaction}` : `Segure para ${interaction}`)
+                  : (touchPlaying ? `Toque para ${interaction}` : interaction))
               : (touchPlaying ? 'Toque: ' : '') + doorPrompt(nearDoor!)}
           </span>
         </button>
+      )}
+
+      {/* Pop-up de texto ("i", quadros, pedestais) */}
+      {info && (
+        <InfoPopup
+          content={info}
+          page={infoPage}
+          compact={IS_TOUCH}
+          hint={padPlaying ? 'Controle: ← → passa as páginas, B fecha.' : IS_TOUCH ? undefined : '← → passam as páginas · Esc fecha'}
+          onPage={(p) => setInfoPage(Math.min(Math.max(p, 0), info.pages.length - 1))}
+          onClose={closeInfo}
+        />
+      )}
+
+      {/* Modo inspecionar: barra com a dica e o botão de voltar */}
+      {inspecting && (
+        <div style={{
+          position: 'absolute', left: '50%', transform: 'translateX(-50%)',
+          bottom: 'calc(24px + env(safe-area-inset-bottom, 0px))', display: 'flex', alignItems: 'center', gap: 14,
+          background: 'rgba(10,10,26,0.85)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 10,
+          padding: '10px 16px', color: '#e0e0f0', fontSize: 14, maxWidth: 'calc(100vw - 32px)',
+        }}>
+          <span>
+            {padPlaying
+              ? 'Inspecionando (a câmera gira sozinha) · B volta'
+              : IS_TOUCH ? 'Arraste para girar · pinça para zoom' : 'Arraste para girar · roda do mouse para zoom'}
+          </span>
+          <button onClick={exitInspect} style={{
+            background: 'var(--primary)', color: 'var(--primary-fg)', border: 'none', borderRadius: 8,
+            padding: '6px 14px', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+          }}>
+            Voltar à sala
+          </button>
+        </div>
       )}
 
       {/* HUD de ajustes da sala (camada A) */}
@@ -304,7 +433,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
       )}
 
       {/* Tela de instruções (aparece enquanto não está "jogando") */}
-      {!playing && !showHud && (
+      {!playing && !showHud && !info && !inspecting && (
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'rgba(5,5,15,0.55)', padding: 24,
