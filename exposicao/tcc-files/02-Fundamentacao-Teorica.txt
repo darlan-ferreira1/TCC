@@ -1,0 +1,125 @@
+% =====================================================================
+% FUNDAMENTAÇÃO TEÓRICA: funil em blocos, como no Gustavo:
+%   2.1 o conteúdo (uma subseção por sala, com fórmula)
+%   2.2 resolução de problemas, simulações e feedback (o bloco que o Gustavo não tem)
+%   2.3 ambientes e exposições virtuais (Slater)
+%   2.4 tecnologias Web 3D
+%   2.5 IA generativa na programação
+% Rascunho gerado com IA: confira as fórmulas no livro e reescreva.
+% As figuras marcadas com \figurapendente ainda precisam ser feitas.
+% =====================================================================
+
+\providecommand{\figurapendente}[1]{%
+	\fbox{\parbox[c][4.5cm][c]{14cm}{\centering\textbf{[FIGURA A INSERIR]}\\[2mm]\small #1}}}
+
+\chapter{Fundamentação Teórica}
+\label{chap:fundamentacao}
+
+Este capítulo apresenta os conceitos que sustentam o trabalho. Inicialmente, são descritos os fenômenos de Mecânica representados na exposição. Em seguida, discutem-se a resolução de problemas no ensino de Física, o uso de simulações e o papel do retorno ao estudante. Depois, são apresentados os conceitos de ambientes e exposições virtuais interativos, as tecnologias Web 3D utilizadas e, por fim, a IA generativa aplicada ao desenvolvimento de software.
+
+\section{Conteúdos de Mecânica abordados}
+\label{sec:conteudos}
+
+Os conteúdos foram escolhidos por fazerem parte do currículo de Física do ensino médio e por permitirem uma representação visual direta do resultado de um cálculo. Em todo o trabalho adota-se $g = 10\,\text{m/s}^2$, valor usual nos livros didáticos e no ENEM.
+
+\subsection{Pêndulo simples}
+
+O pêndulo simples é formado por uma massa pequena presa a um fio inextensível de comprimento $L$. Para pequenas amplitudes, o movimento é aproximadamente harmônico simples, com período dado pela Equação~\ref{eq:pendulo} \cite{halliday2016v2}:
+
+\begin{equation}
+	T = 2\pi\sqrt{\frac{L}{g}}
+	\label{eq:pendulo}
+\end{equation}
+
+O período não depende da massa nem, para ângulos pequenos, da amplitude, propriedade observada por Galileu. Para amplitudes grandes, a aproximação deixa de valer e o período real torna-se maior do que o previsto pela Equação~\ref{eq:pendulo}, o que permite discutir com o estudante os limites de validade de um modelo.
+
+\subsection{Lançamento oblíquo}
+
+Um corpo lançado com velocidade inicial $v_0$, em um ângulo $\theta$ com a horizontal e sem resistência do ar, descreve uma trajetória parabólica que pode ser decomposta em um movimento uniforme na horizontal e um movimento uniformemente variado na vertical \cite{halliday2016v1}. O tempo de voo, a altura máxima e o alcance são dados por:
+
+\begin{equation}
+	t_{v} = \frac{2 v_0 \sin\theta}{g}, \qquad
+	H = \frac{v_0^2 \sin^2\theta}{2g}, \qquad
+	R = \frac{v_0^2 \sin 2\theta}{g}
+	\label{eq:lancamento}
+\end{equation}
+
+Da expressão do alcance decorre que o maior alcance ocorre para $\theta = 45^{\circ}$ e que ângulos complementares, como $30^{\circ}$ e $60^{\circ}$, produzem o mesmo alcance com alturas máximas diferentes.
+
+\subsection{Leis de Kepler}
+
+As três leis de Kepler descrevem o movimento dos planetas em torno do Sol: as órbitas são elipses com o Sol em um dos focos; o segmento que liga o planeta ao Sol varre áreas iguais em tempos iguais; e o quadrado do período orbital é proporcional ao cubo do semieixo maior da órbita \cite{halliday2016v2}. Medindo o período $T$ em anos terrestres e o semieixo maior $a$ em unidades astronômicas (UA), a terceira lei assume a forma simples da Equação~\ref{eq:kepler}:
+
+\begin{equation}
+	T^2 = a^3
+	\label{eq:kepler}
+\end{equation}
+
+\subsection{Ondas em uma corda}
+
+Uma onda periódica que se propaga em uma corda é caracterizada pela amplitude $A$, pelo comprimento de onda $\lambda$ e pela frequência $f$. A velocidade de propagação e o período relacionam-se com essas grandezas pela Equação~\ref{eq:onda} \cite{halliday2016v2}:
+
+\begin{equation}
+	v = \lambda f, \qquad T = \frac{1}{f}
+	\label{eq:onda}
+\end{equation}
+
+Em um mesmo meio, a velocidade é constante; assim, ao dobrar a frequência, o comprimento de onda cai pela metade.
+
+\subsection{Pêndulo cônico}
+
+No pêndulo cônico, a massa descreve uma circunferência horizontal enquanto o fio forma um ângulo constante $\theta$ com a vertical. A componente horizontal da tração atua como força centrípeta, e o período do movimento circular é dado pela Equação~\ref{eq:conico} \cite{halliday2016v1}:
+
+\begin{equation}
+	T = 2\pi\sqrt{\frac{L\cos\theta}{g}}
+	\label{eq:conico}
+\end{equation}
+
+Esse fenômeno complementa o pêndulo simples e é um dos casos em que a representação tridimensional é necessária, pois o movimento não ocorre em um único plano.
+
+\subsection{Pêndulo de Foucault}
+
+Em 1851, Léon Foucault mostrou que o plano de oscilação de um pêndulo longo gira lentamente em relação ao chão, evidenciando a rotação da Terra. O período dessa rotação depende da latitude $\varphi$ do local, conforme a Equação~\ref{eq:foucault} \cite{nussenzveig2013}:
+
+\begin{equation}
+	T_F \approx \frac{24\,\text{h}}{\sin\varphi}
+	\label{eq:foucault}
+\end{equation}
+
+Nos polos, o plano completa uma volta em aproximadamente um dia; no equador, não gira. Em Quixadá, a cerca de $5^{\circ}$ de latitude sul, uma volta completa leva aproximadamente 11 dias, no sentido anti-horário.
+
+% Confira os valores com a sua lista (exercícios F1–F5).
+
+\section{Resolução de problemas, simulações e retorno ao estudante}
+\label{sec:pedagogia}
+
+Estudos clássicos sobre a resolução de problemas de Física mostram diferenças entre especialistas e iniciantes. \citeonline{chi1981} observaram que iniciantes classificam os problemas por características superficiais, como os objetos mencionados no enunciado, enquanto especialistas os agrupam pelos princípios físicos envolvidos. \citeonline{vanheuvelen1991} discute estratégias para que o estudante aprenda a representar o problema qualitativamente antes de aplicar equações. Em comum, esses trabalhos apontam o risco de uma resolução mecânica, na qual o estudante busca a fórmula que contém as grandezas do enunciado sem compreender o fenômeno.
+
+As simulações computacionais são uma das formas de aproximar o estudante do fenômeno. \citeonline{fiolhais2003} discutem o computador como ferramenta no ensino de Física, desde animações bidimensionais até ambientes tridimensionais. O projeto PhET, da Universidade do Colorado, desenvolve simulações interativas fundamentadas em pesquisa educacional, que privilegiam o retorno imediato às ações do estudante, múltiplas representações ligadas e a visualização de grandezas que não podem ser vistas diretamente \cite{wieman2008}. Há também propostas de problemas construídos sobre simulações, nos quais o enunciado não fornece os dados e o estudante precisa obtê-los interagindo com a simulação, o que desestimula a simples substituição de valores em fórmulas \cite{dancy2002}.
+
+O retorno ao estudante (\textit{feedback}) é um dos fatores de maior influência na aprendizagem. \citeonline{hattie2007} o definem como a informação fornecida sobre o desempenho ou a compreensão de quem aprende, e destacam que ele é mais eficaz quando informa onde o estudante está em relação ao objetivo e o que precisa fazer para avançar, e não apenas se a resposta está certa ou errada. Neste trabalho, o retorno é visual: a resposta do estudante é usada para montar o fenômeno, e a diferença entre a cena obtida e a esperada indica a natureza do erro.
+
+\section{Ambientes e exposições virtuais interativos}
+\label{sec:ambientes-virtuais}
+
+Ambientes virtuais interativos são espaços tridimensionais gerados por computador nos quais o usuário navega e interage com objetos em tempo real \cite{lepouras2004}. \citeonline{slater2009} distingue a imersão, entendida como uma propriedade técnica do sistema, das ilusões que ela pode produzir. A ilusão de lugar é a sensação de estar no ambiente virtual; a ilusão de plausibilidade é a aceitação de que os eventos apresentados estão de fato acontecendo. Em sistemas executados em monitores e celulares, como o deste trabalho, a ilusão de lugar é limitada, mas o controle do ponto de vista pelo usuário promove um engajamento ativo, diferente da observação passiva de imagens ou vídeos.
+
+Neste trabalho, adota-se o termo \textit{exposição virtual interativa} para designar um ambiente virtual organizado em espaços temáticos, como um salão e salas, no qual cada espaço apresenta um fenômeno. O termo refere-se à forma de organizar e apresentar o conteúdo, e não à instituição museológica.
+
+% Conversar com o orientador sobre manter este parágrafo, que justifica o termo.
+
+\section{Tecnologias Web 3D}
+\label{sec:tecnologias}
+
+O WebGL é uma interface de programação em JavaScript, derivada do OpenGL ES, que permite renderizar gráficos tridimensionais acelerados pela placa de vídeo diretamente no navegador, por meio do elemento \texttt{canvas} \cite{parisi2012}. Por exigir o controle direto do pipeline gráfico, o WebGL costuma ser usado por meio de bibliotecas de mais alto nível.
+
+O Three.js é uma biblioteca de código aberto que abstrai o WebGL em conceitos como cena, câmera, malhas, materiais e luzes \cite{dirksen2023}. Neste trabalho, ele é usado diretamente, sem frameworks intermediários, para que cada simulação controle seu próprio laço de atualização física. A biblioteca também fornece controles de câmera reutilizados na exposição: o \textit{PointerLockControls}, que captura o mouse para a navegação em primeira pessoa, e o \textit{OrbitControls}, que permite girar a câmera em torno de um objeto \cite{threejs2026}.
+
+A interface é construída com React, biblioteca para interfaces baseadas em componentes \cite{react2026}, e empacotada com o Vite \cite{vite2026}. Para dispositivos de toque e controles de videogame, são usados, respectivamente, eventos de toque e a Gamepad API do navegador.
+
+\section{IA generativa no desenvolvimento de software}
+\label{sec:ia}
+
+Os modelos de linguagem de grande escala (\textit{Large Language Models}, LLMs) são redes neurais treinadas em grandes volumes de texto e código, capazes de gerar texto a partir de uma instrução. A maior parte desses modelos baseia-se na arquitetura \textit{Transformer} \cite{vaswani2017}. \citeonline{chen2021} mostraram que modelos treinados em código-fonte são capazes de gerar funções corretas a partir de descrições em linguagem natural, e \citeonline{peng2023}, em um experimento controlado, observaram que desenvolvedores com acesso a um assistente de programação concluíram uma tarefa 55,8\% mais rápido do que o grupo de controle.
+
+Além de sugerir trechos de código, ferramentas mais recentes atuam como agentes: leem os arquivos do projeto, editam o código, executam comandos como a compilação e os testes e verificam o resultado em ciclos sucessivos. Este trabalho utilizou o Claude Code, ferramenta desse tipo desenvolvida pela Anthropic \cite{claudecode2026}. Os mesmos modelos que aceleram o desenvolvimento podem produzir afirmações ou código incorretos com aparência de corretos, o que torna a verificação humana indispensável. Esse aspecto é discutido na metodologia (Seção~\ref{sec:met-ia}) e nos resultados (Seção~\ref{sec:res-ia}).

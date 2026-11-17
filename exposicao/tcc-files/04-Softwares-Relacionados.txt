@@ -1,0 +1,13 @@
+% =====================================================================
+% SOFTWARES RELACIONADOS: capítulo removido nesta versão.
+%
+% O modelo seguido (TCC do Gustavo, ver proposta/gustavo.md) não tem um
+% capítulo de softwares: os sistemas existentes entram em Trabalhos
+% Relacionados. Por isso o PhET virou uma seção do Capítulo 3.
+%
+% Se o orientador quiser manter o capítulo (a banca do TCC1 elogiou a
+% análise de PhET, Labster e ChemCollective), dá para reaproveitar o texto
+% antigo de arquivos-tcc/tccfiles/04-Softwares-Relacionados.txt,
+% mantendo só o que é de Física, e tirar o PhET do Capítulo 3.
+% Lembre de mudar a "Organização do trabalho" na Introdução.
+% =====================================================================
