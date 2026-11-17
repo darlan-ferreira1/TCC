@@ -168,3 +168,68 @@ export function buildPedestal(group: THREE.Group, t: Tracker, x: number, z: numb
   base.position.set(x, height / 2, z);
   group.add(base);
 }
+
+// ── Ícone "i" e quadros (textos informativos, ver info.ts) ──
+
+// Ícone "i" redondo que sempre fica de frente para a câmera (Sprite).
+export function buildInfoIcon(t: Tracker, color = 0x3498db): THREE.Sprite {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 128;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
+  ctx.beginPath();
+  ctx.arc(64, 64, 58, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = '#ffffff';
+  ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 84px Georgia, serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('i', 64, 70);
+  const tex = t.track(new THREE.CanvasTexture(canvas));
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const sprite = new THREE.Sprite(t.track(new THREE.SpriteMaterial({ map: tex, depthTest: true })));
+  sprite.scale.setScalar(0.28);
+  return sprite;
+}
+
+// Quadro num cavalete: placa com o título e a dica "clique para ler".
+export function buildEasel(t: Tracker, title: string, color: number): THREE.Group {
+  const g = new THREE.Group();
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 360;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#14142a';
+  ctx.fillRect(0, 0, 512, 360);
+  const hex = `#${color.toString(16).padStart(6, '0')}`;
+  ctx.strokeStyle = hex;
+  ctx.lineWidth = 14;
+  ctx.strokeRect(7, 7, 498, 346);
+  ctx.fillStyle = hex;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 64px Inter, system-ui, sans-serif';
+  ctx.fillText(title, 256, 150);
+  ctx.fillStyle = '#c8c8e0';
+  ctx.font = '30px Inter, system-ui, sans-serif';
+  ctx.fillText('mire e aperte para ler', 256, 250);
+  const tex = t.track(new THREE.CanvasTexture(canvas));
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const board = new THREE.Mesh(
+    t.track(new THREE.PlaneGeometry(1.3, 0.92)),
+    t.track(new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide })),
+  );
+  board.position.y = 1.55;
+  g.add(board);
+  const legMat = t.track(new THREE.MeshStandardMaterial({ color: 0x3a3a55, roughness: 0.6 }));
+  const legGeo = t.track(new THREE.CylinderGeometry(0.025, 0.025, 1.6, 8));
+  for (const x of [-0.45, 0.45]) {
+    const leg = new THREE.Mesh(legGeo, legMat);
+    leg.position.set(x, 0.8, -0.03);
+    g.add(leg);
+  }
+  return g;
+}

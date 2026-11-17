@@ -22,6 +22,7 @@ export const sala: InteractiveRoom<BohrSceneConfig> = {
     wallHeight: 5,
     place: [0, 2.3, -0.5],
     scale: 0.1,
+    inspect: { distance: 6 },
   },
   controls: [
     {

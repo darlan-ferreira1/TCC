@@ -26,6 +26,11 @@ export interface RoomSpec {
   spin?: number;          // giro automático do experimento em Y (rad/s)
   pedestal?: { radius: number; height: number }; // desenha pedestal e bloqueia a passagem
   obstacleRadius?: number; // só bloqueia a passagem (sem pedestal)
+  // Modo "inspecionar" (câmera orbital em volta do experimento): ponto que a
+  // câmera olha e distância inicial, em coordenadas da sala. Padrão: `place`, 5 m.
+  inspect?: { target?: [number, number, number]; distance?: number };
+  // Onde fica o ícone "i" do experimento (coordenadas da sala).
+  infoAt?: [number, number, number];
 }
 
 // Interação direta (camada B). O museu chama estes métodos com o raio que sai
@@ -33,6 +38,7 @@ export interface RoomSpec {
 // futuro, de um controle VR.
 export interface RoomInteraction {
   prompt: string;                   // texto do aviso, ex.: "pegar a massa"
+  hold?: boolean;                   // true (padrão) = segurar; false = só apertar (ex.: ler um "i")
   isTarget(ray: THREE.Ray): boolean; // a mira está sobre o objeto?
   press(ray: THREE.Ray): void;      // começou a segurar
   drag(ray: THREE.Ray): void;       // segurando (chamado a cada frame)

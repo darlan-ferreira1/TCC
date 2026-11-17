@@ -28,18 +28,23 @@
 // Portas:
 //   - porta com sala interativa (sala.ts) → transição (tela escurece) e troca de
 //     fase dentro da MESMA cena e do MESMO renderer;
-//   - porta sem sala → onEnter(id): o React abre a página do experimento.
+//   - porta sem sala → onEnter(id): o React abre a página do experimento;
+//   - porta de ala temática (config.wings, ver alas.ts) → um salão menor com as
+//     salas de um tema. Pilha de fases: salão → ala → sala; cada porta de
+//     saída volta um nível.
 //
 // O loop usa renderer.setAnimationLoop (e não requestAnimationFrame) para que a
 // mesma cena possa ganhar uma sessão WebXR nas próximas etapas sem mudar o loop.
 
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import type { InfoContent, RoomContent } from './info';
 import type { ControlDef, ControlValue, ControlValues } from '../core/controls';
 import { defaultValues } from '../core/controls';
 import { createDirectionRepeat, createGamepadReader, frameDirection, type GamepadDirection } from '../core/gamepad';
 import type { InteractiveRoom, RoomInteraction } from './interactiveRoom';
-import { buildHall, buildRoom, type Level } from './levels';
+import { buildHall, buildRoom, buildWing, type Centerpiece, type Level } from './levels';
 import {
   spawnPoint, constrainPosition, nearestDoor, EXIT_DOOR_ID, EYE_HEIGHT,
   type DoorEntry, type DoorPlacement,
@@ -48,8 +53,24 @@ import {
 export interface MuseumSceneConfig {
   entries: DoorEntry[];
   rooms: Record<string, InteractiveRoom>; // id do experimento → sala interativa
+  wings?: Record<string, WingDef>;        // id da porta do salão → ala temática
+  content?: Record<string, RoomContent>;  // id da porta → textos ("i", quadros)
+  miniatures?: Record<string, Centerpiece>; // id da porta → miniatura no pedestal da ala
   spawnDoorId?: string;            // porta na frente da qual o jogador aparece
   background: number;
+}
+
+// Ala temática (museu dentro do museu): uma porta do salão principal leva a um
+// salão menor com as portas das salas de um tema. As salas da ala usam o mesmo
+// `rooms` acima; portas sem sala abrem a página do experimento, como no salão.
+export interface WingDef {
+  entries: DoorEntry[];
+  centerpiece?: Centerpiece;
+}
+
+export interface WingInfo {
+  id: string;
+  title: string;
 }
 
 export interface RoomInfo {
@@ -72,6 +93,8 @@ export interface MuseumScene {
   // Botões de toque: entrar na porta próxima / segurar e soltar o objeto na mira.
   enterNearest(): void;
   interactPress(): void;
+  // Modo "inspecionar" (só numa sala): câmera orbital em volta do experimento.
+  setInspect(on: boolean): void;
   interactRelease(): void;
   // HUD de ajustes da sala atual (camada A da sala interativa).
   setControl(id: string, value: ControlValue): void;
@@ -87,7 +110,10 @@ export interface MuseumScene {
   onNearDoorChange: ((door: DoorPlacement | null) => void) | null;
   onEnter: ((doorId: string) => void) | null;          // abrir a PÁGINA do experimento
   onRoomChange: ((room: RoomInfo | null) => void) | null; // entrou/saiu de uma sala
-  onInteractionChange: ((prompt: string | null) => void) | null;
+  onWingChange: ((wing: WingInfo | null) => void) | null; // entrou/saiu de uma ala
+  onInteractionChange: ((prompt: string | null, hold: boolean) => void) | null;
+  onInfo: ((content: InfoContent) => void) | null;       // abrir o pop-up de texto
+  onInspectChange: ((inspecting: boolean) => void) | null;
   dispose(): void;
 }
 
@@ -140,6 +166,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   scene.add(hall.group);
   let level: Level = hall;
   let room: { level: Level; door: DoorPlacement; def: InteractiveRoom; values: ControlValues } | null = null;
+  let wing: { level: Level; door: DoorPlacement } | null = null;
 
   function placePlayer(doorId?: string) {
     const spawn = spawnPoint(level.layout, doorId);
@@ -215,7 +242,11 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     onNearDoorChange: null,
     onEnter: null,
     onRoomChange: null,
+    onWingChange: null,
     onInteractionChange: null,
+    onInfo: null,
+    onInspectChange: null,
+    setInspect,
     dispose,
   };
 
@@ -242,6 +273,10 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     if (fade) return;
     if (room && door.id === EXIT_DOOR_ID) {
       transition(closeRoom);
+    } else if (!room && wing && door.id === EXIT_DOOR_ID) {
+      transition(closeWing);
+    } else if (!room && !wing && config.wings?.[door.id]) {
+      transition(() => openWing(door));
     } else if (!room && config.rooms[door.id]) {
       transition(() => openRoom(door));
     } else if (!room) {
@@ -264,7 +299,8 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   function openRoom(door: DoorPlacement) {
     const def = config.rooms[door.id];
     const values = defaultValues(def.controls);
-    const roomLevel = buildRoom(def, door.title, door.color, values);
+    const exitTitle = wing ? `Voltar ao ${wing.door.title}` : undefined;
+    const roomLevel = buildRoom(def, door.title, door.color, values, exitTitle, config.content?.[door.id], openInfo);
     scene.add(roomLevel.group);
     room = { level: roomLevel, door, def, values };
     switchLevel(roomLevel);
@@ -274,19 +310,89 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
 
   function closeRoom() {
     if (!room) return;
+    setInspect(false);
     const { level: roomLevel, door } = room;
     room = null;
-    switchLevel(hall);
+    switchLevel(wing?.level ?? hall);
     scene.remove(roomLevel.group);
     roomLevel.dispose();
     placePlayer(door.id); // reaparece na frente da porta da sala
     api.onRoomChange?.(null);
   }
 
+  function openWing(door: DoorPlacement) {
+    const def = config.wings![door.id];
+    const wingLevel = buildWing(def.entries, door.title, door.color, def.centerpiece, {
+      miniatures: config.miniatures, content: config.content, openInfo,
+    });
+    scene.add(wingLevel.group);
+    wing = { level: wingLevel, door };
+    switchLevel(wingLevel);
+    placePlayer();
+    api.onWingChange?.({ id: door.id, title: door.title });
+  }
+
+  function closeWing() {
+    if (!wing) return;
+    const { level: wingLevel, door } = wing;
+    wing = null;
+    switchLevel(hall);
+    scene.remove(wingLevel.group);
+    wingLevel.dispose();
+    placePlayer(door.id);
+    api.onWingChange?.(null);
+  }
+
+  // ── Modo "inspecionar" ──
+  // Como o visualizador orbital do ECOS, mas sem trocar de página: a mesma
+  // câmera ganha um OrbitControls em volta do experimento, e o resto da sala
+  // (paredes, portas, quadros) some até o aluno sair do modo.
+  let inspecting: { orbit: OrbitControls; pos: THREE.Vector3; quat: THREE.Quaternion; hidden: THREE.Object3D[] } | null = null;
+
+  function setInspect(on: boolean) {
+    if (on && !inspecting && room?.level.inspect && !fade) {
+      const { root: expRoot, target, distance } = room.level.inspect;
+      interactRelease();
+      pressed.clear();
+      touchMove.x = touchMove.y = 0;
+      controls.unlock();
+      const hidden = room.level.group.children.filter((c) => c !== expRoot && c.visible);
+      hidden.forEach((c) => { c.visible = false; });
+      const pos = camera.position.clone();
+      const quat = camera.quaternion.clone();
+      camera.position.set(target.x, target.y + distance * 0.25, target.z + distance);
+      const orbit = new OrbitControls(camera, renderer.domElement);
+      orbit.target.copy(target);
+      orbit.enableDamping = true;
+      orbit.minDistance = distance * 0.3;
+      orbit.maxDistance = distance * 2.5;
+      orbit.update();
+      inspecting = { orbit, pos, quat, hidden };
+      api.onInspectChange?.(true);
+    } else if (!on && inspecting) {
+      inspecting.orbit.dispose();
+      inspecting.hidden.forEach((c) => { c.visible = true; });
+      camera.position.copy(inspecting.pos);
+      camera.quaternion.copy(inspecting.quat);
+      inspecting = null;
+      api.onInspectChange?.(false);
+    }
+  }
+
   // ── Interações diretas (camada B) ──
+
+  function openInfo(content: InfoContent) {
+    pressed.clear();
+    touchMove.x = touchMove.y = 0;
+    api.onInfo?.(content);
+  }
 
   function interactPress() {
     if (fade || active || !hovered) return;
+    if (hovered.hold === false) { // só apertar (ex.: ler um "i")
+      hovered.press(aimRay());
+      return;
+    }
     active = hovered;
     active.press(aimRay());
   }
@@ -306,6 +412,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   function onKeyDown(e: KeyboardEvent) {
     pressed.add(e.code);
     if (e.code === 'KeyE' && !e.repeat && controls.isLocked) primaryDown();
+    if (e.code === 'KeyI' && !e.repeat && controls.isLocked && room) setInspect(true);
   }
   function onKeyUp(e: KeyboardEvent) {
     pressed.delete(e.code);
@@ -357,6 +464,17 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
       }
     }
 
+    if (inspecting) {
+      // Controle: B sai da inspeção; enquanto isso a câmera gira sozinha.
+      const padNow = gamepad.poll();
+      inspecting.orbit.autoRotate = padNow.connected && gamepadMode !== 'off';
+      if (padNow.justPressed('b') || padNow.justPressed('y')) setInspect(false);
+      inspecting?.orbit.update(dt);
+      level.tick(dt);
+      renderer.render(scene, camera);
+      return;
+    }
+
     // Três fontes de entrada para o mesmo movimento: teclado (com o mouse
     // travado), joystick de toque e controle de videogame. Todas viram um
     // vetor (frente, lado).
@@ -390,6 +508,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
       if (pad.justReleased('a')) interactRelease();
       if (pad.justPressed('start') && room) api.onGamepadAction?.('menu');
       if (pad.justPressed('select')) api.onGamepadAction?.('pause');
+      if (pad.justPressed('y') && room) setInspect(true);
     } else if (pad.justPressed('a') || pad.justPressed('start')) {
       api.onGamepadAction?.('resume');
     }
@@ -413,10 +532,11 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
       if (active) active.drag(ray);
       else hovered = level.interactions.find((i) => i.isTarget(ray)) ?? null;
     }
-    const prompt = (active ?? hovered)?.prompt ?? null;
+    const current = active ?? hovered;
+    const prompt = current?.prompt ?? null;
     if (prompt !== shownPrompt) {
       shownPrompt = prompt;
-      api.onInteractionChange?.(prompt);
+      api.onInteractionChange?.(prompt, current?.hold !== false);
     }
 
     setCurrentDoor(fade ? null : nearestDoor({ x: camera.position.x, z: camera.position.z }, level.layout));
@@ -426,6 +546,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
 
   function dispose() {
     renderer.setAnimationLoop(null);
+    inspecting?.orbit.dispose();
     ro.disconnect();
     gamepad.dispose();
     document.removeEventListener('keydown', onKeyDown);
@@ -437,6 +558,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     controls.unlock();
     controls.dispose();
     if (room) room.level.dispose();
+    if (wing) wing.level.dispose();
     hall.dispose();
     veilGeo.dispose();
     veilMat.dispose();
