@@ -1,3 +1,0 @@
-# Saída do Cargo (compilação Rust) e esquemas gerados pelo Tauri
-/target/
-/gen/schemas

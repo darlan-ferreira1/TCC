@@ -1,0 +1,11 @@
+% =====================================================================
+% ABSTRACT: cole dentro do ambiente de abstract do modelo.
+% Traduza de novo quando o resumo final estiver pronto.
+% =====================================================================
+
+\providecommand{\pendente}{\textcolor{red}{[a preencher]}}
+
+In high school physics, problem solving usually happens only on paper: students apply a formula, obtain a number and rarely observe the phenomenon that this number describes. When the calculation is wrong, the error has no visible consequence, which encourages a mechanical search for formulas instead of conceptual understanding. The objective of this work is to develop a three-dimensional interactive virtual exhibition, accessible through a web browser, that integrates Mechanics simulations with exercises based on a hand-solved problem set, so that the student's answer is used to build the phenomenon in the scene and calculation errors become visible. The methodology comprised the selection of contents and the elaboration of the problem set, the development of a first-person navigable environment with Three.js, organized into a hall, wings and thematic rooms, the integration of the exercises into the simulations, and an evaluation with users through a task script, knowledge tests before and after use, and the System Usability Scale questionnaire. Development was assisted by a generative artificial intelligence tool, whose use is described and discussed in this work. As a result, \pendente.
+
+\vspace{\onelineskip}
+\noindent\textbf{Keywords}: virtual exhibition; physics education; interactive simulation; Three.js; virtual environment.

@@ -1,0 +1,207 @@
+% =====================================================================
+% RESULTADOS E DISCUSSÃO: molde do Gustavo:
+%   6.1 implementação (uma subseção com print por parte, justificando o design)
+%   6.2 relato do desenvolvimento com IA (o acréscimo deste trabalho)
+%   6.3 avaliação com usuários (perfil, pré/pós, SUS, Likert, abertas)
+%   6.4 discussão (conclusões numeradas + limitações)
+%
+% FIGURAS: os prints estão em tcc-files/figuras/. No Overleaf, crie a pasta
+% "figuras" e envie os .jpg. Eles foram tirados automaticamente em 17/11/2026
+% (1280x800); refaça-os quando a exposição mudar (ex.: o sistema de exercícios).
+%
+% Tudo o que depende da pesquisa com pessoas está como \pendente.
+% NUNCA preencha com valores estimados: só com o que foi medido.
+% =====================================================================
+
+\providecommand{\figurapendente}[1]{%
+	\fbox{\parbox[c][4.5cm][c]{14cm}{\centering\textbf{[FIGURA A INSERIR]}\\[2mm]\small #1}}}
+\providecommand{\pendente}{\textcolor{red}{[a preencher]}}
+
+\chapter{Resultados e Discussão}
+\label{chap:resultados}
+
+Este capítulo apresenta a exposição virtual desenvolvida, o relato do desenvolvimento assistido por IA e os resultados da avaliação com usuários. A exposição está disponível publicamente no endereço \pendente.
+
+\section{Implementação da exposição}
+\label{sec:res-implementacao}
+
+A exposição foi implementada como uma aplicação web executada inteiramente no navegador. Ela é composta por um salão de entrada, duas alas temáticas e seis salas de Mecânica, além de salas de outras áreas herdadas de um projeto anterior do autor. % Remova a parte das outras áreas se as salas de Química forem retiradas.
+A seguir, são descritos os resultados visuais e funcionais de cada parte.
+
+\subsection{Salão de entrada e alas}
+
+O salão de entrada reúne as portas das alas temáticas, identificadas por placas e cores próprias, como mostra a Figura~\ref{fig:res-salao}. Ao se aproximar de uma porta, o visitante recebe na tela a indicação da ação disponível, como ``Entrar na Ala da Mecânica''.
+
+\begin{figure}[h!]
+	\centering
+	\Caption{\label{fig:res-salao} Salão de entrada com as portas das alas temáticas}
+	\UFCfig{}{
+		\includegraphics[width=0.85\textwidth]{figuras/1-salao-portas-alas.jpg}
+	}{
+		\Fonte{Elaborado pelo autor.}
+	}
+\end{figure}
+
+Na Ala da Mecânica (Figura~\ref{fig:res-ala}), cada porta é acompanhada de um pedestal com uma miniatura animada do fenômeno da sala e de um ícone de informação. Ao centro, um pêndulo cônico em miniatura identifica o tema da ala. As miniaturas antecipam o conteúdo de cada sala antes que o visitante entre nela, à semelhança dos pedestais com artefatos usados por \citeonline{brito2026}, mas são geradas por código, sem modelos tridimensionais externos.
+
+\begin{figure}[h!]
+	\centering
+	\Caption{\label{fig:res-ala} Ala da Mecânica, com pedestais, miniaturas e ícones de informação}
+	\UFCfig{}{
+		\includegraphics[width=0.85\textwidth]{figuras/1-ala-pedestais.jpg}
+	}{
+		\Fonte{Elaborado pelo autor.}
+	}
+\end{figure}
+
+\subsection{Salas e simulações}
+
+Cada sala apresenta a simulação do fenômeno em escala real, a placa com o nome da sala e um painel com os valores atuais das grandezas. A Figura~\ref{fig:res-sala} mostra a sala do pêndulo cônico, na qual a massa descreve uma circunferência horizontal e o cone descrito pelo fio é destacado. O painel lateral apresenta o comprimento, o ângulo, a gravidade e o número de voltas. Os parâmetros podem ser alterados no painel de ajustes, e a simulação responde imediatamente.
+
+\begin{figure}[h!]
+	\centering
+	\Caption{\label{fig:res-sala} Sala do pêndulo cônico}
+	\UFCfig{}{
+		\includegraphics[width=0.85\textwidth]{figuras/3-sala-quadros.jpg}
+	}{
+		\Fonte{Elaborado pelo autor.}
+	}
+\end{figure}
+
+Os quadros de Teoria e de História abrem uma janela de leitura paginada dentro do próprio ambiente (Figura~\ref{fig:res-popup}). A janela apresenta o título, o texto da página e os controles de navegação, que podem ser acionados pelo mouse, pelo teclado, pelo toque ou pelo controle de videogame. Ao fechá-la, o visitante continua no mesmo ponto da sala.
+
+\begin{figure}[h!]
+	\centering
+	\Caption{\label{fig:res-popup} Janela de leitura do quadro de Teoria}
+	\UFCfig{}{
+		\includegraphics[width=0.85\textwidth]{figuras/4-popup-p1.jpg}
+	}{
+		\Fonte{Elaborado pelo autor.}
+	}
+\end{figure}
+
+\subsection{Modo de inspeção}
+
+No modo de inspeção, as paredes da sala são ocultadas e a câmera orbita em torno da simulação, que continua em funcionamento (Figura~\ref{fig:res-inspecao}). O modo foi pensado para observar o fenômeno de ângulos que a navegação em primeira pessoa não alcança, como o cone do pêndulo visto de cima ou a rosácea traçada pelo pêndulo de Foucault.
+
+\begin{figure}[h!]
+	\centering
+	\Caption{\label{fig:res-inspecao} Modo de inspeção na sala do pêndulo cônico}
+	\UFCfig{}{
+		\includegraphics[width=0.85\textwidth]{figuras/6-inspecionar.jpg}
+	}{
+		\Fonte{Elaborado pelo autor.}
+	}
+\end{figure}
+
+\subsection{Exercícios interativos}
+
+% AINDA NÃO IMPLEMENTADO. Quando estiver pronto: descreva um exercício completo,
+% com dois prints (resposta certa: o projétil acerta o alvo; resposta errada:
+% a cena mostra a distância) e uma tabela com os exercícios implementados por sala.
+\pendente
+
+\begin{figure}[h!]
+	\centering
+	\Caption{\label{fig:res-exercicio} Exercício do lançamento oblíquo com resposta correta e incorreta}
+	\UFCfig{}{
+		\figurapendente{Dois prints lado a lado: (a) resposta correta, o projétil atinge o alvo; (b) resposta incorreta, a cena mostra onde o projétil caiu em relação ao alvo.}
+	}{
+		\Fonte{Elaborado pelo autor.}
+	}
+\end{figure}
+
+\section{Relato do desenvolvimento assistido por IA}
+\label{sec:res-ia}
+
+O desenvolvimento ocorreu em \pendente{} sessões de trabalho com a ferramenta, entre \pendente{} e \pendente, totalizando \pendente{} instruções do autor. % Esses números podem ser extraídos dos registros do Claude Code (peça ao Claude).
+
+A verificação descrita na Seção~\ref{sec:met-ia} identificou erros no conteúdo produzido pela ferramenta. O Quadro~\ref{qua:erros-ia} apresenta exemplos registrados durante o desenvolvimento, com a camada de verificação em que cada erro foi detectado.
+
+% Os exemplos abaixo ocorreram de fato. Acrescente os novos ao longo do trabalho.
+\begin{quadro}[h!]
+	\centering
+	\Caption{\label{qua:erros-ia} Erros cometidos pela ferramenta de IA e forma de detecção}
+	\UFCqua{}{
+		\footnotesize
+		\begin{tabular}{|p{6.2cm}|p{5cm}|p{2.6cm}|}
+			\hline
+			\textbf{Erro} & \textbf{Como foi detectado} & \textbf{Camada} \\
+			\hline
+			Rastro do pêndulo de Foucault desenhado com o sentido de rotação invertido & Comparação com a teoria & Física \\
+			\hline
+			Luz do Sol na sala de Kepler sem limite de alcance, tingindo as paredes da sala & Capturas de tela do percurso automatizado & Testes automatizados \\
+			\hline
+			Gravidade ajustável no lançamento fazia o alcance ultrapassar a parede da sala & Teste manual; a gravidade foi fixada em 10\,m/s$^2$ & Teste humano \\
+			\hline
+			Textos dos painéis ultrapassando a moldura e cobrindo placas de identificação & Capturas de tela & Testes automatizados \\
+			\hline
+			Portas de algumas salas abriam páginas fora do ambiente & Teste do autor & Teste humano \\
+			\hline
+		\end{tabular}
+	}{
+		\Fonte{Elaborado pelo autor.}
+	}
+\end{quadro}
+
+Os erros mostram que o código gerado pode compilar e funcionar e, ainda assim, representar o fenômeno de forma incorreta ou inadequada ao uso. Nenhum deles foi apontado pela compilação ou pela análise estática; todos dependeram da comparação com a resolução manual, da inspeção visual ou do uso real. \pendente % Complete com a sua análise.
+
+\section{Avaliação com usuários}
+\label{sec:res-avaliacao}
+
+\subsection{Perfil dos participantes}
+
+Participaram da avaliação \pendente{} pessoas. \pendente
+
+\begin{figure}[h!]
+	\centering
+	\Caption{\label{fig:res-dispositivos} Dispositivos usados pelos participantes}
+	\UFCfig{}{
+		\figurapendente{Gráfico de barras: computador, Android, iPhone, tablet (sempre com n de N).}
+	}{
+		\Fonte{Elaborado pelo autor.}
+	}
+\end{figure}
+
+\subsection{Conhecimento antes e depois do uso}
+
+A Tabela~\ref{tab:pre-pos} apresenta o desempenho dos participantes no pré-teste e no pós-teste.
+
+\begin{table}[h!]
+	\centering
+	\Caption{\label{tab:pre-pos} Acertos no pré-teste e no pós-teste (0 a 8)}
+	\UFCtab{}{
+		\begin{tabular}{lccc}
+			\toprule
+			\textbf{Medida} & \textbf{Pré-teste} & \textbf{Pós-teste} & \textbf{Diferença} \\
+			\midrule
+			Média & \pendente & \pendente & \pendente \\
+			Mediana & \pendente & \pendente & \pendente \\
+			\bottomrule
+		\end{tabular}
+	}{
+		\Fonte{Elaborado pelo autor.}
+	}
+\end{table}
+
+\pendente % Comente quais questões mais melhoraram (tabela de acerto por questão).
+
+\subsection{Usabilidade}
+
+A pontuação média na escala SUS foi de \pendente, \pendente{} da média de referência de 68 pontos \cite{sauro2011}. \pendente
+
+\subsection{Percepção da navegação, do conteúdo e do retorno visual}
+
+\pendente % Gráfico de barras empilhadas por item Likert, com n de N.
+
+\subsection{Discussão dos resultados}
+
+A análise dos dados permite elencar as seguintes conclusões sobre o estado atual da exposição:
+
+\begin{enumerate}
+	\item \textbf{Aprendizagem}: \pendente;
+	\item \textbf{Usabilidade e navegação}: \pendente;
+	\item \textbf{Retorno visual dos exercícios}: \pendente.
+\end{enumerate}
+
+Esses resultados devem ser interpretados como indícios, e não como comprovação, dadas as limitações do estudo: a amostra reduzida e de conveniência, a ausência de grupo de controle, o pós-teste aplicado logo após o uso, sem medir a retenção, e a aplicação conduzida pelo próprio autor da exposição. \pendente

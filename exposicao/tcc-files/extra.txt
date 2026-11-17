@@ -1,0 +1,40 @@
+% =====================================================================
+% EXTRA: como montar no Overleaf e o que falta.
+% =====================================================================
+%
+% 1. COMO USAR
+%  - Em um projeto Overleaf com o modelo da UFC (o mesmo do TCC antigo):
+%      * cada arquivo 0X-*.txt vira o conteúdo do capítulo correspondente
+%        (ex.: cole 01-Introducao.txt no arquivo do capítulo de introdução);
+%      * 00-Resumo.txt e 00-Abstract.txt entram nos ambientes de resumo/abstract;
+%      * 08-Referencias.txt é BibTeX: cole no referencias.bib;
+%      * envie a pasta figuras/ (os .jpg) para o Overleaf com o mesmo nome.
+%  - Os capítulos usam os comandos do modelo: \Caption, \UFCfig, \UFCqua,
+%    \UFCtab, \Fonte, \citeonline. O ambiente "quadro" também é do modelo.
+%  - Tabelas usam \toprule/\midrule/\bottomrule (pacote booktabs).
+%  - Os textos em vermelho [a preencher] são os \pendente: dependem de medição.
+%  - As caixas [FIGURA A INSERIR] são os \figurapendente.
+%
+% 2. ORDEM DOS CAPÍTULOS (modelo do Gustavo)
+%   1 Introdução (com Questões de pesquisa e Objetivos)
+%   2 Fundamentação Teórica
+%   3 Trabalhos Relacionados (7 trabalhos, formato curto P1/P2/P3)
+%   4 Procedimentos Metodológicos   <- arquivo 05 (o 04 foi removido, ver o arquivo)
+%   5 Resultados e Discussão        <- arquivo 06
+%   6 Conclusão                     <- arquivo 07
+%
+% 3. ANTES DE MOSTRAR AO ORIENTADOR
+%  - Tudo foi gerado com IA a partir da proposta: leia, reescreva com as suas
+%    palavras e confira as fórmulas e as referências.
+%  - Decidir: "exposição virtual interativa" ou "ambiente virtual interativo".
+%  - Decidir: o ARTOM (Química) fica nos trabalhos relacionados?
+%  - Decidir: as salas de Química/Biologia ficam na exposição?
+%  - Decidir: CEP/TCLE para a pesquisa com pessoas.
+%  - O sistema de exercícios ainda NÃO existe: a Metodologia descreve o projeto
+%    dele e os Resultados estão como [a preencher].
+%
+% 4. APÊNDICES SUGERIDOS
+%  - A: lista de exercícios com resolução (proposta/listas-de-exercicios.md);
+%  - B: instrumento da pesquisa (proposta/pesquisa.md);
+%  - C: TCLE e Termo de Assentimento.
+% =====================================================================
