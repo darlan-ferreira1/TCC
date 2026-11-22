@@ -13,7 +13,7 @@ const DEG = Math.PI / 180;
 
 export const sala: InteractiveRoom<ConicalConfig> = {
   experiment: conicalPendulum,
-  room: { width: 9, depth: 9, wallHeight: 4.5, place: [0, 3.4, -1], inspect: { target: [0, 2.6, -1], distance: 5 }, infoAt: [2.6, 1.6, 0.3] },
+  room: { width: 9, depth: 9, wallHeight: 4.5, place: [0, 3.4, -1], inspect: { target: [0, 2.6, -1], distance: 5 }, infoAt: [2.6, 1.6, 0.3], exerciseDoor: true },
   controls: [
     { id: 'L', label: 'Comprimento do fio L', kind: 'range', min: 0.5, max: 3, step: 0.1, unit: 'm', default: 2 },
     { id: 'theta', label: 'Ângulo com a vertical θ', kind: 'range', min: 5, max: 80, step: 1, unit: '°', default: 50 },

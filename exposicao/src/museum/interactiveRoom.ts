@@ -31,6 +31,8 @@ export interface RoomSpec {
   inspect?: { target?: [number, number, number]; distance?: number };
   // Onde fica o ícone "i" do experimento (coordenadas da sala).
   infoAt?: [number, number, number];
+  // Se true, cria uma segunda porta na parede direita que leva ao espaço de exercícios.
+  exerciseDoor?: boolean;
 }
 
 // Interação direta (camada B). O museu chama estes métodos com o raio que sai

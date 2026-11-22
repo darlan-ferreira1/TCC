@@ -7,7 +7,7 @@ import { projectileRoom, type ProjectileConfig } from './scene';
 
 export const sala: InteractiveRoom<ProjectileConfig> = {
   experiment: projectileRoom,
-  room: { width: 22, depth: 16, wallHeight: 6, place: [-9.5, 0, -4], inspect: { target: [-1, 2, -4], distance: 14 }, infoAt: [-1.5, 1.6, 2] },
+  room: { width: 22, depth: 16, wallHeight: 6, place: [-9.5, 0, -4], inspect: { target: [-1, 2, -4], distance: 14 }, infoAt: [-1.5, 1.6, 2], exerciseDoor: true },
   controls: [
     { id: 'v0', label: 'Velocidade inicial v₀', kind: 'range', min: 5, max: 20, step: 1, unit: 'm/s', default: 20 },
     { id: 'angle', label: 'Ângulo de lançamento', kind: 'range', min: 5, max: 85, step: 5, unit: '°', default: 30 },

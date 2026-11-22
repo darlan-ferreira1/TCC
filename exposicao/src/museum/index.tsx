@@ -5,7 +5,9 @@ import { CONTEUDO } from './conteudo';
 import { MINIATURAS } from './miniaturas';
 import type { InfoContent } from './info';
 import InfoPopup from './InfoPopup';
-import { EXIT_DOOR_ID, type DoorEntry, type DoorPlacement } from './layout';
+import { EXIT_DOOR_ID, EXERCISE_DOOR_ID, type DoorEntry, type DoorPlacement } from './layout';
+import ExerciseOverlay from './ExerciseOverlay';
+import { EXERCICIOS } from './exercicios';
 import type { InteractiveRoom } from './interactiveRoom';
 import { stepControl, type ControlValue } from '../core/controls';
 import type { GamepadDirection } from '../core/gamepad';
@@ -75,6 +77,7 @@ const roundButton = {
 
 function doorPrompt(door: DoorPlacement): string {
   if (door.id === EXIT_DOOR_ID) return door.title;
+  if (door.id === EXERCISE_DOOR_ID) return 'Entrar no espaço de exercícios';
   if (door.category === WINGS_CATEGORY) return `Entrar na ${door.title}`;
   if (!(door.id in ALL_ROOMS)) return `Abrir o experimento ${door.title}`;
   return `Entrar na sala ${door.title}`;
@@ -101,6 +104,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   const [interaction, setInteraction] = useState<string | null>(null);
   const [interactionHold, setInteractionHold] = useState(true);
   const [info, setInfo] = useState<InfoContent | null>(null); // pop-up de texto aberto
+  const [exerciseRoomId, setExerciseRoomId] = useState<string | null>(null);
   const [infoPage, setInfoPage] = useState(0);
   const [inspecting, setInspecting] = useState(false);
   const [room, setRoom] = useState<RoomInfo | null>(null);
@@ -167,6 +171,9 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
       setInfoPage(0);
       s.unlock(); // solta o mouse para clicar nas setas
     };
+    s.onExercise = (roomId) => {
+      setExerciseRoomId(roomId);
+    };
     s.onInspectChange = setInspecting;
     s.onRoomChange = (r) => {
       setRoom(r);
@@ -184,6 +191,8 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
       onEnter?.(id);
     };
     sceneRef.current = s;
+    // Começa diretamente dentro da Ala da Mecânica (sem passar pelo salão vazio).
+    s.openWingById('ala-mecanica');
     return () => { s.dispose(); sceneRef.current = null; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme]);
@@ -369,6 +378,15 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
               : (touchPlaying ? 'Toque: ' : '') + doorPrompt(nearDoor!)}
           </span>
         </button>
+      )}
+
+      {/* Espaço de exercícios */}
+      {exerciseRoomId && (
+        <ExerciseOverlay
+          exercicios={EXERCICIOS[exerciseRoomId] ?? []}
+          onSetControl={(id, value) => sceneRef.current?.setControl(id, value)}
+          onClose={() => { setExerciseRoomId(null); if (!IS_TOUCH) sceneRef.current?.lock(); }}
+        />
       )}
 
       {/* Pop-up de texto ("i", quadros, pedestais) */}

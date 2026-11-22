@@ -198,13 +198,15 @@ export function nearestDoor(p: Vec2, layout: MuseumLayout, maxDistance = ENTER_D
 // Reaproveita os mesmos tipos e regras do salão (spawnPoint, constrainPosition,
 // nearestDoor), então colisão e portas funcionam igual nos dois lugares.
 
-export const EXIT_DOOR_ID = 'exit';
+export const EXIT_DOOR_ID     = 'exit';
+export const EXERCISE_DOOR_ID = 'exercise';
 
 export function computeRoomLayout(
   spec: { width: number; depth: number; obstacles: Obstacle[] },
   title: string,
   color: number,
   exitTitle = 'Voltar ao salão',
+  exerciseDoor = false,
 ): MuseumLayout {
   const { width, depth } = spec;
   const exit: DoorPlacement = {
@@ -216,8 +218,20 @@ export function computeRoomLayout(
     ...pointOnWall('near', 0, width, depth),
     ...WALL_GEOMETRY.near,
   };
+  const doors: DoorPlacement[] = [exit];
+  if (exerciseDoor) {
+    doors.push({
+      id: EXERCISE_DOOR_ID,
+      title: 'Espaço de exercícios',
+      category: '',
+      color: 0x27ae60,
+      wall: 'right',
+      ...pointOnWall('right', 0, width, depth),
+      ...WALL_GEOMETRY.right,
+    });
+  }
   const sign: WallSign = { text: title, color, ...pointOnWall('far', 0, width, depth), ...WALL_GEOMETRY.far };
-  return { width, depth, doors: [exit], signs: [sign], obstacles: spec.obstacles };
+  return { width, depth, doors, signs: [sign], obstacles: spec.obstacles };
 }
 
 // ── Alas temáticas (museus dentro do museu) ──
@@ -230,7 +244,7 @@ export function computeRoomLayout(
 
 const WING_WALLS: Wall[] = ['left', 'far', 'right'];
 
-export function computeWingLayout(entries: DoorEntry[], title: string, color: number): MuseumLayout {
+export function computeWingLayout(entries: DoorEntry[], title: string, color: number, noExit = false): MuseumLayout {
   // Divide as portas entre as três paredes, na ordem (5 portas → 2, 2, 1).
   const perWall = WING_WALLS.map((_, i) => Math.floor(entries.length / 3) + (i < entries.length % 3 ? 1 : 0));
   const side = Math.max(wallLength(perWall[0]), wallLength(perWall[2]));
@@ -248,15 +262,17 @@ export function computeWingLayout(entries: DoorEntry[], title: string, color: nu
     }
   });
 
-  doors.push({
-    id: EXIT_DOOR_ID,
-    title: 'Voltar ao salão principal',
-    category: '',
-    color: 0x8888aa,
-    wall: 'near',
-    ...pointOnWall('near', 0, width, depth),
-    ...WALL_GEOMETRY.near,
-  });
+  if (!noExit) {
+    doors.push({
+      id: EXIT_DOOR_ID,
+      title: 'Voltar ao salão principal',
+      category: '',
+      color: 0x8888aa,
+      wall: 'near',
+      ...pointOnWall('near', 0, width, depth),
+      ...WALL_GEOMETRY.near,
+    });
+  }
   const sign: WallSign = { text: title, color, ...pointOnWall('far', 0, width, depth), ...WALL_GEOMETRY.far };
 
   // Um pedestal à direita de cada porta (de quem olha para ela), um pouco

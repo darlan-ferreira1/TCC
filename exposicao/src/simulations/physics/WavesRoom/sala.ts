@@ -6,7 +6,7 @@ import { wavesRoom, type WavesConfig } from './scene';
 
 export const sala: InteractiveRoom<WavesConfig> = {
   experiment: wavesRoom,
-  room: { width: 13, depth: 9, wallHeight: 4.5, place: [0, 1.5, -1.5], inspect: { distance: 8 } },
+  room: { width: 13, depth: 9, wallHeight: 4.5, place: [0, 1.5, -1.5], inspect: { distance: 8 }, exerciseDoor: true },
   controls: [
     { id: 'wavelength', label: 'Comprimento de onda λ', kind: 'range', min: 0.5, max: 4, step: 0.1, unit: 'm', default: 2 },
     { id: 'frequency', label: 'Frequência f', kind: 'range', min: 0.1, max: 2, step: 0.1, unit: 'Hz', default: 0.5 },

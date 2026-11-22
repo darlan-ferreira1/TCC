@@ -19,12 +19,14 @@
 
 Neste capítulo são apresentados trabalhos que utilizam ambientes virtuais tridimensionais e simulações interativas no apoio ao ensino e à divulgação científica. O objetivo é analisar soluções existentes quanto à tecnologia empregada, ao público, à presença de exercícios e à forma de avaliação, a fim de situar a proposta deste trabalho.
 
-\section{ECOS: uma exposição virtual de artefatos espaciais baseada em Web 3D}
+\section{\citeonline{brito2026ecos}, ECOS: uma exposição virtual de artefatos espaciais baseada em Web 3D}
 
-O trabalho de \citeonline{brito2026} apresenta o ECOS, uma exposição virtual de artefatos espaciais acessível pelo navegador, com modelos tridimensionais do foguete Saturn V, dos telescópios Hubble e James Webb, da sonda Voyager 1 e da Estação Espacial Internacional. A exposição é organizada em três ambientes: um hall com os artefatos, salas temáticas com painéis de História, Tecnologias, Missões e Futuro e um visualizador orbital para a inspeção detalhada de cada objeto.
+O trabalho de \citeonline{brito2026ecos} apresenta o ECOS, uma exposição virtual de artefatos espaciais acessível pelo navegador, com modelos tridimensionais do foguete Saturn V, dos telescópios Hubble e James Webb, da sonda Voyager 1 e da Estação Espacial Internacional. A exposição é organizada em três ambientes: um hall com os artefatos, salas temáticas com painéis de História, Tecnologias, Missões e Futuro e um visualizador orbital para a inspeção detalhada de cada objeto.
 
 A aplicação foi desenvolvida com o framework A-Frame, construído sobre Three.js e WebGL, com modelos obtidos de repositórios públicos, e publicada no GitHub Pages. A avaliação envolveu 26 voluntários, que seguiram um roteiro de tarefas e responderam a um questionário em escala Likert. A qualidade visual foi o aspecto mais bem avaliado, enquanto usuários de celular relataram dificuldades de navegação e de desempenho e sentiram falta de um tutorial inicial.
 
+
+% {ver depois} o que é do geral pro especifico?
 Assim como este trabalho, o ECOS é uma exposição Web 3D navegável, organizada do geral para o específico, e avalia a experiência com usuários. A diferença principal está no propósito: o ECOS é voltado à divulgação científica para o público geral e não propõe atividades, enquanto este trabalho é direcionado ao ensino de Física no ensino médio e integra exercícios cuja resposta é representada na cena. O próprio autor aponta a integração de exercícios às salas temáticas como trabalho futuro.
 
 \begin{figure}[h!]
@@ -37,9 +39,9 @@ Assim como este trabalho, o ECOS é uma exposição Web 3D navegável, organizad
 	}
 \end{figure}
 
-\section{Experiência interativa em 3D para exibição de animais extintos no Museu Emílio Goeldi}
+\section{\citeonline{webmedia}, Experiência interativa em 3D para exibição de animais extintos no Museu Emílio Goeldi}
 
-O trabalho de \citeonline{pina2025} apresenta uma aplicação web para a visualização de modelos tridimensionais de cinco animais extintos do território brasileiro, no contexto do Museu Paraense Emílio Goeldi. Os autores investigaram se a visualização 3D interativa aumenta o engajamento e a retenção de conhecimento em comparação com a exposição tradicional.
+O trabalho de \citeonline{webmedia} apresenta uma aplicação web para a visualização de modelos tridimensionais de cinco animais extintos do território brasileiro, no contexto do Museu Paraense Emílio Goeldi. Os autores investigaram se a visualização 3D interativa aumenta o engajamento e a retenção de conhecimento em comparação com a exposição tradicional.
 
 A aplicação foi desenvolvida com React Three Fiber, sobre Three.js, com modelos otimizados para funcionar também em celulares. Em um estudo quase-experimental com 150 participantes, com testes de conhecimento antes e depois do uso e um teste de retenção após duas semanas, os autores relatam usabilidade média de 78,4 na escala SUS e ganho de conhecimento significativamente maior no grupo que usou a aplicação.
 
@@ -55,13 +57,13 @@ Assim como este trabalho, utiliza Three.js no navegador, prioriza o acesso por d
 	}
 \end{figure}
 
-\section{Um laboratório virtual tridimensional e interativo para suporte ao ensino de Física}
+\section{\citeonline{wie}, Um laboratório virtual tridimensional e interativo para suporte ao ensino de Física}
 
-O trabalho de \citeonline{falcao2010} apresenta o LabSEF, um laboratório virtual tridimensional para apoiar o ensino de Física no ensino médio, com simulações de movimento retilíneo uniforme, queda livre e lançamento oblíquo. O ambiente é organizado em uma sala de recepção e um corredor com portas para cada experimento, onde o estudante insere parâmetros e observa a simulação, tabelas de dados e vetores de velocidade.
+O trabalho de \citeonline{wie} apresenta o LabSEF, um laboratório virtual tridimensional para apoiar o ensino de Física no ensino médio, com simulações de movimento retilíneo uniforme, queda livre e lançamento oblíquo. O ambiente é organizado em uma sala de recepção e um corredor com portas para cada experimento, onde o estudante insere parâmetros e observa a simulação, tabelas de dados e vetores de velocidade.
 
 O laboratório foi construído com X3D, Blender e Java e oferece visualização estereoscópica com óculos anáglifos de baixo custo. Em uma avaliação com 33 estudantes de um curso pré-vestibular, 23 não tiveram dificuldade nas simulações e 31 relataram que a visão tridimensional os estimulou a explorar o ambiente. O lançamento oblíquo foi o experimento com mais relatos de dificuldade.
 
-Assim como este trabalho, aborda conteúdos de Mecânica do ensino médio em um ambiente tridimensional navegável, organizado em salas por experimento. Diferencia-se por exigir a instalação de software específico, por não propor exercícios e por avaliar apenas a motivação dos estudantes, enquanto este trabalho é executado no navegador, inclusive em celulares, e vincula cada sala a exercícios de uma lista resolvida.
+Assim como este trabalho, aborda conteúdos de Mecânica do ensino médio em um ambiente tridimensional navegável, organizado em salas por experimento. \citeonline{wie} Diferencia-se por exigir a instalação de software específico, por não propor exercícios e por avaliar apenas a motivação dos estudantes, enquanto este trabalho é executado no navegador, inclusive em celulares, e vincula cada sala a exercícios de uma lista resolvida.
 
 \begin{figure}[h!]
 	\centering
@@ -73,9 +75,9 @@ Assim como este trabalho, aborda conteúdos de Mecânica do ensino médio em um 
 	}
 \end{figure}
 
-\section{Teaching with Physlets: examples from optics}
+\section{\citeonline{Dancy_2002}, Teaching with Physlets: examples from optics}
 
-O trabalho de \citeonline{dancy2002} apresenta o uso de Physlets, pequenas simulações programáveis distribuídas em páginas web, para a construção de problemas de Física. Nesses problemas, o enunciado não fornece os dados numéricos: o estudante precisa interagir com a simulação para identificar e medir as grandezas relevantes antes de resolver a questão.
+O trabalho de \citeonline{Dancy_2002} apresenta o uso de Physlets, pequenas simulações programáveis distribuídas em páginas web, para a construção de problemas de Física. Nesses problemas, o enunciado não fornece os dados numéricos: o estudante precisa interagir com a simulação para identificar e medir as grandezas relevantes antes de resolver a questão.
 
 O artigo discute os fundamentos pedagógicos da abordagem e apresenta exemplos de óptica, como a determinação da distância focal de um espelho e a identificação de lentes escondidas. Os autores relatam que a interatividade permite diferentes caminhos de solução e torna visíveis concepções equivocadas que passariam despercebidas em problemas de papel, mas não apresentam uma avaliação quantitativa da aprendizagem.
 
@@ -91,9 +93,9 @@ Assim como este trabalho, integra exercícios de Física a simulações acessív
 	}
 \end{figure}
 
-\section{Design of a virtual environment with interactive simulations for the teaching of mechanics}
+\section{\citeonline{duque2026design}, Design of a virtual environment with interactive simulations for the teaching of mechanics}
 
-O trabalho de \citeonline{jalkduque2026} apresenta uma plataforma web com simulações interativas de Mecânica, como queda livre, movimento retilíneo uniforme, lançamento oblíquo, plano inclinado e pêndulo, motivada pela falta de laboratórios em instituições com poucos recursos. Cada tema é organizado em seções de teoria, guia e simulação, com atividades e perguntas orientadoras.
+O trabalho de \citeonline{duque2026design} apresenta uma plataforma web com simulações interativas de Mecânica, como queda livre, movimento retilíneo uniforme, lançamento oblíquo, plano inclinado e pêndulo, motivada pela falta de laboratórios em instituições com poucos recursos. Cada tema é organizado em seções de teoria, guia e simulação, com atividades e perguntas orientadoras.
 
 As simulações foram construídas no GeoGebra e incorporadas a um site criado no Wix. Algumas atividades validam a resposta do estudante com mensagens de acerto ou erro e dicas. Em um estudo piloto com 20 licenciandos em Matemática, avaliado por questionário Likert e observação, os autores relatam avaliação positiva da motivação e da compreensão percebida dos conceitos.
 
@@ -109,10 +111,10 @@ Assim como este trabalho, aborda Mecânica com simulações no navegador, organi
 	}
 \end{figure}
 
-\section{PhET: simulations that enhance learning}
+\section{\citeonline{doi:10.1126/science.1161948}, PhET: simulations that enhance learning}
 
 % Resumido sem acesso ao PDF. Leia o original (2 páginas) e confira.
-O trabalho de \citeonline{wieman2008} apresenta o projeto PhET, da Universidade do Colorado, um conjunto de simulações interativas gratuitas de Física e Química executadas no navegador, que inclui fenômenos como o pêndulo, o movimento de projéteis e as órbitas. Os autores defendem que simulações projetadas a partir de pesquisa com estudantes podem promover aprendizagem conceitual comparável ou superior à de métodos tradicionais.
+O trabalho de \citeonline{doi:10.1126/science.1161948} apresenta o projeto PhET, da Universidade do Colorado, um conjunto de simulações interativas gratuitas de Física e Química executadas no navegador, que inclui fenômenos como o pêndulo, o movimento de projéteis e as órbitas. Os autores defendem que simulações projetadas a partir de pesquisa com estudantes podem promover aprendizagem conceitual comparável ou superior à de métodos tradicionais.
 
 As simulações são desenvolvidas e refinadas a partir de entrevistas com estudantes e privilegiam o retorno imediato, múltiplas representações e a visualização de grandezas invisíveis. Os autores citam estudos do grupo em que estudantes que usaram simulações tiveram desempenho superior aos que usaram equipamentos reais \cite{finkelstein2005}.
 
@@ -128,11 +130,11 @@ Assim como este trabalho, utiliza simulações interativas no navegador com reto
 	}
 \end{figure}
 
-\section{ARTOM: aplicativo para ensino de Química em realidade aumentada}
+\section{\citeonline{pereira2020artom}, ARTOM: aplicativo para ensino de Química em realidade aumentada}
 
 % ATENÇÃO: trabalho de Química. Decidir com o orientador se fica.
 % Se sair, apague esta seção, a linha do quadro e a referência.
-O trabalho de \citeonline{pereira2021} apresenta o ARTOM, um aplicativo Android para apoiar o ensino de ligações químicas covalentes no início do ensino médio. Ao aproximar cartões impressos que representam átomos, o estudante visualiza, em realidade aumentada, a formação da molécula e sua geometria.
+O trabalho de \citeonline{pereira2020artom} apresenta o ARTOM, um aplicativo Android para apoiar o ensino de ligações químicas covalentes no início do ensino médio. Ao aproximar cartões impressos que representam átomos, o estudante visualiza, em realidade aumentada, a formação da molécula e sua geometria.
 
 O aplicativo foi desenvolvido em Unity com o plug-in Vuforia para o reconhecimento dos cartões. Não houve avaliação com usuários, e os autores relatam que a descontinuação de uma dependência do Vuforia impediu ajustes no protótipo.
 
@@ -183,5 +185,5 @@ O Quadro~\ref{qua:comparativo-trabalhos} compara os trabalhos analisados com a p
 		\Fonte{Elaborado pelo autor.}
 	}
 \end{quadro}
-
+%{ver depois} nao vou fazer preteste e posteste. nao da tempo. só uma avalicaozinha bem basica pra dizer que o sistema foi testado
 O comparativo mostra que os elementos desta proposta já aparecem, isoladamente, em outros trabalhos. Há exposições tridimensionais no navegador \cite{brito2026,pina2025}, laboratórios tridimensionais de Física para o ensino médio \cite{falcao2010} e simulações com exercícios \cite{dancy2002,jalkduque2026}. Nos trabalhos analisados, porém, a simulação fornece os dados do problema ou apenas valida a resposta. Nenhum deles usa a resposta calculada pelo estudante como entrada da simulação, de modo que o erro se torne visível no fenômeno, nem integra esse tipo de exercício a um ambiente tridimensional navegável. Além disso, a maior parte das avaliações mediu a percepção dos participantes, e não a aprendizagem. Este trabalho explora essa combinação.

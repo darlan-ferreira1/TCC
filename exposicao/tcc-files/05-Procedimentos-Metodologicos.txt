@@ -31,12 +31,15 @@ Este capítulo descreve o ambiente de desenvolvimento e os procedimentos adotado
 \section{Ambiente de desenvolvimento e recursos utilizados}
 
 A exposição foi projetada como uma aplicação web, acessível por navegadores modernos em computadores e dispositivos móveis, sem instalação de programas ou extensões. A interface foi construída com React e TypeScript e empacotada com o Vite. As cenas tridimensionais foram implementadas diretamente com a biblioteca Three.js, sem frameworks intermediários, para que cada simulação controlasse o próprio passo de integração numérica.
+% {ver depois } esse proprio passo de integração numérica parece prolixo
 
-Todos os elementos da exposição, como paredes, portas, aparelhos e textos, são gerados por código a partir de formas geométricas simples, sem modelos tridimensionais externos. Essa decisão buscou reduzir o volume de dados transferido ao abrir a aplicação, problema relatado por usuários de celular em trabalho anterior \cite{brito2026}. O código é versionado com Git, e a aplicação é publicada como site estático no GitHub Pages.
+Todos os elementos da exposição, como paredes, portas, aparelhos e textos, são gerados por código a partir de formas geométricas simples, sem modelos tridimensionais externos. Essa decisão buscou reduzir o volume de dados transferido ao abrir a aplicação, problema relatado por usuários de celular em trabalho anterior \cite{brito2026ecos}. O código é versionado com Git, e a aplicação é publicada como site estático no GitHub Pages.
+% {ver depois} é uma boa atacar o gustavo assim? kkk de graça
+
 
 \section{Seleção dos conteúdos}
 
-Os conteúdos foram selecionados a partir de três critérios: pertencer ao currículo de Física do ensino médio \cite{bncc2018}; ser recorrente em questões do ENEM; e permitir que o resultado de um cálculo seja representado diretamente na cena, como uma posição, um tempo ou uma trajetória. O Quadro~\ref{qua:conteudos} apresenta as salas da exposição, os conteúdos e os exercícios da lista associados a cada uma.
+Os conteúdos foram selecionados a partir de três critérios: pertencer ao currículo de Física do ensino médio [\textbf{bncc2018}]\cite{bncc2018}; ser recorrente em questões do ENEM; e permitir que o resultado de um cálculo seja representado diretamente na cena, como uma posição, um tempo ou uma trajetória. O Quadro~\ref{qua:conteudos} apresenta as salas da exposição, os conteúdos e os exercícios da lista associados a cada uma.
 
 \begin{quadro}[h!]
 	\centering
@@ -70,6 +73,8 @@ Os conteúdos foram selecionados a partir de três critérios: pertencer ao curr
 \section{Elaboração da lista de exercícios}
 
 Para cada sala, foi elaborada uma lista de exercícios de nível médio, com $g = 10\,\text{m/s}^2$, composta por questões de cálculo e questões conceituais. Todos os exercícios foram resolvidos manualmente pelo autor, e a resolução foi usada com duas finalidades: servir de gabarito para os exercícios interativos e verificar se as simulações produzem os mesmos valores que o cálculo, como o período de aproximadamente 3,14\,s para um pêndulo de 2,5\,m. Os rascunhos dos enunciados foram gerados com apoio de IA e revisados e resolvidos pelo autor, conforme descrito na Seção~\ref{sec:met-ia}. A lista completa encontra-se no Apêndice~\pendente.
+
+% {ver depois} a lista de exrcícios foi gerada pror ia mas foi pra eu aprender os contteudos mesmo. as questões do app desse tcc acho melhor serem beseadas nas do enem, vestibulares ou livros do ensino medio
 
 \section{Desenvolvimento da exposição}
 

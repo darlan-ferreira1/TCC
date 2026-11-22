@@ -11,11 +11,5 @@ export interface HallDoor {
   folder: string; // pasta em src/simulations/ que tem o sala.ts
 }
 
-const COR = { Física: 0x9b59b6, Química: 0x3498db, Biologia: 0x2ecc71 };
-
-export const HALL_DOORS: HallDoor[] = [
-  { id: 'bohr-model',         title: 'Modelo de Bohr',       category: 'Química',  color: COR.Química,  folder: 'chemistry/BohrModel' },
-  { id: 'molecular-geometry', title: 'Geometria Molecular',  category: 'Química',  color: COR.Química,  folder: 'chemistry/MolecularGeometry' },
-  { id: 'simple-pendulum',    title: 'Pêndulo Simples',      category: 'Física',   color: COR.Física,   folder: 'physics/Pendulum' },
-  { id: 'dna-helix',          title: 'Dupla Hélice de DNA',  category: 'Biologia', color: COR.Biologia, folder: 'biology/DnaHelix' },
-];
+// Sem portas avulsas no salão: o aluno começa direto na Ala da Mecânica.
+export const HALL_DOORS: HallDoor[] = [];

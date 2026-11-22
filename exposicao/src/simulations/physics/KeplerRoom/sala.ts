@@ -7,7 +7,7 @@ import { keplerRoom, type KeplerConfig } from './scene';
 
 export const sala: InteractiveRoom<KeplerConfig> = {
   experiment: keplerRoom,
-  room: { width: 15, depth: 15, wallHeight: 4.5, place: [0, 0.9, -0.5], obstacleRadius: 0.5, inspect: { distance: 10 } },
+  room: { width: 15, depth: 15, wallHeight: 4.5, place: [0, 0.9, -0.5], obstacleRadius: 0.5, inspect: { distance: 10 }, exerciseDoor: true },
   controls: [
     { id: 'planetX', label: 'Distância do Planeta X ao Sol', kind: 'range', min: 0.5, max: 5, step: 0.1, unit: 'UA', default: 4 },
     { id: 'yearsPerSecond', label: 'Velocidade do tempo', kind: 'range', min: 0.1, max: 3, step: 0.1, unit: 'anos/s', default: 0.5 },

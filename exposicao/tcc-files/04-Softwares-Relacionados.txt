@@ -11,3 +11,207 @@
 % mantendo só o que é de Física, e tirar o PhET do Capítulo 3.
 % Lembre de mudar a "Organização do trabalho" na Introdução.
 % =====================================================================
+
+\providecommand{\figurapendente}[1]{%
+	\fbox{\parbox[c][4.5cm][c]{14cm}{\centering\textbf{[FIGURA A INSERIR]}\\[2mm]\small #1}}}
+\providecommand{\pendente}{\textcolor{red}{[a preencher]}}
+
+\chapter{Softwares Relacionados}
+\label{chap:softwares-relacionados}
+
+Este capítulo analisa aplicativos de experimentação científica que um professor ou estudante pode acessar hoje, separadamente dos trabalhos acadêmicos discutidos no capítulo anterior. Diferentemente dos artigos, aplicativos não costumam publicar objetivos de pesquisa, metodologia ou resultados; por isso, a análise segue um roteiro próprio, aplicado igualmente a cada um: apresentação e público, experiência e funcionalidades, acesso e requisitos, observação realizada e relação com a CLARA.js.
+
+Foram selecionados quatro aplicativos que representam abordagens distintas: o PhET, referência em simulações gratuitas e baseadas em pesquisa educacional; o ChemCollective, um laboratório virtual voltado aos procedimentos da química; o Labster, um produto comercial de laboratórios virtuais tridimensionais; e o Merge EDU, uma plataforma comercial de realidade aumentada para a educação básica. As informações de acesso e requisitos foram obtidas nas páginas oficiais de cada aplicativo e são distinguidas, ao longo do texto, daquilo que foi observado diretamente. Quando um recurso não pôde ser examinado, ele é registrado como ``não verificado'', e não como ausente. A observação de cada aplicativo seguiu o mesmo procedimento: abrir a experiência, escolher uma atividade comparável às da CLARA.js, registrar as formas de interação e os recursos tridimensionais ou imersivos disponíveis, anotar data, endereço, dispositivo e navegador utilizados e as limitações encontradas.
+
+\FloatBarrier
+\section{PhET Interactive Simulations}
+\label{sec:PhET}
+
+ O PhET Interactive Simulations é um projeto da Universidade do Colorado em Boulder, iniciado em 2002 por Carl Wieman, que oferece simulações interativas gratuitas de Física, Química, Biologia, Ciências da Terra e Matemática, destinadas do ensino fundamental ao superior \cite{wieman2010, phet2026}. As simulações são desenvolvidas a partir de pesquisa em ensino e disponibilizadas como recursos educacionais abertos, traduzidas para dezenas de idiomas, incluindo o português.
+
+\begin{figure}[h!]
+	\captionsetup{width=16cm}
+	\Caption{\label{fig:PhET} Simulação ``Laboratório de Pêndulo'' do PhET}
+	\UFCfig{}{
+			\includegraphics[width=16cm]{figuras/phetSims.png}
+		}{
+			\Fonte{PhET Interactive Simulations, University of Colorado Boulder}
+		}
+\end{figure}
+
+As simulações apresentam ambientes predominantemente bidimensionais, nos quais o estudante pode alterar parâmetros e também manipular diretamente elementos da cena. Na simulação “Laboratório de Pêndulo”, por exemplo, é possível arrastar o pêndulo com o mouse, além de alterar seu comprimento, massa, gravidade e atrito. Algumas simulações apresentam elementos tridimensionais dentro da interface 2D, aproximando-se de uma representação 2.5D.
+
+As simulações utilizam diferentes tecnologias, principalmente HTML5, mas o catálogo também possui versões legadas em Java e Flash. As simulações HTML5 podem ser executadas diretamente em navegadores modernos e apresentaram boa utilização em dispositivos móveis. Algumas aplicações Java podem ser executadas no navegador por meio do CheerpJ ou baixadas como arquivos Java, enquanto as simulações em Flash apresentam limitações em navegadores modernos.
+
+Observou-se que muitas simulações são bastante orientadas ao uso do mouse e de controles deslizantes. Na simulação “Soluções de Açúcar e Sal”, por exemplo, uma torneira é acionada deslizando um controle localizado sobre sua tampa, interação pouco conveniente em telas pequenas. Também foram observados indicadores no catálogo que informam recursos e formas de interação, como teclado, áudio e ampliação.
+
+\begin{figure}[h!]
+	\captionsetup{width=16cm}
+	\Caption{\label{fig:PhETSims} pagina de simulações do PhET}
+	\UFCfig{}{
+			\includegraphics[width=16cm]{figuras/solucoesAguaSal.png}
+		}{
+			\Fonte{PhET Interactive Simulations, University of Colorado Boulder}
+		}
+\end{figure}
+
+O PhET compartilha com o CLARA.js a gratuidade, a execução no navegador e o aprendizado por exploração. A principal diferença está na representação e nas formas de interação: o PhET utiliza predominantemente ambientes 2D, enquanto a CLARA.js explora ambientes 3D, realidade aumentada, realidade virtual e gestos. A análise também reforçou o uso de poucos parâmetros por experimento, faixas de valores controladas e indicadores que informem ao usuário os recursos disponíveis em cada simulação.
+
+\begin{figure}[h!]
+	\captionsetup{width=16cm}
+	\Caption{\label{fig:PhET} Simulação ``Soluções de açucar e sal'' do PhET}
+	\UFCfig{}{
+			\includegraphics[width=16cm]{figuras/penduloPhet.png}
+		}{
+			\Fonte{PhET Interactive Simulations, University of Colorado Boulder}
+		}
+\end{figure}
+
+
+\FloatBarrier
+\section{ChemCollective}
+\label{sec:ChemCollective}
+
+O ChemCollective é um conjunto de recursos de química on-line desenvolvido na Universidade Carnegie Mellon, organizado por David Yaron (Carnegie Mellon) e Ryan Dwyer (University of Mount Union), com apoio da National Science Foundation \cite{chemcollective2026}. Reúne laboratórios virtuais, atividades baseadas em cenários, tutoriais e testes conceituais, voltados principalmente ao ensino de química geral, para uso em pré-laboratórios, tarefas e atividades em sala.
+
+O principal recurso é o Laboratório Virtual, que simula uma bancada de Química. O estudante seleciona reagentes, vidrarias e instrumentos nos painéis laterais e os arrasta para a área de trabalho (Workbench), onde pode transferir líquidos, misturar soluções e observar reações. Um painel de informações apresenta propriedades como volume, temperatura, concentração e pH das soluções.
+
+O laboratório é gratuito e acessível pelo navegador, sem necessidade de cadastro. Originalmente desenvolvido em Java, possui uma versão em HTML5 que dispensa instalação. A interface está disponível em inglês, espanhol e italiano, sem tradução para o português nas opções observadas.
+
+As atividades compartilham uma interface de bancada bidimensional, com painéis para seleção de soluções (Solutions), vidrarias (Glassware) e ferramentas (Tools). Os exercícios são organizados por temas, como estequiometria, termoquímica, equilíbrio químico, ácidos e bases, solubilidade e eletroquímica. O site também disponibiliza vídeos e tutoriais que orientam o uso do laboratório.
+
+\begin{figure}[h!]
+	\captionsetup{width=16cm}
+	\Caption{\label{fig:ChemCollective} Laboratório Virtual do ChemCollective}
+	\UFCfig{}{
+			\includegraphics[width=16cm]{figuras/labChemColective.png}
+		}{
+			\Fonte{ ChemCollective, Carnegie Mellon University}
+		}
+
+\end{figure}
+
+A interação ocorre principalmente por arrastar e soltar objetos e modificar parâmetros, sendo orientada ao uso do mouse. Nos testes em celular, foi necessário ativar o modo desktop do navegador para utilizar o laboratório, o que pode dificultar o acesso de usuários menos familiarizados com essa configuração.
+
+Ambos oferecem experimentação gratuita pelo navegador, mas apresentam abordagens diferentes. O ChemCollective concentra-se na reprodução de procedimentos laboratoriais, enquanto o CLARA.js explora a visualização tridimensional e diferentes modalidades de interação. A organização de instrumentos e reagentes em uma bancada virtual, assim como a disponibilização de tutoriais, oferece referências para o desenvolvimento de novos experimentos no CLARA.js.deria ser abordado em trabalhos futuros.
+
+
+
+\FloatBarrier
+\section{Labster}
+\label{sec:labster}
+
+O Labster é uma plataforma comercial de laboratórios virtuais tridimensionais voltada a escolas e instituições de ensino superior, com simulações de Biologia, Química, Física e áreas afins. As atividades combinam procedimentos laboratoriais, situações-problema e questões de avaliação, podendo ser integradas aos ambientes virtuais de aprendizagem das instituições \cite{labster2026}.
+
+As simulações apresentam ambientes tridimensionais nos quais o estudante percorre laboratórios, interage com equipamentos e amostras e realiza procedimentos seguindo roteiros de atividades. O catálogo organiza os experimentos por disciplinas, níveis de ensino e habilidades desenvolvidas, abrangendo desde conteúdos do ensino médio até disciplinas universitárias.
+
+O acesso depende de licença paga, comercializada para educadores e instituições, sem opção de compra individual \cite{labster2026}. As simulações são executadas em navegadores compatíveis de computadores Windows e macOS, com requisitos mínimos de hardware e conexão à internet. Há também um aplicativo para iPad, mas smartphones não são suportados \cite{labster2026}
+
+A análise foi realizada por meio de vídeos demonstrativos e informações públicas, pois não foi possível obter acesso às simulações completas. Os vídeos apresentam ambientes 3D semelhantes a jogos em primeira pessoa, com interação com objetos e equipamentos científicos. Entretanto, a duração limitada das demonstrações não permitiu avaliar diretamente os controles, o desempenho ou a experiência completa das atividades.
+
+O Labster apresenta semelhanças com o museu virtual do CLARA.js, especialmente na navegação por ambientes tridimensionais e na interação com objetos científicos. Entretanto, oferece roteiros com avaliação integrada e conexão com ambientes de aprendizagem, enquanto o CLARA.js prioriza a exploração livre, o acesso gratuito e modalidades como realidade aumentada e interação por gestos. A análise sugere, como possibilidade futura, incorporar atividades guiadas e mecanismos de avaliação aos experimentos do CLARA.js.
+
+\begin{figure}[h!]
+	\captionsetup{width=16cm}
+	\Caption{\label{fig:Merge} Ambientes tridimensionais das simulações de anatomia do sistema respiratório e genética animal do Labster}
+	\UFCfig{}{
+			\includegraphics[width=16cm]{figuras/labsterlabs.png}
+		}{
+			\Fonte{ \cite{labster2026}}
+		}
+\end{figure}
+
+\FloatBarrier
+\section{Merge EDU}
+\label{sec:merge}
+
+O Merge EDU é uma plataforma comercial de recursos educacionais tridimensionais e realidade aumentada, voltada principalmente à educação básica. Reúne modelos 3D, simulações científicas e ferramentas para criação de atividades, incluindo o Merge Object Viewer, o Merge Explorer e o Merge HoloGlobe) \cite{merge2026}.
+
+O Object Viewer permite explorar modelos tridimensionais, como células e estruturas anatômicas, além de criar módulos de aprendizagem com etapas definidas pelo professor. Os objetos podem ser visualizados diretamente na tela ou associados ao Merge Cube, um cubo físico com marcadores que permite girar e examinar modelos virtuais por meio da movimentação das mãos.
+
+\begin{figure}[h!]
+	\captionsetup{width=16cm}
+	\Caption{\label{fig:Merge} Conteúdo em realidade aumentada ancorado ao Merge Cube}
+	\UFCfig{}{
+			\includegraphics[width=16cm]{figuras/MERGEphotos.png}
+		}{
+			\Fonte{ \cite{merge2026}}
+		}
+\end{figure}
+
+A plataforma oferece um período de avaliação gratuita de 14 dias, após o qual o acesso completo depende de assinatura. Seus recursos são distribuídos entre aplicações web e aplicativos para dispositivos compatíveis. Durante a análise, o Merge Explorer não estava disponível na Google Play brasileira, sendo necessária sua instalação por arquivo APK externo.
+
+Nos testes com um Merge Cube impresso em papel, foi possível visualizar e rotacionar modelos 3D movimentando o cubo, embora a imagem apresentasse fundo preto, diferentemente das demonstrações oficiais. O Object Viewer também apresentou modos de visualização 3D e interação por movimentos da cabeça e das mãos. No Merge Explorer, não foi possível testar integralmente as atividades que exigiam um visor de realidade virtual compatível.
+
+Ambas as plataformas exploram modelos tridimensionais e realidade aumentada, mas utilizam formas distintas de interação. O Merge EDU permite manipular objetos por meio de marcadores físicos, enquanto o CLARA.js utiliza detecção de superfícies e gestos para posicionar modelos no ambiente. A experiência com o Merge Cube sugere a possibilidade de incorporar realidade aumentada baseada em marcadores ao CLARA.js, ampliando as alternativas de acesso em dispositivos sem suporte à modalidade atual.
+
+
+\FloatBarrier
+\section{Síntese comparativa}
+\label{sec:sintese-comparativa}
+
+O Quadro~\ref{qua:softwares} reúne as principais características dos aplicativos analisados, incluindo suas formas de interação, condições de acesso e relações com o CLARA.js.
+
+\begin{quadro}[h!]
+    \centering
+    \Caption{\label{qua:softwares} Comparação entre os aplicativos analisados e o CLARA.js}
+    \UFCqua{}{
+        \scriptsize
+        \begin{tabular}{|p{1.7cm}|p{2.2cm}|p{2.6cm}|p{2.1cm}|p{2.6cm}|p{2.6cm}|}
+            \hline
+            \textbf{Aplicativo} &
+            \textbf{Atividade examinada} &
+            \textbf{Interações} &
+            \textbf{Distribuição} &
+            \textbf{Requisitos e compatibilidade} &
+            \textbf{Relação com o CLARA.js} \\
+            \hline
+
+            PhET &
+            Laboratório de Pêndulo; Soluções de Açúcar e Sal &
+            Manipulação direta, controles deslizantes e medições (2D) &
+            Gratuito; HTML5 e versões legadas &
+            Navegador; versões Java via CheerpJ ou download; Flash com limitações &
+            Exploração de fenômenos por parâmetros; diferenças na representação e interação \\
+            \hline
+
+            ChemCollective &
+            Laboratório Virtual: bancada química &
+            Arrastar vidrarias, misturar reagentes e medir propriedades (2D) &
+            Gratuito; navegador (HTML5) &
+            Interface orientada ao mouse; uso móvel observado no modo desktop &
+            Reprodução de procedimentos laboratoriais, em vez de visualização 3D dos fenômenos \\
+            \hline
+
+            Labster &
+            Genética animal e sistema respiratório (vídeos) &
+            Ambientes 3D, procedimentos guiados e questões &
+            Licença institucional paga &
+            Windows/macOS; aplicativo para iPad; sem suporte a smartphones &
+            Ambientes 3D semelhantes ao museu virtual; avaliação integrada \\
+            \hline
+
+            Merge EDU &
+            Object Viewer e Merge Explorer &
+            Modelos 3D, cubo com marcador e modos de rastreamento &
+            Teste de 14 dias; assinatura para acesso completo &
+            Aplicativos e navegador; recursos dependentes do dispositivo e acessórios &
+            RA com marcador físico; diferentes modos de visualização e interação \\
+            \hline
+
+            CLARA.js &
+            Experimentos e museu virtual &
+            Controles, navegação 3D, toque, RA e gestos pela webcam &
+            Gratuito; navegador; código aberto &
+            Navegador moderno; RA e RV conforme suporte do dispositivo &
+            Plataforma desenvolvida neste trabalho \\
+            \hline
+        \end{tabular}
+    }{
+        \Fonte{Elaborado pelo autor, com base nas fontes oficiais e nas observações realizadas.}
+    }
+\end{quadro}
+
+A comparação evidencia diferentes abordagens de experimentação virtual. O PhET privilegia a exploração de fenômenos por meio da manipulação de parâmetros, enquanto o ChemCollective reproduz procedimentos em uma bancada química bidimensional. O Labster apresenta laboratórios tridimensionais com atividades guiadas e avaliações, mas possui acesso comercial restrito a instituições. Já o Merge EDU destaca-se pela visualização de modelos 3D e pelo uso de realidade aumentada com marcadores físicos.
+
+O CLARA.js reúne características presentes nessas plataformas, como a exploração interativa de fenômenos, a representação tridimensional e a realidade aumentada. Diferencia-se pela combinação dessas modalidades com navegação em um museu virtual e interação por gestos, mantendo acesso gratuito pelo navegador. Essa combinação não implica superioridade geral, pois os aplicativos analisados apresentam recursos próprios, como atividades guiadas, avaliações integradas e ferramentas de criação de conteúdos educacionais, que podem orientar futuras melhorias no CLARA.js.

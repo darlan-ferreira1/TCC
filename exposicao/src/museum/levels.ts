@@ -85,11 +85,12 @@ export interface WingExtras {
   miniatures?: Record<string, Centerpiece>;    // id da porta → miniatura no pedestal
   content?: Record<string, RoomContent>;       // id da porta → textos
   openInfo?: OpenInfo;
+  noExit?: boolean;
 }
 
 export function buildWing(entries: DoorEntry[], title: string, color: number, centerpiece?: Centerpiece, extras: WingExtras = {}): Level {
   const t = new Tracker();
-  const layout = computeWingLayout(entries, title, color);
+  const layout = computeWingLayout(entries, title, color, extras.noExit);
   const group = new THREE.Group();
   const { doorMaterials } = buildShell(group, layout, t);
   const interactions: RoomInteraction[] = [];
@@ -155,7 +156,7 @@ export function buildRoom(
   const quadros = content && openInfo ? content.quadros.slice(0, easelSpots.length) : [];
   quadros.forEach((_, i) => obstacles.push({ ...easelSpots[i], r: 0.45 }));
 
-  const layout = computeRoomLayout({ width: spec.width, depth: spec.depth, obstacles }, title, color, exitTitle);
+  const layout = computeRoomLayout({ width: spec.width, depth: spec.depth, obstacles }, title, color, exitTitle, spec.exerciseDoor);
   const group = new THREE.Group();
   const { doorMaterials } = buildShell(group, layout, t, spec.wallHeight);
   if (spec.pedestal) buildPedestal(group, t, px, pz, spec.pedestal.radius, spec.pedestal.height);

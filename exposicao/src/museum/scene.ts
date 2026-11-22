@@ -46,7 +46,7 @@ import { createDirectionRepeat, createGamepadReader, frameDirection, type Gamepa
 import type { InteractiveRoom, RoomInteraction } from './interactiveRoom';
 import { buildHall, buildRoom, buildWing, type Centerpiece, type Level } from './levels';
 import {
-  spawnPoint, constrainPosition, nearestDoor, EXIT_DOOR_ID, EYE_HEIGHT,
+  spawnPoint, constrainPosition, nearestDoor, EXIT_DOOR_ID, EXERCISE_DOOR_ID, EYE_HEIGHT,
   type DoorEntry, type DoorPlacement,
 } from './layout';
 
@@ -66,6 +66,7 @@ export interface MuseumSceneConfig {
 export interface WingDef {
   entries: DoorEntry[];
   centerpiece?: Centerpiece;
+  noExit?: boolean;
 }
 
 export interface WingInfo {
@@ -114,6 +115,9 @@ export interface MuseumScene {
   onInteractionChange: ((prompt: string | null, hold: boolean) => void) | null;
   onInfo: ((content: InfoContent) => void) | null;       // abrir o pop-up de texto
   onInspectChange: ((inspecting: boolean) => void) | null;
+  onExercise: ((roomId: string) => void) | null;          // entrar no espaço de exercícios
+  // Abre uma ala sem transição (usado para começar diretamente na ala da Mecânica).
+  openWingById(id: string): void;
   dispose(): void;
 }
 
@@ -246,6 +250,13 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     onInteractionChange: null,
     onInfo: null,
     onInspectChange: null,
+    onExercise: null,
+    openWingById(id) {
+      const entry = config.entries.find((e) => e.id === id);
+      if (!entry || !config.wings?.[id]) return;
+      const fake: DoorPlacement = { ...entry, wall: 'far', x: 0, z: 0, rotationY: 0, normal: { x: 0, z: 1 } };
+      openWing(fake);
+    },
     setInspect,
     dispose,
   };
@@ -271,7 +282,12 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
 
   function goThroughDoor(door: DoorPlacement) {
     if (fade) return;
-    if (room && door.id === EXIT_DOOR_ID) {
+    if (room && door.id === EXERCISE_DOOR_ID) {
+      pressed.clear();
+      touchMove.x = touchMove.y = 0;
+      controls.unlock();
+      api.onExercise?.(room.door.id);
+    } else if (room && door.id === EXIT_DOOR_ID) {
       transition(closeRoom);
     } else if (!room && wing && door.id === EXIT_DOOR_ID) {
       transition(closeWing);
@@ -323,7 +339,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   function openWing(door: DoorPlacement) {
     const def = config.wings![door.id];
     const wingLevel = buildWing(def.entries, door.title, door.color, def.centerpiece, {
-      miniatures: config.miniatures, content: config.content, openInfo,
+      miniatures: config.miniatures, content: config.content, openInfo, noExit: def.noExit,
     });
     scene.add(wingLevel.group);
     wing = { level: wingLevel, door };

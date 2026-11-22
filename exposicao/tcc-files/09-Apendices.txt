@@ -1,0 +1,214 @@
+% =====================================================================
+% APÊNDICES: instrumentos da avaliação com usuários, elaborados pelo autor.
+%   A: roteiro de tarefas (o que o participante faz na exposição)
+%   B: pré-teste (antes de usar, sem consulta)
+%   C: pós-teste (depois de usar, sem consulta; mesma estrutura do pré,
+%      com outras palavras e outros números)
+%   D: questionário de usabilidade (SUS)
+%
+% São APÊNDICES (e não anexos) porque foram elaborados pelo autor.
+% Fonte das perguntas: proposta/roteiro_pesquisa.md e proposta/pesquisa.md.
+%
+% No Overleaf: cada \chapter vai num arquivo (apendice-a.tex ... -d.tex).
+% NÃO coloque \begin{apendicesenv} dentro de cada arquivo: cada ambiente
+% novo reinicia a contagem e todos viram "APÊNDICE A". O ambiente abre UMA
+% vez só, no arquivo principal, em volta dos \include dos apêndices.
+%
+% ATENÇÃO:
+%  - As tarefas marcadas com (*) dependem do sistema de exercícios, que
+%    ainda NÃO está implementado. Se ele não ficar pronto, troque-as por
+%    "ajuste a simulação até obter o valor pedido".
+%  - Se a avaliação for só básica (sem pré/pós), apague os Apêndices B e C
+%    e tire as menções a eles na Metodologia.
+%  - Confira todos os gabaritos à mão antes de aplicar.
+% =====================================================================
+
+% ---------------------------------------------------------------------
+\chapter{Roteiro de tarefas da avaliação}
+\label{ap:roteiro}
+
+\textbf{Código do participante:} \rule{2cm}{0.4pt}
+
+\textbf{Instruções:} realize as tarefas na ordem e marque cada uma quando concluir. Não há resposta certa ou errada sobre o ambiente: o que está sendo avaliado é a exposição, e não você. Se ficar sem saber o que fazer por mais de dois minutos, peça ajuda ao aplicador.
+
+\textbf{Controles.} No computador: teclas W, A, S, D para andar, mouse para olhar, E para interagir, Tab para abrir os ajustes e I para o modo de inspeção. No celular: joystick na tela para andar, arrastar para olhar e os botões que aparecem na tela.
+
+\section*{Bloco A: ambientação}
+\begin{enumerate}
+	\item[$\square$] 1. Abra o endereço da exposição e leia as instruções iniciais.
+	\item[$\square$] 2. Ande pelo salão de entrada.
+	\item[$\square$] 3. Encontre a porta da Ala da Mecânica e entre nela.
+\end{enumerate}
+
+\section*{Bloco B: exploração da ala}
+\begin{enumerate}
+	\item[$\square$] 4. Leia o ícone de informação (``i'') de pelo menos dois pedestais.
+	\item[$\square$] 5. Entre na sala do pêndulo simples.
+\end{enumerate}
+
+\section*{Bloco C: sala do pêndulo}
+\begin{enumerate}
+	\item[$\square$] 6. Abra o quadro de Teoria e passe as páginas.
+	\item[$\square$] 7. Abra os ajustes, mude o comprimento do pêndulo e observe o que acontece com o tempo de cada oscilação.
+	\item[$\square$] 8. Entre no modo de inspeção, gire a câmera em volta do pêndulo e volte à sala.
+	\item[$\square$] 9. (*) Resolva o exercício da sala, digite a sua resposta e observe o pêndulo montado com ela.
+\end{enumerate}
+
+\section*{Bloco D: sala do lançamento oblíquo}
+\begin{enumerate}
+	\item[$\square$] 10. Volte à ala e entre na sala do lançamento oblíquo.
+	\item[$\square$] 11. (*) Resolva o exercício da sala: calcule o alcance de uma bola lançada a 20\,m/s e 30$^\circ$, digite a resposta e lance. Se errar, observe onde a bola caiu em relação ao alvo e tente novamente.
+\end{enumerate}
+
+\section*{Bloco E: exploração livre}
+\begin{enumerate}
+	\item[$\square$] 12. Visite mais uma sala à sua escolha e, se houver, resolva o exercício dela.
+\end{enumerate}
+
+% Folha do observador (preenchida pelo aplicador, não pelo participante).
+% Se quiser incluí-la no TCC, descomente.
+% \section*{Folha do observador}
+% \begin{tabular}{|c|p{3cm}|p{2cm}|p{4.5cm}|}
+% \hline
+% \textbf{Tarefa} & \textbf{Concluiu? (sim / com ajuda / não)} & \textbf{Tempo} & \textbf{Dificuldade observada} \\ \hline
+% 1 & & & \\ \hline
+% ...
+% \end{tabular}
+
+% ---------------------------------------------------------------------
+\chapter{Pré-teste}
+\label{ap:pre-teste}
+
+\textbf{Código do participante:} \rule{2cm}{0.4pt}
+
+\textbf{Instruções:} responda antes de usar a exposição, sem consultar nada. Use $g = 10$\,m/s$^2$. Se não souber, marque ``não sei'': essa resposta também ajuda a pesquisa.
+
+\begin{enumerate}
+	\item Se o comprimento de um pêndulo for multiplicado por 4, o período:\\
+	( ) fica 4 vezes maior \quad ( ) fica 2 vezes maior \quad ( ) não muda \quad ( ) fica 2 vezes menor \quad ( ) não sei
+
+	\item A bolinha de um pêndulo é trocada por outra com o dobro da massa, mantendo o mesmo fio. O período:\\
+	( ) dobra \quad ( ) cai pela metade \quad ( ) não muda \quad ( ) aumenta um pouco \quad ( ) não sei
+
+	\item Um pêndulo simples tem 2,5\,m de comprimento. Usando $T = 2\pi\sqrt{L/g}$, seu período é aproximadamente:\\
+	( ) 1\,s \quad ( ) 2\,s \quad ( ) 3,14\,s \quad ( ) 6,28\,s \quad ( ) não sei
+
+	\item O mesmo pêndulo é levado da Terra para a Lua, onde a gravidade é menor. O período:\\
+	( ) aumenta \quad ( ) diminui \quad ( ) não muda \quad ( ) não sei
+
+	\item Com a mesma velocidade de lançamento e sem resistência do ar, o ângulo que produz o maior alcance é:\\
+	( ) 30$^\circ$ \quad ( ) 45$^\circ$ \quad ( ) 60$^\circ$ \quad ( ) 90$^\circ$ \quad ( ) não sei
+
+	\item Uma bola é lançada a 20\,m/s, a 30$^\circ$ da horizontal ($\sin 30^\circ = 0{,}5$; $\cos 30^\circ \approx 0{,}87$). O alcance é aproximadamente:\\
+	( ) 17,3\,m \quad ( ) 20\,m \quad ( ) 34,6\,m \quad ( ) 40\,m \quad ( ) não sei
+
+	\item Duas bolas são lançadas com a mesma velocidade, uma a 30$^\circ$ e outra a 60$^\circ$. É correto afirmar que:\\
+	( ) a de 60$^\circ$ vai mais longe\\
+	( ) a de 30$^\circ$ vai mais longe\\
+	( ) as duas têm o mesmo alcance, mas a de 60$^\circ$ sobe mais\\
+	( ) as duas têm o mesmo alcance e a mesma altura máxima\\
+	( ) não sei
+
+	\item A fórmula $T = 2\pi\sqrt{L/g}$ vale:\\
+	( ) para qualquer ângulo de soltura \quad ( ) só para ângulos pequenos \quad ( ) só para ângulos grandes \quad ( ) só quando a massa é pequena \quad ( ) não sei
+\end{enumerate}
+
+% GABARITO (não vai para o participante; tire do TCC se o orientador preferir):
+% 1) 2 vezes maior  2) não muda  3) 3,14 s  4) aumenta  5) 45°
+% 6) 34,6 m (v0y = 10 m/s, voo = 2 s, v0x ≈ 17,3 m/s)
+% 7) mesmo alcance, 60° sobe mais  8) só ângulos pequenos
+
+% ---------------------------------------------------------------------
+\chapter{Pós-teste}
+\label{ap:pos-teste}
+
+\textbf{Código do participante:} \rule{2cm}{0.4pt}
+
+\textbf{Instruções:} responda depois de usar a exposição, sem consultar nada e sem voltar a ela. Use $g = 10$\,m/s$^2$. Se não souber, marque ``não sei''.
+
+\begin{enumerate}
+	\item Se o comprimento de um pêndulo for multiplicado por 9, o período:\\
+	( ) fica 9 vezes maior \quad ( ) fica 3 vezes maior \quad ( ) não muda \quad ( ) fica 3 vezes menor \quad ( ) não sei
+
+	\item Dois pêndulos têm o mesmo comprimento: um com bola de 1\,kg e outro com bola de 3\,kg. Qual oscila mais rápido?\\
+	( ) o de 1\,kg \quad ( ) o de 3\,kg \quad ( ) os dois têm o mesmo período \quad ( ) não sei
+
+	\item Um pêndulo simples tem 0,4\,m de comprimento. Usando $T = 2\pi\sqrt{L/g}$, seu período é aproximadamente:\\
+	( ) 0,63\,s \quad ( ) 1,26\,s \quad ( ) 2\,s \quad ( ) 4\,s \quad ( ) não sei
+
+	\item Em Júpiter a gravidade é maior que na Terra. Um pêndulo levado para lá terá período:\\
+	( ) maior \quad ( ) menor \quad ( ) igual \quad ( ) não sei
+
+	\item Um jogador quer chutar a bola o mais longe possível, sem mudar a força do chute e ignorando o ar. Ele deve chutar com um ângulo de:\\
+	( ) 15$^\circ$ \quad ( ) 30$^\circ$ \quad ( ) 45$^\circ$ \quad ( ) 75$^\circ$ \quad ( ) não sei
+
+	\item Uma bola é lançada a 10\,m/s, a 30$^\circ$ da horizontal ($\sin 30^\circ = 0{,}5$; $\cos 30^\circ \approx 0{,}87$). O alcance é aproximadamente:\\
+	( ) 5\,m \quad ( ) 8,7\,m \quad ( ) 10\,m \quad ( ) 17,3\,m \quad ( ) não sei
+
+	\item Duas bolas são lançadas com a mesma velocidade, uma a 20$^\circ$ e outra a 70$^\circ$. É correto afirmar que:\\
+	( ) as duas têm o mesmo alcance, mas a de 70$^\circ$ sobe mais\\
+	( ) a de 70$^\circ$ vai mais longe\\
+	( ) a de 20$^\circ$ vai mais longe\\
+	( ) as duas têm o mesmo alcance e a mesma altura máxima\\
+	( ) não sei
+
+	\item Um pêndulo é solto com um ângulo de 70$^\circ$. Seu período real, em relação ao calculado por $T = 2\pi\sqrt{L/g}$, é:\\
+	( ) igual \quad ( ) maior \quad ( ) menor \quad ( ) não sei
+\end{enumerate}
+
+% GABARITO:
+% 1) 3 vezes maior  2) mesmo período  3) 1,26 s (2·3,14·0,2)  4) menor
+% 5) 45°  6) 8,7 m (v0y = 5 m/s, voo = 1 s, v0x ≈ 8,7 m/s)
+% 7) mesmo alcance, 70° sobe mais  8) maior
+%
+% Correspondência pré → pós: cada questão n do pós mede o mesmo conceito
+% da questão n do pré. A 3 do pós usa L = 0,4 m (e não 0,1 m, como em
+% proposta/pesquisa.md) para ter dificuldade parecida com a do pré.
+
+% ---------------------------------------------------------------------
+% APÊNDICE D: questionário de usabilidade (SUS).
+% Os itens são da SUS (Brooke, 1996), na tradução usual para o português.
+% ANTES DE ENTREGAR: troque pelo texto de uma tradução VALIDADA e cite-a
+% (a tradução pode ir no \Fonte ou numa nota). Não mude a ordem dos itens.
+% Fica como apêndice porque o questionário aplicado foi montado pelo autor;
+% se o orientador preferir, a escala original pura pode ir como anexo.
+% "Sistema" pode ser trocado por "exposição" em todos os itens, se o
+% orientador concordar (faça o mesmo no Google Forms).
+\chapter{Questionário de usabilidade (SUS)}
+\label{ap:sus}
+
+\textbf{Código do participante:} \rule{2cm}{0.4pt}
+
+\textbf{Instruções:} responda depois de usar a exposição. Para cada afirmação, marque um número de 1 a 5, em que 1 significa ``discordo totalmente'' e 5 significa ``concordo totalmente''. Responda com a primeira impressão, sem pensar muito em cada item.
+
+\begin{table}[h!]
+	\centering
+	\Caption{\label{tab:ap-sus} Itens da \textit{System Usability Scale}}
+	\UFCtab{}{
+		\small
+		\begin{tabular}{p{0.5cm}p{9.5cm}ccccc}
+			\toprule
+			& \textbf{Afirmação} & \textbf{1} & \textbf{2} & \textbf{3} & \textbf{4} & \textbf{5} \\
+			\midrule
+			1 & Eu acho que gostaria de usar este sistema com frequência. & ( ) & ( ) & ( ) & ( ) & ( ) \\
+			2 & Eu achei o sistema desnecessariamente complexo. & ( ) & ( ) & ( ) & ( ) & ( ) \\
+			3 & Eu achei o sistema fácil de usar. & ( ) & ( ) & ( ) & ( ) & ( ) \\
+			4 & Eu acho que precisaria da ajuda de uma pessoa com conhecimentos técnicos para usar o sistema. & ( ) & ( ) & ( ) & ( ) & ( ) \\
+			5 & Eu achei que as várias funções do sistema estão bem integradas. & ( ) & ( ) & ( ) & ( ) & ( ) \\
+			6 & Eu achei que o sistema apresenta muita inconsistência. & ( ) & ( ) & ( ) & ( ) & ( ) \\
+			7 & Eu imagino que a maioria das pessoas aprenderia a usar este sistema rapidamente. & ( ) & ( ) & ( ) & ( ) & ( ) \\
+			8 & Eu achei o sistema muito complicado de usar. & ( ) & ( ) & ( ) & ( ) & ( ) \\
+			9 & Eu me senti muito confiante usando o sistema. & ( ) & ( ) & ( ) & ( ) & ( ) \\
+			10 & Eu precisei aprender muitas coisas antes de conseguir usar o sistema. & ( ) & ( ) & ( ) & ( ) & ( ) \\
+			\bottomrule
+		\end{tabular}
+	}{
+		\Fonte{Adaptado de \citeonline{brooke1996}.}
+	}
+\end{table}
+
+% CÁLCULO (não vai para o participante; está descrito na Metodologia):
+% itens ímpares: resposta - 1; itens pares: 5 - resposta;
+% soma × 2,5 = nota de 0 a 100 por participante. Referência: média 68
+% (sauro2011).
+

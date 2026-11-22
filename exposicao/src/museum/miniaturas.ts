@@ -125,96 +125,6 @@ const waves: Centerpiece = (group, t) => {
   };
 };
 
-const dalton: Centerpiece = (group, t) => {
-  const atom = new THREE.Mesh(sphere(t, 0.13), std(t, 0x8e8e9a));
-  atom.position.y = 0.2;
-  group.add(atom);
-  return (dt) => { atom.rotation.y += dt; };
-};
-
-const thomson: Centerpiece = (group, t) => {
-  const atom = new THREE.Group();
-  atom.position.y = 0.22;
-  atom.add(new THREE.Mesh(sphere(t, 0.15), std(t, 0xff8fab, { transparent: true, opacity: 0.4, depthWrite: false })));
-  const eGeo = sphere(t, 0.018);
-  const eMat = std(t, 0x3498db, { emissive: 0x1f6fb2, emissiveIntensity: 0.5 });
-  [[0.06, 0.05, 0.02], [-0.07, 0, 0.05], [0, -0.07, -0.04], [0.04, -0.02, 0.08], [-0.03, 0.08, -0.05], [0.07, 0.02, -0.07]].forEach((p) => {
-    const e = new THREE.Mesh(eGeo, eMat);
-    e.position.set(p[0], p[1], p[2]);
-    atom.add(e);
-  });
-  group.add(atom);
-  return (dt) => { atom.rotation.y += dt * 0.6; };
-};
-
-const rutherford: Centerpiece = (group, t) => {
-  const foil = new THREE.Mesh(t.track(new THREE.BoxGeometry(0.004, 0.18, 0.18)), std(t, 0xd4af37, { metalness: 0.9, roughness: 0.25 }));
-  foil.position.y = 0.2;
-  const source = new THREE.Mesh(t.track(new THREE.BoxGeometry(0.06, 0.06, 0.06)), std(t, 0x555566));
-  source.position.set(-0.25, 0.2, 0);
-  const pGeo = sphere(t, 0.01);
-  const pMat = t.track(new THREE.MeshBasicMaterial({ color: 0xff5e3a }));
-  const parts = Array.from({ length: 6 }, (_, i) => {
-    const m = new THREE.Mesh(pGeo, pMat);
-    group.add(m);
-    return { m, s: i / 6, bend: i === 2 ? 0.8 : i === 5 ? 2.6 : 0 };
-  });
-  group.add(foil, source);
-  return (dt) => {
-    parts.forEach((p) => {
-      p.s = (p.s + dt * 0.35) % 1;
-      const x = -0.22 + 0.5 * p.s;
-      if (x < 0 || !p.bend) p.m.position.set(x, 0.2, 0);
-      else p.m.position.set(Math.cos(p.bend) * x, 0.2 + Math.sin(p.bend) * x, 0); // desviada ou voltando
-    });
-  };
-};
-
-const bohr: Centerpiece = (group, t) => {
-  const atom = new THREE.Group();
-  atom.position.y = 0.22;
-  atom.add(new THREE.Mesh(sphere(t, 0.035), std(t, 0xe74c3c)));
-  const ringMat = t.track(new THREE.MeshBasicMaterial({ color: 0x8888aa }));
-  const eGeo = sphere(t, 0.012);
-  const eMat = std(t, 0x3498db, { emissive: 0x3498db, emissiveIntensity: 0.6 });
-  const shells = [0.09, 0.16].map((r, i) => {
-    const ring = new THREE.Mesh(t.track(new THREE.TorusGeometry(r, 0.002, 6, 48)), ringMat);
-    ring.rotation.x = Math.PI / 2;
-    const spin = new THREE.Group();
-    const count = i === 0 ? 2 : 4;
-    for (let k = 0; k < count; k++) {
-      const e = new THREE.Mesh(eGeo, eMat);
-      const a = (k / count) * Math.PI * 2;
-      e.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
-      spin.add(e);
-    }
-    atom.add(ring, spin);
-    return { spin, speed: 1.5 / (i + 1) ** 3 * 4 };
-  });
-  group.add(atom);
-  return (dt) => shells.forEach((s) => { s.spin.rotation.y += dt * s.speed; });
-};
-
-const geometry: Centerpiece = (group, t) => {
-  const mol = new THREE.Group();
-  mol.position.y = 0.22;
-  mol.add(new THREE.Mesh(sphere(t, 0.04), std(t, 0x333333)));
-  const hMat = std(t, 0xf0f0f0);
-  const bondMat = std(t, 0x999999);
-  const L = 0.13;
-  [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]].forEach(([x, y, z]) => {
-    const dir = new THREE.Vector3(x, y, z).normalize();
-    const h = new THREE.Mesh(sphere(t, 0.025), hMat);
-    h.position.copy(dir.clone().multiplyScalar(L));
-    const bond = new THREE.Mesh(t.track(new THREE.CylinderGeometry(0.006, 0.006, L, 6)), bondMat);
-    bond.position.copy(dir.clone().multiplyScalar(L / 2));
-    bond.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
-    mol.add(h, bond);
-  });
-  group.add(mol);
-  return (dt) => { mol.rotation.y += dt * 0.7; mol.rotation.x += dt * 0.2; };
-};
-
 // id da porta → miniatura
 export const MINIATURAS: Record<string, Centerpiece> = {
   'simple-pendulum': pendulum,
@@ -223,9 +133,4 @@ export const MINIATURAS: Record<string, Centerpiece> = {
   'conical-pendulum': conical,
   'waves-room': waves,
   'foucault-pendulum': foucault,
-  'dalton-model': dalton,
-  'thomson-model': thomson,
-  'rutherford-model': rutherford,
-  'bohr-model': bohr,
-  'molecular-geometry': geometry,
 };
