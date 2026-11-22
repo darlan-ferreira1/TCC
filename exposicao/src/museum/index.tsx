@@ -5,9 +5,10 @@ import { CONTEUDO } from './conteudo';
 import { MINIATURAS } from './miniaturas';
 import type { InfoContent } from './info';
 import InfoPopup from './InfoPopup';
-import { EXIT_DOOR_ID, EXERCISE_DOOR_ID, type DoorEntry, type DoorPlacement } from './layout';
-import ExerciseOverlay from './ExerciseOverlay';
-import { EXERCICIOS } from './exercicios';
+import { EXIT_DOOR_ID, EXERCISE_DOOR_ID, NEXT_EXERCISE_DOOR_ID, type DoorEntry, type DoorPlacement } from './layout';
+import ExerciseHud from './ExerciseHud';
+import { EXERCICIOS_INTERATIVOS, type ExercicioInterativo } from './exerciciosInterativos';
+import { buildAllExerciseRooms, buildExerciseMap } from './exerciseRooms';
 import type { InteractiveRoom } from './interactiveRoom';
 import { stepControl, type ControlValue } from '../core/controls';
 import type { GamepadDirection } from '../core/gamepad';
@@ -34,6 +35,22 @@ const DOOR_ENTRIES: DoorEntry[] = HALL_DOORS
 // própria do salão, e as salas novas entram na mesma tabela de salas.
 const HALL_ENTRIES: DoorEntry[] = [...DOOR_ENTRIES, ...WING_DOORS];
 const ALL_ROOMS: Record<string, InteractiveRoom> = { ...ROOMS, ...WING_ROOMS };
+
+// Salas de exercício: geradas a partir de EXERCICIOS_INTERATIVOS + salas base.
+const EXERCISE_ROOMS = buildAllExerciseRooms(ALL_ROOMS);
+const EXERCISE_MAP   = buildExerciseMap(ALL_ROOMS);
+const ALL_ROOMS_FINAL: Record<string, InteractiveRoom> = { ...ALL_ROOMS, ...EXERCISE_ROOMS };
+
+// Busca qual exercício corresponde a um ID de sala de exercício.
+function getExerciseForRoom(roomId: string): {
+  ex: ExercicioInterativo; expId: string; index: number; total: number;
+} | null {
+  for (const [expId, exercises] of Object.entries(EXERCICIOS_INTERATIVOS)) {
+    const idx = exercises.findIndex((e) => e.id === roomId);
+    if (idx !== -1) return { ex: exercises[idx], expId, index: idx, total: exercises.length };
+  }
+  return null;
+}
 
 // Guarda por qual porta o aluno saiu, para ele reaparecer na frente dela ao
 // voltar do experimento (o componente é desmontado durante o experimento,
@@ -78,8 +95,9 @@ const roundButton = {
 function doorPrompt(door: DoorPlacement): string {
   if (door.id === EXIT_DOOR_ID) return door.title;
   if (door.id === EXERCISE_DOOR_ID) return 'Entrar no espaço de exercícios';
+  if (door.id === NEXT_EXERCISE_DOOR_ID) return 'Próxima questão';
   if (door.category === WINGS_CATEGORY) return `Entrar na ${door.title}`;
-  if (!(door.id in ALL_ROOMS)) return `Abrir o experimento ${door.title}`;
+  if (!(door.id in ALL_ROOMS_FINAL)) return `Abrir o experimento ${door.title}`;
   return `Entrar na sala ${door.title}`;
 }
 
@@ -104,7 +122,18 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   const [interaction, setInteraction] = useState<string | null>(null);
   const [interactionHold, setInteractionHold] = useState(true);
   const [info, setInfo] = useState<InfoContent | null>(null); // pop-up de texto aberto
-  const [exerciseRoomId, setExerciseRoomId] = useState<string | null>(null);
+  const [exerciseState, setExerciseState] = useState<{
+    roomId: string;   // id da sala de exercício (ex.: 'pendulo-q1')
+    expId: string;    // id do experimento base (ex.: 'simple-pendulum')
+    exIndex: number;  // índice 0-based em EXERCICIOS_INTERATIVOS[expId]
+    total: number;    // total de questões do experimento
+    completed: boolean;
+  } | null>(null);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+  const exerciseStateRef = useRef<typeof exerciseState>(null);
+  const roomValuesRef = useRef<Record<string, import('../core/controls').ControlValue>>({});
+  const correctSinceRef = useRef<number | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [infoPage, setInfoPage] = useState(0);
   const [inspecting, setInspecting] = useState(false);
   const [room, setRoom] = useState<RoomInfo | null>(null);
@@ -120,7 +149,15 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
     setTouchPlaying(false);
   }
 
+  const currentExercise: ExercicioInterativo | null = exerciseState
+    ? (EXERCICIOS_INTERATIVOS[exerciseState.expId] ?? [])[exerciseState.exIndex] ?? null
+    : null;
+  const lockedControlsSet = room?.id && ALL_ROOMS_FINAL[room.id]?.lockedControls
+    ? new Set(ALL_ROOMS_FINAL[room.id]!.lockedControls!)
+    : undefined;
+
   function changeControl(id: string, value: ControlValue) {
+    if (lockedControlsSet?.has(id)) return;
     setRoom((r) => (r ? { ...r, values: { ...r.values, [id]: value } } : r));
     sceneRef.current?.setControl(id, value);
   }
@@ -136,10 +173,11 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
     if (!container) return;
     const s = createMuseumScene(container, {
       entries: HALL_ENTRIES,
-      rooms: ALL_ROOMS,
+      rooms: ALL_ROOMS_FINAL,
       wings: WINGS,
       content: CONTEUDO,
       miniatures: MINIATURAS,
+      exerciseMap: EXERCISE_MAP,
       spawnDoorId: lastDoorId,
       background: theme === 'dark' ? 0x0a0a1a : 0xcfd6e6,
     });
@@ -171,15 +209,24 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
       setInfoPage(0);
       s.unlock(); // solta o mouse para clicar nas setas
     };
-    s.onExercise = (roomId) => {
-      setExerciseRoomId(roomId);
-    };
     s.onInspectChange = setInspecting;
     s.onRoomChange = (r) => {
       setRoom(r);
       setHudOpen(false);
-      // Dentro de uma ala, a porta "de volta" no salão é a da ala.
-      if (r) lastDoorId = wingRef.current?.id ?? r.id;
+      if (r) {
+        lastDoorId = wingRef.current?.id ?? r.id;
+        const exInfo = getExerciseForRoom(r.id);
+        if (exInfo) {
+          setExerciseState({ roomId: r.id, expId: exInfo.expId, exIndex: exInfo.index, total: exInfo.total, completed: false });
+          setInfo(exInfo.ex.enunciado);
+          setInfoPage(0);
+          s.unlock();
+        } else {
+          setExerciseState(null);
+        }
+      } else {
+        setExerciseState(null);
+      }
     };
     s.onWingChange = (w) => {
       wingRef.current = w;
@@ -196,6 +243,40 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
     return () => { s.dispose(); sceneRef.current = null; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme]);
+
+  // Mantém refs em sincronia com o estado
+  useEffect(() => { exerciseStateRef.current = exerciseState; }, [exerciseState]);
+  useEffect(() => { roomValuesRef.current = room?.values ?? {}; }, [room?.values]);
+
+  // Detecção de acerto: intervalo de 200ms que checa isCorrect do exercício atual.
+  useEffect(() => {
+    if (!exerciseState) return;
+    correctSinceRef.current = null;
+    const ex = (EXERCICIOS_INTERATIVOS[exerciseState.expId] ?? [])[exerciseState.exIndex];
+    if (!ex) return;
+    const id = setInterval(() => {
+      const state = exerciseStateRef.current;
+      if (!state || state.completed) return;
+      const holdMs = ex.minHoldMs ?? 1200;
+      if (ex.isCorrect(roomValuesRef.current)) {
+        if (!correctSinceRef.current) correctSinceRef.current = Date.now();
+        else if (Date.now() - correctSinceRef.current >= holdMs) {
+          correctSinceRef.current = null;
+          setExerciseState(prev => prev ? { ...prev, completed: true } : prev);
+          if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+          setSuccessToast(ex.feedbackCorreto);
+          toastTimerRef.current = setTimeout(() => setSuccessToast(null), 3500);
+        }
+      } else {
+        correctSinceRef.current = null;
+      }
+    }, 200);
+    return () => { clearInterval(id); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exerciseState?.expId, exerciseState?.exIndex]);
+
+  // Limpa timer do toast ao desmontar
+  useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
 
   // Com o HUD aberto, o controle navega nele; fora dele, só move a cena
   // enquanto se está jogando com o controle.
@@ -238,6 +319,30 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [room, locked, hudOpen]);
+
+  function showEnunciadoExercicio() {
+    if (!currentExercise) return;
+    setInfo(currentExercise.enunciado);
+    setInfoPage(0);
+    if (!IS_TOUCH) sceneRef.current?.unlock();
+  }
+
+  function showDicaExercicio() {
+    if (!currentExercise?.dica) return;
+    setInfo({ title: 'Dica', pages: [{ heading: currentExercise.titulo, text: currentExercise.dica }] });
+    setInfoPage(0);
+    if (!IS_TOUCH) sceneRef.current?.unlock();
+  }
+
+  function goToNextExercise() {
+    sceneRef.current?.goToNextExercise();
+  }
+
+  function closeExercise() {
+    // Descarta o HUD mas mantém o aluno na sala de exercício.
+    setExerciseState(null);
+    if (!IS_TOUCH) sceneRef.current?.lock();
+  }
 
   function turnPage(step: number) {
     if (!info) return;
@@ -380,12 +485,18 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
         </button>
       )}
 
-      {/* Espaço de exercícios */}
-      {exerciseRoomId && (
-        <ExerciseOverlay
-          exercicios={EXERCICIOS[exerciseRoomId] ?? []}
-          onSetControl={(id, value) => sceneRef.current?.setControl(id, value)}
-          onClose={() => { setExerciseRoomId(null); if (!IS_TOUCH) sceneRef.current?.lock(); }}
+      {/* Exercícios interativos dentro da sala */}
+      {exerciseState && currentExercise && (
+        <ExerciseHud
+          exercicio={currentExercise}
+          qNum={exerciseState.exIndex + 1}
+          qTotal={exerciseState.total}
+          completed={exerciseState.completed}
+          successToast={successToast}
+          onEnunciado={showEnunciadoExercicio}
+          onDica={showDicaExercicio}
+          onNext={goToNextExercise}
+          onClose={closeExercise}
         />
       )}
 
@@ -435,6 +546,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
           closeLabel="Voltar à sala"
           focusedId={padPlaying ? room.controls[Math.min(padFocus, room.controls.length - 1)]?.id : undefined}
           hint={padPlaying ? GAMEPAD_HUD_HINT : undefined}
+          lockedControls={lockedControlsSet}
         />
       )}
 

@@ -88,6 +88,24 @@ export default function ExerciseOverlay({ exercicios, onSetControl, onClose }: P
 
   const ex = exercicios[current];
 
+  // Reset do estado ao mudar de questão (padrão "setState durante o render").
+  const [lastCurrent, setLastCurrent] = useState(current);
+  if (lastCurrent !== current) {
+    setLastCurrent(current);
+    setInputs({});
+    setResult(null);
+    setShowHint(false);
+  }
+
+  // Aplica preControls na cena (efeito externo; não é setState).
+  useEffect(() => {
+    if (ex.preControls) {
+      for (const [id, val] of Object.entries(ex.preControls)) {
+        onSetControl(id, val);
+      }
+    }
+  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Esc fecha o overlay sem propagar para os handlers do jogo (que pausariam).
   // Space = ação principal (Verificar / Próximo), igual ao "E" do FPS.
   useEffect(() => {
@@ -106,17 +124,6 @@ export default function ExerciseOverlay({ exercicios, onSetControl, onClose }: P
     document.addEventListener('keydown', onKey, true); // capture phase: dispara antes dos handlers do jogo
     return () => document.removeEventListener('keydown', onKey, true);
   }, [onClose]);
-
-  useEffect(() => {
-    setInputs({});
-    setResult(null);
-    setShowHint(false);
-    if (ex.preControls) {
-      for (const [id, val] of Object.entries(ex.preControls)) {
-        onSetControl(id, val);
-      }
-    }
-  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function verify() {
     const answers: Record<string, number> = {};

@@ -18,9 +18,11 @@ interface Props {
   // Controle de videogame: linha selecionada e dica de uso (opcionais).
   focusedId?: string;
   hint?: string;
+  // Controles bloqueados durante exercício: aparecem mas não podem ser alterados.
+  lockedControls?: Set<string>;
 }
 
-export default function ControlsHud({ title, controls, values, compact, onChange, onClose, closeLabel, focusedId, hint }: Props) {
+export default function ControlsHud({ title, controls, values, compact, onChange, onClose, closeLabel, focusedId, hint, lockedControls }: Props) {
   return (
     <div
       role="dialog"
@@ -40,43 +42,50 @@ export default function ControlsHud({ title, controls, values, compact, onChange
         <div style={{ fontSize: 17, fontWeight: 700 }}>{title}</div>
       </div>
 
-      {controls.map((c) => (
-        <label
-          key={c.id}
-          style={{
-            display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, borderRadius: 4,
-            outline: c.id === focusedId ? '2px solid var(--primary)' : 'none', outlineOffset: 4,
-          }}
-        >
-          <span style={{ color: 'var(--text-muted)' }}>
-            {c.label}
-            {c.kind === 'range' && (
-              <strong style={{ color: 'var(--text)', marginLeft: 6 }}>
-                {Number(values[c.id]).toFixed(decimals(c.step))}{c.unit ? ` ${c.unit}` : ''}
-              </strong>
+      {controls.map((c) => {
+        const locked = lockedControls?.has(c.id) ?? false;
+        return (
+          <label
+            key={c.id}
+            style={{
+              display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, borderRadius: 4,
+              outline: c.id === focusedId ? '2px solid var(--primary)' : 'none', outlineOffset: 4,
+              opacity: locked ? 0.45 : 1,
+            }}
+          >
+            <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              {c.label}
+              {locked && <span title="Valor fixado pelo exercício" style={{ fontSize: 10 }}>🔒</span>}
+              {c.kind === 'range' && (
+                <strong style={{ color: 'var(--text)', marginLeft: 4 }}>
+                  {Number(values[c.id]).toFixed(decimals(c.step))}{c.unit ? ` ${c.unit}` : ''}
+                </strong>
+              )}
+            </span>
+            {c.kind === 'range' ? (
+              <input
+                type="range" min={c.min} max={c.max} step={c.step}
+                value={Number(values[c.id])}
+                disabled={locked}
+                onChange={(e) => onChange(c.id, Number(e.target.value))}
+                style={{ width: '100%' }}
+              />
+            ) : (
+              <select
+                value={String(values[c.id])}
+                disabled={locked}
+                onChange={(e) => onChange(c.id, e.target.value)}
+                style={{
+                  background: 'var(--bg-surface2)', color: 'var(--text)', border: '1px solid var(--border)',
+                  borderRadius: 6, padding: '6px 8px', fontSize: 14,
+                }}
+              >
+                {c.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
             )}
-          </span>
-          {c.kind === 'range' ? (
-            <input
-              type="range" min={c.min} max={c.max} step={c.step}
-              value={Number(values[c.id])}
-              onChange={(e) => onChange(c.id, Number(e.target.value))}
-              style={{ width: '100%' }}
-            />
-          ) : (
-            <select
-              value={String(values[c.id])}
-              onChange={(e) => onChange(c.id, e.target.value)}
-              style={{
-                background: 'var(--bg-surface2)', color: 'var(--text)', border: '1px solid var(--border)',
-                borderRadius: 6, padding: '6px 8px', fontSize: 14,
-              }}
-            >
-              {c.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          )}
-        </label>
-      ))}
+          </label>
+        );
+      })}
 
       {hint && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{hint}</div>}
 

@@ -198,8 +198,9 @@ export function nearestDoor(p: Vec2, layout: MuseumLayout, maxDistance = ENTER_D
 // Reaproveita os mesmos tipos e regras do salão (spawnPoint, constrainPosition,
 // nearestDoor), então colisão e portas funcionam igual nos dois lugares.
 
-export const EXIT_DOOR_ID     = 'exit';
-export const EXERCISE_DOOR_ID = 'exercise';
+export const EXIT_DOOR_ID          = 'exit';
+export const EXERCISE_DOOR_ID      = 'exercise';
+export const NEXT_EXERCISE_DOOR_ID = 'next-exercise';
 
 export function computeRoomLayout(
   spec: { width: number; depth: number; obstacles: Obstacle[] },
@@ -207,6 +208,7 @@ export function computeRoomLayout(
   color: number,
   exitTitle = 'Voltar ao salão',
   exerciseDoor = false,
+  nextExerciseDoor = false,
 ): MuseumLayout {
   const { width, depth } = spec;
   const exit: DoorPlacement = {
@@ -228,6 +230,17 @@ export function computeRoomLayout(
       wall: 'right',
       ...pointOnWall('right', 0, width, depth),
       ...WALL_GEOMETRY.right,
+    });
+  }
+  if (nextExerciseDoor) {
+    doors.push({
+      id: NEXT_EXERCISE_DOOR_ID,
+      title: 'Próxima questão',
+      category: '',
+      color: 0x27ae60,
+      wall: 'left',
+      ...pointOnWall('left', 0, width, depth),
+      ...WALL_GEOMETRY.left,
     });
   }
   const sign: WallSign = { text: title, color, ...pointOnWall('far', 0, width, depth), ...WALL_GEOMETRY.far };

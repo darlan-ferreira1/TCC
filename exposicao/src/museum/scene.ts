@@ -46,7 +46,8 @@ import { createDirectionRepeat, createGamepadReader, frameDirection, type Gamepa
 import type { InteractiveRoom, RoomInteraction } from './interactiveRoom';
 import { buildHall, buildRoom, buildWing, type Centerpiece, type Level } from './levels';
 import {
-  spawnPoint, constrainPosition, nearestDoor, EXIT_DOOR_ID, EXERCISE_DOOR_ID, EYE_HEIGHT,
+  spawnPoint, constrainPosition, nearestDoor,
+  EXIT_DOOR_ID, EXERCISE_DOOR_ID, NEXT_EXERCISE_DOOR_ID, EYE_HEIGHT,
   type DoorEntry, type DoorPlacement,
 } from './layout';
 
@@ -56,6 +57,8 @@ export interface MuseumSceneConfig {
   wings?: Record<string, WingDef>;        // id da porta do salão → ala temática
   content?: Record<string, RoomContent>;  // id da porta → textos ("i", quadros)
   miniatures?: Record<string, Centerpiece>; // id da porta → miniatura no pedestal da ala
+  // Mapeia id do experimento → lista de { id, title } das salas de exercício, em ordem.
+  exerciseMap?: Record<string, Array<{ id: string; title: string }>>;
   spawnDoorId?: string;            // porta na frente da qual o jogador aparece
   background: number;
 }
@@ -115,7 +118,8 @@ export interface MuseumScene {
   onInteractionChange: ((prompt: string | null, hold: boolean) => void) | null;
   onInfo: ((content: InfoContent) => void) | null;       // abrir o pop-up de texto
   onInspectChange: ((inspecting: boolean) => void) | null;
-  onExercise: ((roomId: string) => void) | null;          // entrar no espaço de exercícios
+  // Navega para a próxima sala de exercício (ou fecha a sala se for a última).
+  goToNextExercise(): void;
   // Abre uma ala sem transição (usado para começar diretamente na ala da Mecânica).
   openWingById(id: string): void;
   dispose(): void;
@@ -171,6 +175,12 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   let level: Level = hall;
   let room: { level: Level; door: DoorPlacement; def: InteractiveRoom; values: ControlValues } | null = null;
   let wing: { level: Level; door: DoorPlacement } | null = null;
+
+  // Mapa reverso: id da sala de exercício → { experimentId, index }.
+  const exerciseRoomInfo: Record<string, { experimentId: string; index: number }> = {};
+  for (const [expId, entries] of Object.entries(config.exerciseMap ?? {})) {
+    entries.forEach((e, i) => { exerciseRoomInfo[e.id] = { experimentId: expId, index: i }; });
+  }
 
   function placePlayer(doorId?: string) {
     const spawn = spawnPoint(level.layout, doorId);
@@ -250,7 +260,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     onInteractionChange: null,
     onInfo: null,
     onInspectChange: null,
-    onExercise: null,
+    goToNextExercise() { if (!fade && room) navigateNextExercise(); },
     openWingById(id) {
       const entry = config.entries.find((e) => e.id === id);
       if (!entry || !config.wings?.[id]) return;
@@ -280,13 +290,34 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     veil.visible = true;
   }
 
+  function navigateNextExercise() {
+    const info = room ? exerciseRoomInfo[room.door.id] : null;
+    if (!info) { transition(closeRoom); return; }
+    const exEntries = config.exerciseMap?.[info.experimentId] ?? [];
+    const nextEntry = exEntries[info.index + 1];
+    if (nextEntry) {
+      transition(() => openRoom({
+        id: nextEntry.id, title: nextEntry.title, category: 'Exercício', color: 0x27ae60,
+        wall: 'right', x: 0, z: 0, rotationY: -Math.PI / 2, normal: { x: -1, z: 0 },
+      }));
+    } else {
+      transition(closeRoom);
+    }
+  }
+
   function goThroughDoor(door: DoorPlacement) {
     if (fade) return;
     if (room && door.id === EXERCISE_DOOR_ID) {
-      pressed.clear();
-      touchMove.x = touchMove.y = 0;
-      controls.unlock();
-      api.onExercise?.(room.door.id);
+      const exEntries = config.exerciseMap?.[room.door.id] ?? [];
+      if (exEntries.length) {
+        const first = exEntries[0];
+        transition(() => openRoom({
+          id: first.id, title: first.title, category: 'Exercício', color: 0x27ae60,
+          wall: 'right', x: 0, z: 0, rotationY: -Math.PI / 2, normal: { x: -1, z: 0 },
+        }));
+      }
+    } else if (room && door.id === NEXT_EXERCISE_DOOR_ID) {
+      navigateNextExercise();
     } else if (room && door.id === EXIT_DOOR_ID) {
       transition(closeRoom);
     } else if (!room && wing && door.id === EXIT_DOOR_ID) {
@@ -314,7 +345,17 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
 
   function openRoom(door: DoorPlacement) {
     const def = config.rooms[door.id];
-    const values = defaultValues(def.controls);
+    if (!def) return;
+    // Troca de sala sem passar pela ala (ex.: questão → próxima questão).
+    if (room) {
+      setInspect(false);
+      const old = room;
+      room = null;
+      scene.remove(old.level.group);
+      old.level.dispose();
+    }
+    const defaults = defaultValues(def.controls);
+    const values = def.preControls ? { ...defaults, ...def.preControls } : defaults;
     const exitTitle = wing ? `Voltar ao ${wing.door.title}` : undefined;
     const roomLevel = buildRoom(def, door.title, door.color, values, exitTitle, config.content?.[door.id], openInfo);
     scene.add(roomLevel.group);

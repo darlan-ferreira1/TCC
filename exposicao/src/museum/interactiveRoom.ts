@@ -33,6 +33,8 @@ export interface RoomSpec {
   infoAt?: [number, number, number];
   // Se true, cria uma segunda porta na parede direita que leva ao espaço de exercícios.
   exerciseDoor?: boolean;
+  // Se true, cria uma porta na parede esquerda para a próxima questão.
+  nextExerciseDoor?: boolean;
 }
 
 // Interação direta (camada B). O museu chama estes métodos com o raio que sai
@@ -53,4 +55,7 @@ export interface InteractiveRoom<Config = unknown, Mounted extends MountedExperi
   controls: ControlDef[];
   toConfig(values: ControlValues): Config;
   interactions?(mounted: Mounted, root: THREE.Group): RoomInteraction[];
+  // Campos usados pelas salas de exercício (geradas dinamicamente).
+  lockedControls?: string[];
+  preControls?: Record<string, number>;
 }

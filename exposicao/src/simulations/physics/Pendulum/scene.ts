@@ -40,6 +40,17 @@ export interface MountedPendulum extends MountedExperiment<PendulumSceneConfig> 
 
 export const pendulum: MountableExperiment<PendulumSceneConfig, MountedPendulum> = {
   mount({ root }, config) {
+    // Suporte do pivô — haste vertical + placa no teto (estáticos, não giram)
+    const supportMat = new THREE.MeshStandardMaterial({ color: 0x5c3d1a, roughness: 0.95 });
+    const shaftGeo = new THREE.CylinderGeometry(0.03, 0.03, 1.0, 8, 1);
+    const shaftMesh = new THREE.Mesh(shaftGeo, supportMat);
+    shaftMesh.position.set(0, 0.5, 0);
+    root.add(shaftMesh);
+    const plateGeo = new THREE.BoxGeometry(0.4, 0.06, 0.4);
+    const plateMesh = new THREE.Mesh(plateGeo, supportMat);
+    plateMesh.position.set(0, 1.0, 0);
+    root.add(plateMesh);
+
     // Pivô fixo — marcador visual na origem
     const pivotGeo = new THREE.SphereGeometry(0.07, 12, 8);
     const pivotMat = new THREE.MeshPhongMaterial({ color: 0x888888 });
@@ -109,13 +120,16 @@ export const pendulum: MountableExperiment<PendulumSceneConfig, MountedPendulum>
         state = { theta: state.theta, omega: 0 };
       },
       dispose() {
-        root.remove(pivotMesh, pivotGroup);
+        root.remove(pivotMesh, pivotGroup, shaftMesh, plateMesh);
         rodGeo?.dispose();
         massGeo.dispose();
         pivotGeo.dispose();
+        shaftGeo.dispose();
+        plateGeo.dispose();
         pivotMat.dispose();
         rodMat.dispose();
         massMat.dispose();
+        supportMat.dispose();
       },
     };
   },

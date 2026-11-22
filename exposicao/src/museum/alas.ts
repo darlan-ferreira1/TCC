@@ -14,6 +14,7 @@ import type { InteractiveRoom } from './interactiveRoom';
 import type { DoorEntry } from './layout';
 import type { Centerpiece } from './levels';
 import type { WingDef } from './scene';
+import { sala as pendulumRoom } from '../simulations/physics/Pendulum/sala';
 import { sala as conicalRoom } from '../simulations/physics/ConicalPendulum/sala';
 import { sala as foucaultRoom } from '../simulations/physics/FoucaultPendulum/sala';
 import { sala as projectileRoom } from '../simulations/physics/ProjectileRoom/sala';
@@ -25,6 +26,7 @@ const MECHANICS_COLOR = 0xe67e22;
 
 // Salas que só existem nas alas (id da porta → sala interativa).
 export const WING_ROOMS: Record<string, InteractiveRoom> = {
+  'simple-pendulum': pendulumRoom as InteractiveRoom,
   'conical-pendulum': conicalRoom as InteractiveRoom,
   'foucault-pendulum': foucaultRoom as InteractiveRoom,
   'projectile-room': projectileRoom as InteractiveRoom,
