@@ -43,11 +43,11 @@ Uma exposição 3D no navegador, com salas de Mecânica:
 - pêndulo cônico;
 - pêndulo de Foucault.
 
-O aluno anda em primeira pessoa pelas salas.
+O estudante anda em primeira pessoa pelas salas.
 
-**Ideia central:** os exercícios vêm de uma lista resolvida à mão (`proposta/listas-de-exercicios.md`), e **a resposta do aluno vira o fenômeno na cena**. Se a conta estiver errada, a cena mostra o resultado errado: a bola não cai no alvo, ou o pêndulo do aluno sai de sincronia com o correto. O erro é mostrado, não só apontado.
+**Ideia central:** os exercícios vêm de uma lista resolvida à mão (`proposta/listas-de-exercicios.md`), e **a resposta do estudante vira o fenômeno na cena**. Se a conta estiver errada, a cena mostra o resultado errado: a bola não cai no alvo, ou o pêndulo do estudante sai de sincronia com o correto. O erro é mostrado, não só apontado.
 
-- **Contribuição:** nos trabalhos relacionados (Physlets, Jalk Duque et al. 2026, Falcão & Machado 2010 e outros), a simulação fornece os dados ou apenas valida a resposta. Aqui, **a resposta do aluno é a entrada da simulação**, dentro de um ambiente 3D navegável.
+- **Contribuição:** nos trabalhos relacionados (Physlets, Jalk Duque et al. 2026, Falcão & Machado 2010 e outros), a simulação fornece os dados ou apenas valida a resposta. Aqui, **a resposta do estudante é a entrada da simulação**, dentro de um ambiente 3D navegável.
 - **Depois:** questões do ENEM com figura conceitual recriadas em 3D.
 - **Avaliação:** com usuários, usando pré e pós-teste, SUS e Likert (`proposta/roteiro_pesquisa.md` e `proposta/pesquisa.md`).
 - **Uso de IA:** o desenvolvimento é feito com o Claude Code, e isso é declarado no TCC (`proposta/ia_questao.md`). Os erros da IA são anotados, porque viram resultado.

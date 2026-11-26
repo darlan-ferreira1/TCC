@@ -14,7 +14,7 @@
 //     do mundo (ex.: pegar a massa do pêndulo e soltar).
 
 import type * as THREE from 'three';
-import type { ControlDef, ControlValues } from '../core/controls';
+import type { ControlDef, ControlValue, ControlValues } from '../core/controls';
 import type { MountableExperiment, MountedExperiment } from '../core/mountable';
 
 export interface RoomSpec {
@@ -35,6 +35,8 @@ export interface RoomSpec {
   exerciseDoor?: boolean;
   // Se true, cria uma porta na parede esquerda para a próxima questão.
   nextExerciseDoor?: boolean;
+  // Se true, cria uma porta na parede direita para a questão anterior.
+  prevExerciseDoor?: boolean;
 }
 
 // Interação direta (camada B). O museu chama estes métodos com o raio que sai
@@ -57,5 +59,7 @@ export interface InteractiveRoom<Config = unknown, Mounted extends MountedExperi
   interactions?(mounted: Mounted, root: THREE.Group): RoomInteraction[];
   // Campos usados pelas salas de exercício (geradas dinamicamente).
   lockedControls?: string[];
-  preControls?: Record<string, number>;
+  preControls?: Record<string, ControlValue>;
+  // Texto do enunciado exibido como placa 3D na parede do fundo.
+  enunciado?: { heading: string; text: string };
 }

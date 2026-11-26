@@ -15,9 +15,11 @@ export function buildAllExerciseRooms(
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
       const hasNext = i < exercises.length - 1;
+      const hasPrev = i > 0;
+      const page = ex.enunciado.pages[0];
       result[ex.id] = {
         experiment: base.experiment,
-        room: { ...base.room, exerciseDoor: false, nextExerciseDoor: hasNext },
+        room: { ...base.room, exerciseDoor: false, nextExerciseDoor: hasNext, prevExerciseDoor: hasPrev },
         controls: base.controls,
         toConfig(values) {
           return base.toConfig({ ...values, ...ex.preControls });
@@ -25,6 +27,7 @@ export function buildAllExerciseRooms(
         interactions: base.interactions,
         lockedControls: ex.lockedControls,
         preControls: ex.preControls,
+        enunciado: { heading: page.heading ?? ex.titulo, text: page.text },
       };
     }
   }

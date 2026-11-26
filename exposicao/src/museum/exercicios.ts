@@ -1,6 +1,6 @@
 // Exercícios interativos por sala. Cada `Exercicio` define o enunciado, as
-// entradas esperadas do aluno, o gabarito e quais controles da simulação mudar
-// antes (preControls) ou depois (applyControls) que o aluno responde.
+// entradas esperadas do estudante, o gabarito e quais controles da simulação mudar
+// antes (preControls) ou depois (applyControls) que o estudante responde.
 
 export interface ExInput {
   id: string;
@@ -19,7 +19,7 @@ export interface Exercicio {
   dica: string;
   // Controles da simulação fixados antes de mostrar o exercício.
   preControls?: Record<string, number>;
-  // Controles a aplicar com a resposta do aluno (undefined = não altera).
+  // Controles a aplicar com a resposta do estudante (undefined = não altera).
   applyControls?: (ans: Record<string, number>) => Record<string, number>;
 }
 

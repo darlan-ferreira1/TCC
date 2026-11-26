@@ -11,5 +11,5 @@ export interface HallDoor {
   folder: string; // pasta em src/simulations/ que tem o sala.ts
 }
 
-// Sem portas avulsas no salão: o aluno começa direto na Ala da Mecânica.
+// Sem portas avulsas no salão: o estudante começa direto na Ala da Mecânica.
 export const HALL_DOORS: HallDoor[] = [];

@@ -5,7 +5,7 @@
 // (T em anos, a em UA). Assim a lei vale de verdade dentro da sala.
 //
 // Além dos planetas reais (Mercúrio a Júpiter) há um "Planeta X" cuja
-// distância o aluno escolhe: ele calcula o período e confere contando quantas
+// distância o estudante escolhe: ele calcula o período e confere contando quantas
 // voltas a Terra dá enquanto o Planeta X dá uma (exercícios 10 e 11).
 
 import * as THREE from 'three';

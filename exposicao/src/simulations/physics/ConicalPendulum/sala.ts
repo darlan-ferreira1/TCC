@@ -2,7 +2,7 @@
 // O ponto de suspensão fica a 3,4 m do chão; com L = 3 m e θ pequeno a massa
 // passa a 0,4 m do chão.
 //
-// O painel mostra o raio e conta as voltas, mas NÃO mostra o período: o aluno
+// O painel mostra o raio e conta as voltas, mas NÃO mostra o período: o estudante
 // cronometra as voltas para conferir a conta (exercícios C1 e C3 da lista).
 
 import type { InteractiveRoom } from '../../../museum/interactiveRoom';

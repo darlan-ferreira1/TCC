@@ -162,6 +162,80 @@ export function buildShell(group: THREE.Group, layout: MuseumLayout, t: Tracker,
   return { doorMaterials };
 }
 
+// Quebra `text` em linhas que cabem em `maxWidth` pixels (canvas 2D).
+// Preserva quebras de linha explícitas (`\n`) e ignora linhas que não caberiam
+// no espaço vertical (evita estouro de canvas).
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number): string[] {
+  const out: string[] = [];
+  for (const para of text.split('\n')) {
+    if (out.length >= maxLines) break;
+    if (para.trim() === '') { out.push(''); continue; }
+    const words = para.split(' ');
+    let cur = '';
+    for (const w of words) {
+      if (out.length >= maxLines) break;
+      const test = cur ? `${cur} ${w}` : w;
+      if (ctx.measureText(test).width > maxWidth) {
+        if (cur) out.push(cur);
+        cur = w;
+      } else {
+        cur = test;
+      }
+    }
+    if (cur && out.length < maxLines) out.push(cur);
+  }
+  return out;
+}
+
+// Placa retangular com título e texto multilinha, para a parede do fundo das
+// salas de exercício. Já retorna o mesh posicionado em (0, 0, 0); quem chama
+// define a posição final.
+export function buildEnunciadoPanel(t: Tracker, heading: string, text: string, color: number): THREE.Mesh {
+  const W = 1024, H = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+  const hex = `#${color.toString(16).padStart(6, '0')}`;
+
+  // Fundo escuro + borda colorida
+  ctx.fillStyle = '#14142a';
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = hex;
+  ctx.lineWidth = 8;
+  ctx.strokeRect(4, 4, W - 8, H - 8);
+  // Barra colorida no topo
+  ctx.fillStyle = hex;
+  ctx.fillRect(0, 0, W, 16);
+
+  // Título em branco, fonte grande
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 54px Inter, system-ui, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(heading, 42, 28, W - 84);
+
+  // Separador
+  ctx.fillStyle = hex;
+  ctx.fillRect(42, 96, W - 84, 3);
+
+  // Corpo do texto (multilinha)
+  ctx.fillStyle = '#c8c8e0';
+  ctx.font = '34px Inter, system-ui, sans-serif';
+  const lines = wrapText(ctx, text, W - 84, 9);
+  lines.forEach((line, i) => {
+    ctx.fillText(line, 42, 112 + i * 46);
+  });
+
+  const tex = t.track(new THREE.CanvasTexture(canvas));
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  return new THREE.Mesh(
+    t.track(new THREE.PlaneGeometry(3.2, 1.6)),
+    t.track(new THREE.MeshBasicMaterial({ map: tex })),
+  );
+}
+
 export function buildPedestal(group: THREE.Group, t: Tracker, x: number, z: number, radius: number, height: number) {
   const mat = t.track(new THREE.MeshStandardMaterial({ color: 0x3a3a55, roughness: 0.6 }));
   const base = new THREE.Mesh(t.track(new THREE.CylinderGeometry(radius, radius * 1.1, height, 32)), mat);

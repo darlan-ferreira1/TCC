@@ -5,7 +5,7 @@ import { CONTEUDO } from './conteudo';
 import { MINIATURAS } from './miniaturas';
 import type { InfoContent } from './info';
 import InfoPopup from './InfoPopup';
-import { EXIT_DOOR_ID, EXERCISE_DOOR_ID, NEXT_EXERCISE_DOOR_ID, type DoorEntry, type DoorPlacement } from './layout';
+import { EXIT_DOOR_ID, EXERCISE_DOOR_ID, NEXT_EXERCISE_DOOR_ID, PREV_EXERCISE_DOOR_ID, type DoorEntry, type DoorPlacement } from './layout';
 import ExerciseHud from './ExerciseHud';
 import { EXERCICIOS_INTERATIVOS, type ExercicioInterativo } from './exerciciosInterativos';
 import { buildAllExerciseRooms, buildExerciseMap } from './exerciseRooms';
@@ -52,7 +52,7 @@ function getExerciseForRoom(roomId: string): {
   return null;
 }
 
-// Guarda por qual porta o aluno saiu, para ele reaparecer na frente dela ao
+// Guarda por qual porta o estudante saiu, para ele reaparecer na frente dela ao
 // voltar do experimento (o componente é desmontado durante o experimento,
 // então isso fica fora do estado do React).
 let lastDoorId: string | undefined;
@@ -67,7 +67,8 @@ const KEYBOARD_HELP = [
   ['E', 'entrar na porta / segurar objeto / ler o "i"'],
   ['Tab', 'ajustes (dentro de uma sala)'],
   ['I', 'inspecionar o experimento (dentro de uma sala)'],
-  ['Esc', 'pausar'],
+  ['Esc', 'fechar textos e ajustes'],
+  ['P', 'pausar'],
 ];
 
 const TOUCH_HELP = [
@@ -92,10 +93,11 @@ const roundButton = {
   background: 'rgba(10,10,26,0.6)', color: '#e0e0f0', fontSize: 16, cursor: 'pointer',
 } as const;
 
-function doorPrompt(door: DoorPlacement): string {
+function doorPrompt(door: DoorPlacement, nextLocked = false): string {
   if (door.id === EXIT_DOOR_ID) return door.title;
   if (door.id === EXERCISE_DOOR_ID) return 'Entrar no espaço de exercícios';
-  if (door.id === NEXT_EXERCISE_DOOR_ID) return 'Próxima questão';
+  if (door.id === NEXT_EXERCISE_DOOR_ID) return nextLocked ? 'Responda para avançar' : 'Próxima questão';
+  if (door.id === PREV_EXERCISE_DOOR_ID) return 'Questão anterior';
   if (door.category === WINGS_CATEGORY) return `Entrar na ${door.title}`;
   if (!(door.id in ALL_ROOMS_FINAL)) return `Abrir o experimento ${door.title}`;
   return `Entrar na sala ${door.title}`;
@@ -113,10 +115,14 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef     = useRef<MuseumScene | null>(null);
   const [locked, setLocked]     = useState(false);
-  // No celular não existe Pointer Lock: "jogando" = o aluno tocou em Começar.
+  // Menu de instruções: aparece no início e quando o estudante pausa (P,
+  // Select, ❚❚). Se o mouse for solto por outro motivo (Esc do navegador),
+  // aparece só um aviso pequeno de "clique para continuar".
+  const [menuOpen, setMenuOpen] = useState(true);
+  // No celular não existe Pointer Lock: "jogando" = o estudante tocou em Começar.
   // Ao voltar de um experimento, já recomeça direto (sem a tela de instruções).
   const [touchPlaying, setTouchPlaying] = useState(IS_TOUCH && lastDoorId !== undefined);
-  // Com controle de videogame: "jogando" = o aluno apertou A ou Start.
+  // Com controle de videogame: "jogando" = o estudante apertou A ou Start.
   const [padPlaying, setPadPlaying] = useState(false);
   const [nearDoor, setNearDoor] = useState<DoorPlacement | null>(null);
   const [interaction, setInteraction] = useState<string | null>(null);
@@ -142,9 +148,10 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   const [hudOpen, setHudOpen] = useState(false);
   const [padFocus, setPadFocus] = useState(0); // linha do HUD selecionada pelo controle
   const padHudInput = useRef<((direction: GamepadDirection) => void) | null>(null);
-  const playing = locked || touchPlaying || padPlaying;
+  const playing = locked || touchPlaying || padPlaying || exerciseState !== null;
 
   function pauseTouch() {
+    setMenuOpen(true);
     sceneRef.current?.setTouchMove(0, 0);
     setTouchPlaying(false);
   }
@@ -181,7 +188,8 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
       spawnDoorId: lastDoorId,
       background: theme === 'dark' ? 0x0a0a1a : 0xcfd6e6,
     });
-    s.onLockChange = setLocked;
+    s.onLockChange = (l) => { setLocked(l); if (l) setMenuOpen(false); };
+    s.onPause = () => setMenuOpen(true);
     s.onGamepadAction = (action) => {
       if (action === 'resume') {
         setHudOpen(false);
@@ -192,6 +200,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
         setHudOpen(true);
         s.unlock(); // no desktop, solta o mouse para usar o HUD
       } else {
+        setMenuOpen(true);
         setPadPlaying(false);
         setTouchPlaying(false);
         s.setTouchMove(0, 0);
@@ -218,8 +227,6 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
         const exInfo = getExerciseForRoom(r.id);
         if (exInfo) {
           setExerciseState({ roomId: r.id, expId: exInfo.expId, exIndex: exInfo.index, total: exInfo.total, completed: false });
-          setInfo(exInfo.ex.enunciado);
-          setInfoPage(0);
           s.unlock();
         } else {
           setExerciseState(null);
@@ -275,6 +282,11 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exerciseState?.expId, exerciseState?.exIndex]);
 
+  // Libera a porta "Próxima questão" assim que o estudante completa o exercício.
+  useEffect(() => {
+    sceneRef.current?.setNextExerciseLocked(!exerciseState?.completed);
+  }, [exerciseState?.completed]);
+
   // Limpa timer do toast ao desmontar
   useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
 
@@ -304,7 +316,8 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   });
 
   // Desktop: Tab abre o HUD de ajustes dentro de uma sala (solta o mouse);
-  // Esc com o HUD aberto volta para a tela de pausa.
+  // Esc com o HUD aberto fecha o HUD (o mouse já está solto).
+  // Esc durante o jogo não muda de sala (sem teleporte); o navegador só solta o mouse.
   useEffect(() => {
     if (IS_TOUCH) return;
     const onKey = (e: KeyboardEvent) => {
@@ -320,13 +333,6 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
     return () => document.removeEventListener('keydown', onKey);
   }, [room, locked, hudOpen]);
 
-  function showEnunciadoExercicio() {
-    if (!currentExercise) return;
-    setInfo(currentExercise.enunciado);
-    setInfoPage(0);
-    if (!IS_TOUCH) sceneRef.current?.unlock();
-  }
-
   function showDicaExercicio() {
     if (!currentExercise?.dica) return;
     setInfo({ title: 'Dica', pages: [{ heading: currentExercise.titulo, text: currentExercise.dica }] });
@@ -339,7 +345,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   }
 
   function closeExercise() {
-    // Descarta o HUD mas mantém o aluno na sala de exercício.
+    // Descarta o HUD mas mantém o estudante na sala de exercício.
     setExerciseState(null);
     if (!IS_TOUCH) sceneRef.current?.lock();
   }
@@ -480,7 +486,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
               ? (interactionHold
                   ? (touchPlaying ? `Segure aqui para ${interaction}` : `Segure para ${interaction}`)
                   : (touchPlaying ? `Toque para ${interaction}` : interaction))
-              : (touchPlaying ? 'Toque: ' : '') + doorPrompt(nearDoor!)}
+              : (touchPlaying ? 'Toque: ' : '') + doorPrompt(nearDoor!, !exerciseState?.completed)}
           </span>
         </button>
       )}
@@ -493,7 +499,6 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
           qTotal={exerciseState.total}
           completed={exerciseState.completed}
           successToast={successToast}
-          onEnunciado={showEnunciadoExercicio}
           onDica={showDicaExercicio}
           onNext={goToNextExercise}
           onClose={closeExercise}
@@ -550,8 +555,24 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
         />
       )}
 
-      {/* Tela de instruções (aparece enquanto não está "jogando") */}
-      {!playing && !showHud && !info && !inspecting && (
+      {/* Mouse solto sem pausa (ex.: Esc): só pede um clique para voltar a travar.
+          O Pointer Lock só pode ser pedido dentro de um clique. */}
+      {!playing && !menuOpen && !showHud && !info && !inspecting && (
+        <div
+          onClick={() => (IS_TOUCH ? setTouchPlaying(true) : sceneRef.current?.lock())}
+          style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+        >
+          <div style={{
+            background: 'var(--bg-surface)', color: 'var(--text)', border: '1px solid var(--border)',
+            borderRadius: 10, padding: '10px 20px', fontSize: 14, fontWeight: 600,
+          }}>
+            Clique para continuar
+          </div>
+        </div>
+      )}
+
+      {/* Menu de instruções: no início e na pausa (P, Select, ❚❚) */}
+      {!playing && menuOpen && !showHud && !info && !inspecting && (
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'rgba(5,5,15,0.55)', padding: 24,

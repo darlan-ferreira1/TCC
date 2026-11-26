@@ -1,4 +1,4 @@
-// Overlay de exercícios interativos. Aparece sobre a cena 3D quando o aluno
+// Overlay de exercícios interativos. Aparece sobre a cena 3D quando o estudante
 // entra pela porta do "espaço de exercícios" dentro de uma sala.
 
 import { useEffect, useState } from 'react';

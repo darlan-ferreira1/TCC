@@ -6,7 +6,6 @@ interface Props {
   qTotal: number;  // total de questões do experimento
   completed: boolean;
   successToast: string | null;
-  onEnunciado: () => void;
   onDica: () => void;
   onNext: () => void;   // "Próxima →" ou "Concluído ✓" (após completar)
   onClose: () => void;  // "Sair" (descarta o HUD sem navegar)
@@ -14,7 +13,7 @@ interface Props {
 
 export default function ExerciseHud({
   exercicio, qNum, qTotal, completed, successToast,
-  onEnunciado, onDica, onNext, onClose,
+  onDica, onNext, onClose,
 }: Props) {
   const isLast = qNum === qTotal;
 
@@ -55,7 +54,6 @@ export default function ExerciseHud({
 
         {/* Botões */}
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-          <Btn onClick={onEnunciado}>Enunciado</Btn>
           {exercicio.dica && <Btn onClick={onDica}>Dica</Btn>}
           {completed
             ? <Btn primary onClick={onNext}>

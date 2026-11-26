@@ -47,7 +47,7 @@ import type { InteractiveRoom, RoomInteraction } from './interactiveRoom';
 import { buildHall, buildRoom, buildWing, type Centerpiece, type Level } from './levels';
 import {
   spawnPoint, constrainPosition, nearestDoor,
-  EXIT_DOOR_ID, EXERCISE_DOOR_ID, NEXT_EXERCISE_DOOR_ID, EYE_HEIGHT,
+  EXIT_DOOR_ID, EXERCISE_DOOR_ID, NEXT_EXERCISE_DOOR_ID, PREV_EXERCISE_DOOR_ID, EYE_HEIGHT,
   type DoorEntry, type DoorPlacement,
 } from './layout';
 
@@ -107,6 +107,9 @@ export interface MuseumScene {
   setGamepadMode(mode: GamepadMode): void;
 
   onLockChange: ((locked: boolean) => void) | null;
+  // P apertado: pausa de verdade (o React mostra o menu de instruções).
+  // Um destravamento sem onPause antes (ex.: Esc do navegador) não abre o menu.
+  onPause: (() => void) | null;
   // resume = começar/voltar a jogar; menu = abrir o HUD (só numa sala);
   // pause = pausar (Select ou controle desconectado).
   onGamepadAction: ((action: 'resume' | 'menu' | 'pause') => void) | null;
@@ -120,6 +123,10 @@ export interface MuseumScene {
   onInspectChange: ((inspecting: boolean) => void) | null;
   // Navega para a próxima sala de exercício (ou fecha a sala se for a última).
   goToNextExercise(): void;
+  // Libera (false) ou trava (true) a porta "Próxima questão".
+  setNextExerciseLocked(locked: boolean): void;
+  // Volta para a fase anterior (sala → ala → salão), igual ao ESC.
+  goBack(): void;
   // Abre uma ala sem transição (usado para começar diretamente na ala da Mecânica).
   openWingById(id: string): void;
   dispose(): void;
@@ -195,6 +202,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   const touchMove = { x: 0, y: 0 };
   let currentDoor: DoorPlacement | null = null;
   let hovered: RoomInteraction | null = null;
+  let nextExerciseLocked = false;
   let active: RoomInteraction | null = null; // interação sendo segurada
   let shownPrompt: string | null = null;
   let fade: { phase: 'out' | 'in'; t: number; action?: () => void } | null = null;
@@ -251,6 +259,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
       room.level.setControls(room.values);
     },
     onLockChange: null,
+    onPause: null,
     onGamepadAction: null,
     onGamepadHud: null,
     onNearDoorChange: null,
@@ -261,6 +270,8 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     onInfo: null,
     onInspectChange: null,
     goToNextExercise() { if (!fade && room) navigateNextExercise(); },
+    setNextExerciseLocked(locked) { nextExerciseLocked = locked; },
+    goBack,
     openWingById(id) {
       const entry = config.entries.find((e) => e.id === id);
       if (!entry || !config.wings?.[id]) return;
@@ -305,6 +316,21 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     }
   }
 
+  function navigatePrevExercise() {
+    const info = room ? exerciseRoomInfo[room.door.id] : null;
+    if (!info) { transition(closeRoom); return; }
+    const exEntries = config.exerciseMap?.[info.experimentId] ?? [];
+    const prevEntry = exEntries[info.index - 1];
+    if (prevEntry) {
+      transition(() => openRoom({
+        id: prevEntry.id, title: prevEntry.title, category: 'Exercício', color: 0x27ae60,
+        wall: 'right', x: 0, z: 0, rotationY: -Math.PI / 2, normal: { x: -1, z: 0 },
+      }));
+    } else {
+      transition(closeRoom);
+    }
+  }
+
   function goThroughDoor(door: DoorPlacement) {
     if (fade) return;
     if (room && door.id === EXERCISE_DOOR_ID) {
@@ -317,7 +343,9 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
         }));
       }
     } else if (room && door.id === NEXT_EXERCISE_DOOR_ID) {
-      navigateNextExercise();
+      if (!nextExerciseLocked) navigateNextExercise();
+    } else if (room && door.id === PREV_EXERCISE_DOOR_ID) {
+      navigatePrevExercise();
     } else if (room && door.id === EXIT_DOOR_ID) {
       transition(closeRoom);
     } else if (!room && wing && door.id === EXIT_DOOR_ID) {
@@ -360,6 +388,8 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     const roomLevel = buildRoom(def, door.title, door.color, values, exitTitle, config.content?.[door.id], openInfo);
     scene.add(roomLevel.group);
     room = { level: roomLevel, door, def, values };
+    // Salas de exercício sempre começam travadas: o estudante precisa responder para avançar.
+    nextExerciseLocked = exerciseRoomInfo[door.id] !== undefined;
     switchLevel(roomLevel);
     placePlayer();
     api.onRoomChange?.({ id: door.id, title: door.title, controls: def.controls, values });
@@ -403,7 +433,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   // ── Modo "inspecionar" ──
   // Como o visualizador orbital do ECOS, mas sem trocar de página: a mesma
   // câmera ganha um OrbitControls em volta do experimento, e o resto da sala
-  // (paredes, portas, quadros) some até o aluno sair do modo.
+  // (paredes, portas, quadros) some até o estudante sair do modo.
   let inspecting: { orbit: OrbitControls; pos: THREE.Vector3; quat: THREE.Quaternion; hidden: THREE.Object3D[] } | null = null;
 
   function setInspect(on: boolean) {
@@ -466,10 +496,23 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     else if (currentDoor) goThroughDoor(currentDoor);
   }
 
+  function goBack() {
+    if (fade) return;
+    if (room) transition(closeRoom);
+    else if (wing) transition(closeWing);
+  }
+
   function onKeyDown(e: KeyboardEvent) {
     pressed.add(e.code);
     if (e.code === 'KeyE' && !e.repeat && controls.isLocked) primaryDown();
     if (e.code === 'KeyI' && !e.repeat && controls.isLocked && room) setInspect(true);
+    // Esc não muda de sala: sem teleporte, o estudante volta andando pelas
+    // portas. Esc só fecha pop-ups e o HUD de ajustes (tratado no index.tsx).
+    // P pausa (solta o mouse e mostra a tela de instruções).
+    if (e.code === 'KeyP' && !e.repeat && controls.isLocked && !inspecting) {
+      api.onPause?.();
+      controls.unlock();
+    }
   }
   function onKeyUp(e: KeyboardEvent) {
     pressed.delete(e.code);

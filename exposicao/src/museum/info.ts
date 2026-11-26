@@ -1,6 +1,6 @@
 // Textos informativos do Museu Virtual (ícones "i", quadros e pedestais).
 //
-// O texto é mostrado num pop-up paginado (InfoPopup.tsx): o aluno passa as
+// O texto é mostrado num pop-up paginado (InfoPopup.tsx): o estudante passa as
 // páginas com as setas sem sair do museu (no ECOS, cada quadro abria outra
 // página do site).
 

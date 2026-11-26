@@ -9,7 +9,7 @@
 import * as THREE from 'three';
 import type { ControlValues } from '../core/controls';
 import type { InteractiveRoom, RoomInteraction } from './interactiveRoom';
-import { buildEasel, buildInfoIcon, buildPedestal, buildShell, Tracker } from './builders';
+import { buildEasel, buildEnunciadoPanel, buildInfoIcon, buildPedestal, buildShell, Tracker } from './builders';
 import type { InfoContent, RoomContent } from './info';
 import { computeLayout, computeRoomLayout, computeWingLayout, EXHIBIT_RADIUS, type DoorEntry, type MuseumLayout, type Obstacle } from './layout';
 
@@ -156,7 +156,7 @@ export function buildRoom(
   const quadros = content && openInfo ? content.quadros.slice(0, easelSpots.length) : [];
   quadros.forEach((_, i) => obstacles.push({ ...easelSpots[i], r: 0.45 }));
 
-  const layout = computeRoomLayout({ width: spec.width, depth: spec.depth, obstacles }, title, color, exitTitle, spec.exerciseDoor, spec.nextExerciseDoor);
+  const layout = computeRoomLayout({ width: spec.width, depth: spec.depth, obstacles }, title, color, exitTitle, spec.exerciseDoor, spec.nextExerciseDoor, spec.prevExerciseDoor);
   const group = new THREE.Group();
   const { doorMaterials } = buildShell(group, layout, t, spec.wallHeight);
   if (spec.pedestal) buildPedestal(group, t, px, pz, spec.pedestal.radius, spec.pedestal.height);
@@ -186,6 +186,12 @@ export function buildRoom(
     icon.position.set(ix, iy, iz);
     group.add(icon);
     interactions.push(infoInteraction(icon, content.observar, openInfo, 0.3));
+  }
+
+  if (def.enunciado) {
+    const panel = buildEnunciadoPanel(t, def.enunciado.heading, def.enunciado.text, color);
+    panel.position.set(0, 2.3, -spec.depth / 2 + 0.04);
+    group.add(panel);
   }
 
   const [tx, ty, tz] = spec.inspect?.target ?? spec.place;

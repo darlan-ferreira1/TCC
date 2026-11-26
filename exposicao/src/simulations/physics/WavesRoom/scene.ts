@@ -2,7 +2,7 @@
 //
 // Uma corda de contas esticada ao longo de X com uma onda transversal
 // y = A·sen(k·x − ω·t), com k = 2π/λ e ω = 2π·f. Uma conta vermelha marca uma
-// crista que anda com a onda, e o chão tem marcas a cada 0,5 m: o aluno mede
+// crista que anda com a onda, e o chão tem marcas a cada 0,5 m: o estudante mede
 // quanto a crista anda num período e confere v = λ·f (exercícios 12 e 13).
 // O painel mostra λ, f e o período, mas não a velocidade.
 

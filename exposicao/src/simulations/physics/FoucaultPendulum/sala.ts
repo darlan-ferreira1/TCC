@@ -6,7 +6,7 @@
 // tempo para ver o plano girar (exercícios F2 a F5 da lista).
 //
 // O painel mostra o tempo simulado e o giro do plano, mas não o tempo de uma
-// volta: é isso que o aluno calcula com 24 h / sen(latitude) e confere.
+// volta: é isso que o estudante calcula com 24 h / sen(latitude) e confere.
 
 import type { InteractiveRoom } from '../../../museum/interactiveRoom';
 import { foucaultPendulum, type FoucaultConfig } from './scene';

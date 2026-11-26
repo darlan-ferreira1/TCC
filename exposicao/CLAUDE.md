@@ -4,9 +4,9 @@ Detalhes técnicos do código. O contexto geral do TCC (trabalho antigo, por que
 
 ## O que é
 
-Ambiente virtual interativo em 3D, no navegador, para o **ensino de Física (Mecânica) no ensino médio**. O aluno anda em 1ª pessoa por um salão com alas e salas. Cada sala tem uma simulação, quadros de teoria e história, um "i" explicativo e um modo de inspeção.
+Ambiente virtual interativo em 3D, no navegador, para o **ensino de Física (Mecânica) no ensino médio**. O estudante anda em 1ª pessoa por um salão com alas e salas. Cada sala tem uma simulação, quadros de teoria e história, um "i" explicativo e um modo de inspeção.
 
-**Objetivo do TCC:** integrar **exercícios de uma lista resolvida à mão**, de modo que **a resposta do aluno vire o fenômeno na cena**. Se o aluno erra a conta, a cena mostra o resultado errado.
+**Objetivo do TCC:** integrar **exercícios de uma lista resolvida à mão**, de modo que **a resposta do estudante vire o fenômeno na cena**. Se o estudante erra a conta, a cena mostra o resultado errado.
 
 - **Curso:** TCC de Ciência da Computação, UFC Quixadá.
 - **Orientador:** Prof. Rubens Fernandes Nunes.
@@ -106,7 +106,7 @@ src/
 ## Tarefas em aberto (ordem sugerida)
 
 1. **Sistema de exercícios (o núcleo do TCC):**
-   - enunciado na sala → o aluno digita a resposta → **a cena é montada com a resposta** → comparação com o resultado correto, com tolerância e dica.
+   - enunciado na sala → o estudante digita a resposta → **a cena é montada com a resposta** → comparação com o resultado correto, com tolerância e dica.
    - Começar pelo Lançamento (exercício 7: alcance com v₀ = 20 m/s e 30°) e pelo Pêndulo (exercício 2: L para T = 2 s).
    - Os exercícios estão em `proposta/listas-de-exercicios.md`.
 2. **Questões do ENEM** com figura conceitual em versão 3D, como desafio final.
@@ -137,4 +137,4 @@ Rascunho da monografia em LaTeX para o Overleaf, um arquivo por capítulo (mesmo
 | `pesquisa.md` | Perguntas: perfil, pré/pós-teste, SUS, Likert, abertas |
 | `analise-ecos.md` | Análise técnica do ECOS (por que carrega devagar) |
 
-**A contribuição em uma frase:** nos trabalhos analisados, a simulação fornece os dados ou valida a resposta; aqui, **a resposta do aluno é a entrada da simulação**, dentro de um ambiente 3D navegável.
+**A contribuição em uma frase:** nos trabalhos analisados, a simulação fornece os dados ou valida a resposta; aqui, **a resposta do estudante é a entrada da simulação**, dentro de um ambiente 3D navegável.

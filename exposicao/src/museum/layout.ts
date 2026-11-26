@@ -201,6 +201,7 @@ export function nearestDoor(p: Vec2, layout: MuseumLayout, maxDistance = ENTER_D
 export const EXIT_DOOR_ID          = 'exit';
 export const EXERCISE_DOOR_ID      = 'exercise';
 export const NEXT_EXERCISE_DOOR_ID = 'next-exercise';
+export const PREV_EXERCISE_DOOR_ID = 'prev-exercise';
 
 export function computeRoomLayout(
   spec: { width: number; depth: number; obstacles: Obstacle[] },
@@ -209,6 +210,7 @@ export function computeRoomLayout(
   exitTitle = 'Voltar ao salão',
   exerciseDoor = false,
   nextExerciseDoor = false,
+  prevExerciseDoor = false,
 ): MuseumLayout {
   const { width, depth } = spec;
   const exit: DoorPlacement = {
@@ -241,6 +243,17 @@ export function computeRoomLayout(
       wall: 'left',
       ...pointOnWall('left', 0, width, depth),
       ...WALL_GEOMETRY.left,
+    });
+  }
+  if (prevExerciseDoor) {
+    doors.push({
+      id: PREV_EXERCISE_DOOR_ID,
+      title: 'Questão anterior',
+      category: '',
+      color: 0x8888aa,
+      wall: 'right',
+      ...pointOnWall('right', 0, width, depth),
+      ...WALL_GEOMETRY.right,
     });
   }
   const sign: WallSign = { text: title, color, ...pointOnWall('far', 0, width, depth), ...WALL_GEOMETRY.far };
