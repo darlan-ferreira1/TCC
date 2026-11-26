@@ -43,6 +43,24 @@
   box-sizing: border-box;
 }
 
+/* A exposição ocupa a tela inteira e a página nunca rola (no celular, rolar
+   faz a barra do navegador aparecer/sumir e "empurra" a cena). */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Altura da exposição. 100vh no celular é a tela TODA, inclusive a parte
+   escondida atrás das barras do navegador (endereço em cima, botões embaixo),
+   e cortava o topo e o rodapé da interface. 100dvh é a altura visível de
+   verdade e acompanha as barras aparecendo/sumindo. 100vh fica de reserva
+   para navegadores antigos que não conhecem dvh. */
+.expo-root {
+  height: 100vh;
+  height: 100dvh;
+}
+
 body {
   background: var(--bg);
   color: var(--text);

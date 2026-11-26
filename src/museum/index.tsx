@@ -413,7 +413,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   const showGameUi = playing && !showHud && !inspecting;
 
   return (
-    <div style={{ position: 'relative', height: '100vh', overflow: 'hidden', background: 'var(--bg)', fontFamily: 'Inter, sans-serif' }}>
+    <div className="expo-root" style={{ position: 'relative', overflow: 'hidden', background: 'var(--bg)', fontFamily: 'Inter, sans-serif' }}>
       <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
 
       {/* Controles de toque (celular) */}
