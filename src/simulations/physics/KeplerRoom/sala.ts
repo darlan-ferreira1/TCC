@@ -4,6 +4,7 @@
 
 import type { InteractiveRoom } from '../../../museum/interactiveRoom';
 import { keplerRoom, type KeplerConfig } from './scene';
+import { marcadorControl } from '../../../core/marcadores';
 
 export const sala: InteractiveRoom<KeplerConfig> = {
   experiment: keplerRoom,
@@ -11,6 +12,7 @@ export const sala: InteractiveRoom<KeplerConfig> = {
   controls: [
     { id: 'planetX', label: 'Distância do Planeta X ao Sol', kind: 'range', min: 0.5, max: 5, step: 0.1, unit: 'UA', default: 4 },
     { id: 'yearsPerSecond', label: 'Velocidade do tempo', kind: 'range', min: 0.1, max: 3, step: 0.1, unit: 'anos/s', default: 0.5 },
+    marcadorControl('fantasmaT', 'Período escolhido (fantasma)'),
   ],
-  toConfig: (v) => ({ planetX: Number(v.planetX), yearsPerSecond: Number(v.yearsPerSecond) }),
+  toConfig: (v) => ({ planetX: Number(v.planetX), yearsPerSecond: Number(v.yearsPerSecond), fantasmaT: Number(v.fantasmaT ?? 0) }),
 };

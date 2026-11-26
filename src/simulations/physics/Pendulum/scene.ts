@@ -22,11 +22,16 @@ import * as THREE from 'three';
 import { hostInPage } from '../../../core/hostInPage';
 import type { MountableExperiment, MountedExperiment } from '../../../core/mountable';
 import { stepPendulum, type PendulumState, type PendulumConfig } from './physics';
+import { ghostMaterial } from '../../../core/marcadores';
 
 export interface PendulumSceneConfig {
   L: number;      // comprimento (m / unidades da cena)
   g: number;      // gravidade (m/s²)
   theta0: number; // ângulo inicial (rad)
+  // Marcador da resposta (questões de alternativas): período escolhido pelo
+  // estudante, em s. Um pêndulo "fantasma" oscila com esse período; se a
+  // resposta estiver certa, ele acompanha a massa real. 0 = desligado.
+  fantasmaT?: number;
 }
 
 const MAX_STEP = 0.02; // s — maior passo de integração aceito
@@ -84,12 +89,29 @@ export const pendulum: MountableExperiment<PendulumSceneConfig, MountedPendulum>
 
     buildRod(config.L);
 
+    // Fantasma da resposta: halo verde translúcido em volta da massa.
+    const ghostMat = ghostMaterial(0.4);
+    const ghostGeo = new THREE.SphereGeometry(0.3, 20, 14);
+    const ghostGroup = new THREE.Group();
+    const ghost = new THREE.Mesh(ghostGeo, ghostMat);
+    ghostGroup.add(ghost);
+    root.add(ghostGroup);
+    let ghostT = config.fantasmaT ?? 0;
+    let ghostA = config.theta0; // amplitude
+    let ghostTime = 0;
+    function placeGhost() {
+      ghostGroup.visible = ghostT > 0;
+      ghost.position.set(0, -physConfig.L, 0);
+      ghostGroup.rotation.z = -ghostA * Math.cos((2 * Math.PI * ghostTime) / Math.max(ghostT, 1e-6));
+    }
+
     // Estado físico interno — atualizado a cada tick
     let state: PendulumState = { theta: config.theta0, omega: 0 };
     let physConfig: PendulumConfig = { L: config.L, g: config.g };
     let held = false;
 
     pivotGroup.rotation.z = -state.theta;
+    placeGhost();
 
     return {
       bob: massMesh,
@@ -102,6 +124,8 @@ export const pendulum: MountableExperiment<PendulumSceneConfig, MountedPendulum>
           state = stepPendulum(state, physConfig, Math.min(remaining, MAX_STEP));
         }
         pivotGroup.rotation.z = -state.theta;
+        ghostTime += dt;
+        placeGhost();
       },
       update(cfg) {
         physConfig = { L: cfg.L, g: cfg.g };
@@ -109,6 +133,10 @@ export const pendulum: MountableExperiment<PendulumSceneConfig, MountedPendulum>
         state = { theta: cfg.theta0, omega: 0 };
         held = false;
         pivotGroup.rotation.z = -state.theta;
+        ghostT = cfg.fantasmaT ?? 0;
+        ghostA = cfg.theta0;
+        ghostTime = 0; // fantasma e pêndulo saem juntos
+        placeGhost();
       },
       grab(theta) {
         held = true;
@@ -118,9 +146,13 @@ export const pendulum: MountableExperiment<PendulumSceneConfig, MountedPendulum>
       release() {
         held = false;
         state = { theta: state.theta, omega: 0 };
+        ghostA = state.theta; // o fantasma recomeça junto, do mesmo ângulo
+        ghostTime = 0;
       },
       dispose() {
-        root.remove(pivotMesh, pivotGroup, shaftMesh, plateMesh);
+        root.remove(pivotMesh, pivotGroup, shaftMesh, plateMesh, ghostGroup);
+        ghostGeo.dispose();
+        ghostMat.dispose();
         rodGeo?.dispose();
         massGeo.dispose();
         pivotGeo.dispose();

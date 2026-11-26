@@ -10,6 +10,9 @@ export type ControlValues = Record<string, ControlValue>;
 interface BaseControl {
   id: string;
   label: string;
+  // Escondido do painel de ajustes: só as questões mudam este valor
+  // (ex.: o marcador da resposta escolhida numa alternativa).
+  hidden?: boolean;
 }
 
 export interface RangeControl extends BaseControl {

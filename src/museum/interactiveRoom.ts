@@ -62,4 +62,8 @@ export interface InteractiveRoom<Config = unknown, Mounted extends MountedExperi
   preControls?: Record<string, ControlValue>;
   // Texto do enunciado exibido como placa 3D na parede do fundo.
   enunciado?: { heading: string; text: string };
+  // Dica da questão (o "?" amarelo na sala, depois de iniciar).
+  dica?: string;
+  // Textos das alternativas (questões do tipo "alternativas"), na ordem A, B, C…
+  alternativas?: string[];
 }

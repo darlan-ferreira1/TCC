@@ -11,10 +11,15 @@
 import * as THREE from 'three';
 import type { MountableExperiment, MountedExperiment } from '../../../core/mountable';
 import { createTextPanel } from '../../../core/textPanel';
+import { ghostMaterial } from '../../../core/marcadores';
 
 export interface KeplerConfig {
   planetX: number;      // UA
   yearsPerSecond: number;
+  // Marcador da resposta: período escolhido para o Planeta X (anos). Um
+  // planeta "fantasma" anda na mesma órbita com esse período; se estiver
+  // certo, ele acompanha o Planeta X. 0 = desligado.
+  fantasmaT?: number;
 }
 
 const AU = 1.15; // metros de sala por UA
@@ -71,6 +76,11 @@ export const keplerRoom: MountableExperiment<KeplerConfig, MountedExperiment<Kep
     root.add(planetX);
     let xRing: THREE.LineLoop | null = null;
 
+    const ghostMat = ghostMaterial(0.45);
+    const ghost = new THREE.Mesh(planetGeo, ghostMat);
+    ghost.scale.setScalar(0.24);
+    root.add(ghost);
+
     const panel = createTextPanel(2.4, 0.8);
     panel.mesh.position.set(4.2, 0.9, 2.8); // à direita de quem entra, virado para ele
     panel.mesh.rotation.y = -0.8;
@@ -96,6 +106,11 @@ export const keplerRoom: MountableExperiment<KeplerConfig, MountedExperiment<Kep
         years += dt * cfg.yearsPerSecond;
         bodies.forEach((b) => place(b.mesh, b.a, b.phase));
         place(planetX, cfg.planetX, 0);
+        ghost.visible = (cfg.fantasmaT ?? 0) > 0;
+        if (ghost.visible) {
+          const ang = (2 * Math.PI * years) / cfg.fantasmaT!;
+          ghost.position.set(Math.cos(ang) * cfg.planetX * AU, 0, -Math.sin(ang) * cfg.planetX * AU);
+        }
         panel.setLines([
           `Planeta X a ${fmt(cfg.planetX)} UA do Sol`,
           `Anos terrestres passados: ${fmt(years)} (voltas da Terra: ${Math.floor(years)})`,
@@ -109,7 +124,7 @@ export const keplerRoom: MountableExperiment<KeplerConfig, MountedExperiment<Kep
       dispose() {
         root.clear();
         [sunGeo, planetGeo, ...geos].forEach((g) => g.dispose());
-        [sunMat, ringMat, xRingMat, xMat, ...mats].forEach((m) => m.dispose());
+        [sunMat, ringMat, xRingMat, xMat, ghostMat, ...mats].forEach((m) => m.dispose());
         sunLight.dispose();
         panel.dispose();
       },

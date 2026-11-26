@@ -174,7 +174,9 @@ export function buildShell(group: THREE.Group, layout: MuseumLayout, t: Tracker,
   // ── Chão de madeira ──
   const floor = new THREE.Mesh(
     t.track(new THREE.PlaneGeometry(layout.width, layout.depth)),
-    t.track(new THREE.MeshStandardMaterial({ map: woodFloorTexture(t, layout.width, layout.depth), roughness: 0.45, metalness: 0 })),
+    t.track(new THREE.MeshStandardMaterial({ map: woodFloorTexture(t, layout.width, layout.depth), roughness: 0.78, metalness: 0, envMapIntensity: 0.35 })),
+    // Madeira acetinada, não espelhada: com rugosidade baixa o reflexo das
+    // luminárias deixava o chão branco.
   );
   floor.rotation.x = -Math.PI / 2;
   noCast(floor);
@@ -328,80 +330,6 @@ export function enableShadows(group: THREE.Object3D) {
   });
 }
 
-// Quebra `text` em linhas que cabem em `maxWidth` pixels (canvas 2D).
-// Preserva quebras de linha explícitas (`\n`) e ignora linhas que não caberiam
-// no espaço vertical (evita estouro de canvas).
-function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number): string[] {
-  const out: string[] = [];
-  for (const para of text.split('\n')) {
-    if (out.length >= maxLines) break;
-    if (para.trim() === '') { out.push(''); continue; }
-    const words = para.split(' ');
-    let cur = '';
-    for (const w of words) {
-      if (out.length >= maxLines) break;
-      const test = cur ? `${cur} ${w}` : w;
-      if (ctx.measureText(test).width > maxWidth) {
-        if (cur) out.push(cur);
-        cur = w;
-      } else {
-        cur = test;
-      }
-    }
-    if (cur && out.length < maxLines) out.push(cur);
-  }
-  return out;
-}
-
-// Placa retangular com título e texto multilinha, para a parede do fundo das
-// salas de exercício. Já retorna o mesh posicionado em (0, 0, 0); quem chama
-// define a posição final.
-export function buildEnunciadoPanel(t: Tracker, heading: string, text: string, color: number): THREE.Mesh {
-  const W = 1024, H = 512;
-  const canvas = document.createElement('canvas');
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext('2d')!;
-  const hex = `#${color.toString(16).padStart(6, '0')}`;
-
-  // Fundo escuro + borda colorida
-  ctx.fillStyle = BOARD_BG;
-  ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = hex;
-  ctx.lineWidth = 8;
-  ctx.strokeRect(4, 4, W - 8, H - 8);
-  // Barra colorida no topo
-  ctx.fillStyle = hex;
-  ctx.fillRect(0, 0, W, 16);
-
-  // Título em branco, fonte grande
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 54px Inter, system-ui, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
-  ctx.fillText(heading, 42, 28, W - 84);
-
-  // Separador
-  ctx.fillStyle = hex;
-  ctx.fillRect(42, 96, W - 84, 3);
-
-  // Corpo do texto (multilinha)
-  ctx.fillStyle = BOARD_TEXT;
-  ctx.font = '34px Inter, system-ui, sans-serif';
-  const lines = wrapText(ctx, text, W - 84, 9);
-  lines.forEach((line, i) => {
-    ctx.fillText(line, 42, 112 + i * 46);
-  });
-
-  const tex = t.track(new THREE.CanvasTexture(canvas));
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 4;
-  return new THREE.Mesh(
-    t.track(new THREE.PlaneGeometry(3.2, 1.6)),
-    t.track(new THREE.MeshBasicMaterial({ map: tex })),
-  );
-}
-
 export function buildPedestal(group: THREE.Group, t: Tracker, x: number, z: number, radius: number, height: number) {
   // Pedestal claro, acetinado, com base de madeira escura.
   const mat = t.track(new THREE.MeshStandardMaterial({ color: 0xeae4d8, roughness: 0.35 }));
@@ -419,7 +347,7 @@ export function buildPedestal(group: THREE.Group, t: Tracker, x: number, z: numb
 // ── Ícone "i" e quadros (textos informativos, ver info.ts) ──
 
 // Ícone "i" redondo que sempre fica de frente para a câmera (Sprite).
-export function buildInfoIcon(t: Tracker, color = 0x3498db): THREE.Sprite {
+export function buildInfoIcon(t: Tracker, color = 0x3498db, glyph = 'i'): THREE.Sprite {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 128;
   const ctx = canvas.getContext('2d')!;
@@ -434,7 +362,7 @@ export function buildInfoIcon(t: Tracker, color = 0x3498db): THREE.Sprite {
   ctx.font = 'bold 84px Georgia, serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('i', 64, 70);
+  ctx.fillText(glyph, 64, 70);
   const tex = t.track(new THREE.CanvasTexture(canvas));
   tex.colorSpace = THREE.SRGBColorSpace;
   const sprite = new THREE.Sprite(t.track(new THREE.SpriteMaterial({ map: tex, depthTest: true })));

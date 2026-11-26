@@ -4,6 +4,7 @@
 
 import type { InteractiveRoom } from '../../../museum/interactiveRoom';
 import { projectileRoom, type ProjectileConfig } from './scene';
+import { marcadorControl } from '../../../core/marcadores';
 
 export const sala: InteractiveRoom<ProjectileConfig> = {
   experiment: projectileRoom,
@@ -11,7 +12,9 @@ export const sala: InteractiveRoom<ProjectileConfig> = {
   controls: [
     { id: 'v0', label: 'Velocidade inicial v₀', kind: 'range', min: 5, max: 20, step: 1, unit: 'm/s', default: 20 },
     { id: 'angle', label: 'Ângulo de lançamento', kind: 'range', min: 5, max: 85, step: 5, unit: '°', default: 30 },
+    marcadorControl('bandeira', 'Alcance escolhido (bandeira)'),
+    marcadorControl('faixa', 'Altura escolhida (faixa)'),
   ],
   // g fica fixo em 10 m/s² (o da lista): com g menor o alcance não cabe na sala.
-  toConfig: (v) => ({ v0: Number(v.v0), angle: Number(v.angle), g: 10 }),
+  toConfig: (v) => ({ v0: Number(v.v0), angle: Number(v.angle), g: 10, bandeira: Number(v.bandeira ?? 0), faixa: Number(v.faixa ?? 0) }),
 };

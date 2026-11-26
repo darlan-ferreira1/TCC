@@ -8,6 +8,7 @@
 import type { InteractiveRoom } from '../../../museum/interactiveRoom';
 import type { ConicalConfig } from './physics';
 import { conicalPendulum } from './scene';
+import { marcadorControl } from '../../../core/marcadores';
 
 const DEG = Math.PI / 180;
 
@@ -18,6 +19,7 @@ export const sala: InteractiveRoom<ConicalConfig> = {
     { id: 'L', label: 'Comprimento do fio L', kind: 'range', min: 0.5, max: 3, step: 0.1, unit: 'm', default: 2 },
     { id: 'theta', label: 'Ângulo com a vertical θ', kind: 'range', min: 5, max: 80, step: 1, unit: '°', default: 50 },
     { id: 'g', label: 'Gravidade g', kind: 'range', min: 1, max: 20, step: 0.1, unit: 'm/s²', default: 10 },
+    marcadorControl('fantasmaT', 'Período escolhido (fantasma)'),
   ],
-  toConfig: (v) => ({ L: Number(v.L), theta: Number(v.theta) * DEG, g: Number(v.g) }),
+  toConfig: (v) => ({ L: Number(v.L), theta: Number(v.theta) * DEG, g: Number(v.g), fantasmaT: Number(v.fantasmaT ?? 0) }),
 };

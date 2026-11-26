@@ -10,6 +10,7 @@
 
 import type { InteractiveRoom } from '../../../museum/interactiveRoom';
 import { foucaultPendulum, type FoucaultConfig } from './scene';
+import { marcadorControl } from '../../../core/marcadores';
 
 const L = 6;
 const PLACES: Record<string, { label: string; latitude: number }> = {
@@ -30,6 +31,7 @@ export const sala: InteractiveRoom<FoucaultConfig> = {
     obstacleRadius: 2.3, // o visitante não entra no disco
     inspect: { target: [0, 2.5, -0.5], distance: 10 },
     infoAt: [2.8, 1.6, 1.8],
+    exerciseDoor: true,
   },
   controls: [
     {
@@ -40,6 +42,8 @@ export const sala: InteractiveRoom<FoucaultConfig> = {
       default: 'paris',
     },
     { id: 'timeScale', label: 'Aceleração do tempo', kind: 'range', min: 600, max: 14400, step: 600, unit: '×', default: 3600 },
+    marcadorControl('fantasmaT', 'Período escolhido (fantasma)'),
+    marcadorControl('fantasmaH', 'Horas por volta escolhidas (linha verde)'),
   ],
   toConfig(v) {
     const place = PLACES[String(v.place)] ?? PLACES.paris;
@@ -51,6 +55,8 @@ export const sala: InteractiveRoom<FoucaultConfig> = {
       place: place.label,
       timeScale: Number(v.timeScale),
       floorDrop: L + 1.3,
+      fantasmaT: Number(v.fantasmaT ?? 0),
+      fantasmaH: Number(v.fantasmaH ?? 0),
     };
   },
 };

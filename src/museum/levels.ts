@@ -9,7 +9,8 @@
 import * as THREE from 'three';
 import type { ControlValues } from '../core/controls';
 import type { InteractiveRoom, RoomInteraction } from './interactiveRoom';
-import { addSpotlight, buildEasel, buildEnunciadoPanel, buildInfoIcon, buildPedestal, buildShell, enableShadows, Tracker } from './builders';
+import { addSpotlight, buildEasel, buildInfoIcon, buildPedestal, buildShell, enableShadows, Tracker } from './builders';
+import { buildQuestionBoards, type ExerciseHooks } from './quadroQuestao';
 import type { InfoContent, RoomContent } from './info';
 import { computeLayout, computeRoomLayout, computeWingLayout, EXHIBIT_RADIUS, WALL_HEIGHT, type DoorEntry, type MuseumLayout, type Obstacle } from './layout';
 
@@ -23,9 +24,13 @@ export interface Level {
   dispose(): void;
   // Só nas salas: o experimento e para onde olhar no modo "inspecionar".
   inspect?: { root: THREE.Group; target: THREE.Vector3; distance: number };
+  // Só nas salas de questão: estado vindo do React (alternativas erradas
+  // tentadas, acertou, índice da certa) para redesenhar o quadro da resposta.
+  setAlternativesState?(tentadas: number[], acertou: boolean, certa?: number): void;
 }
 
-export type OpenInfo = (content: InfoContent) => void;
+// Abre o painel flutuante de leitura (accent = cor da borda).
+export type OpenInfo = (content: InfoContent, accent?: number) => void;
 
 const INFO_REACH = 5; // m — distância máxima para ler um "i" ou quadro
 
@@ -88,6 +93,7 @@ export interface WingExtras {
   content?: Record<string, RoomContent>;       // id da porta → textos
   openInfo?: OpenInfo;
   noExit?: boolean;
+  boasVindas?: InfoContent; // pop-up ao mirar na peça central e apertar E
 }
 
 export function buildWing(entries: DoorEntry[], title: string, color: number, centerpiece?: Centerpiece, extras: WingExtras = {}): Level {
@@ -126,6 +132,31 @@ export function buildWing(entries: DoorEntry[], title: string, color: number, ce
   top.position.set(pedestal.x, 1.0, pedestal.z);
   group.add(top);
   const animate = centerpiece?.(top, t);
+  // Peça central: um "i" flutuando sobre ela abre as boas-vindas.
+  if (extras.boasVindas && extras.openInfo) {
+    const icon = buildInfoIcon(t, color);
+    icon.position.set(pedestal.x, 1.9, pedestal.z);
+    icon.scale.setScalar(0.3);
+    group.add(icon);
+    const boasVindas = extras.boasVindas;
+    const openInfo = extras.openInfo;
+    const p = new THREE.Vector3();
+    interactions.push({
+      prompt: `ler: ${boasVindas.title}`,
+      hold: false,
+      // Vale mirar no "i" ou na própria planta em cima do pedestal.
+      isTarget(ray) {
+        const near = (x: number, y: number, z: number, r: number) => {
+          p.set(x, y, z);
+          return ray.distanceToPoint(p) < r && ray.origin.distanceTo(p) < INFO_REACH;
+        };
+        return near(pedestal.x, 1.9, pedestal.z, 0.3) || near(pedestal.x, 1.3, pedestal.z, 0.6);
+      },
+      press() { openInfo(boasVindas); },
+      drag() { /* nada */ },
+      release() { /* nada */ },
+    });
+  }
   addSpotlight(group, t, pedestal.x, 1.4, pedestal.z, WALL_HEIGHT, 40);
   enableShadows(group);
 
@@ -146,6 +177,7 @@ export function buildWing(entries: DoorEntry[], title: string, color: number, ce
 export function buildRoom(
   def: InteractiveRoom, title: string, color: number, values: ControlValues,
   exitTitle?: string, content?: RoomContent, openInfo?: OpenInfo,
+  exercise?: ExerciseHooks,
 ): Level {
   const t = new Tracker();
   const spec = def.room;
@@ -160,8 +192,14 @@ export function buildRoom(
   const easelSpots = [-1, 1].map((side) => ({ x: side * Math.min(2.6, spec.width / 2 - 1), z: spec.depth / 2 - 3 }));
   const quadros = content && openInfo ? content.quadros.slice(0, easelSpots.length) : [];
   quadros.forEach((_, i) => obstacles.push({ ...easelSpots[i], r: 0.45 }));
+  // Sala de questão: enunciado de um lado e resposta do outro, nos mesmos
+  // lugares dos quadros Teoria/História (quadros mais largos → obstáculo maior).
+  const isQuestion = !!(def.enunciado && exercise && openInfo);
+  if (isQuestion) easelSpots.forEach((spot) => obstacles.push({ ...spot, r: 0.85 }));
 
   const layout = computeRoomLayout({ width: spec.width, depth: spec.depth, obstacles }, title, color, exitTitle, spec.exerciseDoor, spec.nextExerciseDoor, spec.prevExerciseDoor);
+  // Na sala de questão a parede atrás do fenômeno fica livre (sem placa).
+  if (isQuestion) layout.signs = [];
   const group = new THREE.Group();
   const { doorMaterials } = buildShell(group, layout, t, spec.wallHeight);
   if (spec.pedestal) buildPedestal(group, t, px, pz, spec.pedestal.radius, spec.pedestal.height);
@@ -193,11 +231,10 @@ export function buildRoom(
     interactions.push(infoInteraction(icon, content.observar, openInfo, 0.3));
   }
 
-  if (def.enunciado) {
-    const panel = buildEnunciadoPanel(t, def.enunciado.heading, def.enunciado.text, color);
-    panel.position.set(0, 2.3, -spec.depth / 2 + 0.04);
-    group.add(panel);
-  }
+  const boards = isQuestion
+    ? buildQuestionBoards(group, t, def, easelSpots, { x: 0, z: spec.depth / 2 }, openInfo!, exercise!)
+    : null;
+  if (boards) interactions.push(...boards.interactions);
 
   const [tx, ty, tz] = spec.inspect?.target ?? spec.place;
   // Spot de galeria sobre o experimento (mira no pedestal ou no centro do fenômeno).
@@ -215,6 +252,7 @@ export function buildRoom(
     tick(dt) {
       mounted.tick(dt);
       if (spec.spin) root.rotation.y += spec.spin * dt;
+      boards?.tick(dt);
     },
     setControls(v) { mounted.update(def.toConfig(v)); },
     dispose() {
@@ -222,5 +260,6 @@ export function buildRoom(
       t.dispose();
     },
     inspect: { root, target: new THREE.Vector3(tx, ty, tz), distance: spec.inspect?.distance ?? 5 },
+    setAlternativesState: boards ? (tentadas, acertou, certa) => boards.setState(tentadas, acertou, certa) : undefined,
   };
 }

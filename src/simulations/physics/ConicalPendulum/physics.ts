@@ -13,6 +13,9 @@ export interface ConicalConfig {
   L: number;     // m
   theta: number; // rad, ângulo do fio com a vertical (0 < θ < 90°)
   g: number;     // m/s²
+  // Marcador da resposta: período escolhido (s). Uma massa "fantasma" gira
+  // com esse período; se estiver certo, ela acompanha a massa real. 0 = desligado.
+  fantasmaT?: number;
 }
 
 export interface ConicalInfo {

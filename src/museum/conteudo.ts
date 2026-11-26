@@ -2,7 +2,30 @@
 // experimento (o que fazer na sala) e quadros (Teoria e História).
 // Chave: id da porta (ver alas.ts). Valores usam g = 10 m/s², como a lista.
 
-import type { RoomContent } from './info';
+import type { InfoContent, RoomContent } from './info';
+
+// Pop-up da planta no centro do salão (mirar nela e apertar E).
+export const BOAS_VINDAS: InfoContent = {
+  title: 'Bem-vindo(a)!',
+  pages: [
+    {
+      heading: 'Bem-vindo(a) à exposição',
+      text: 'Esta é uma exposição virtual interativa de Mecânica Clássica.\n\nEm volta deste salão há seis salas, cada uma com um fenômeno: o pêndulo de Galileu, o lançamento de projéteis, as leis de Kepler, as ondas, o pêndulo cônico e o pêndulo de Foucault.\n\nA planta aqui embaixo mostra onde fica cada sala.',
+    },
+    {
+      heading: 'Como andar',
+      text: 'Computador: W A S D para andar, o mouse para olhar e Shift para correr. E entra numa porta ou lê um "i".\n\nCelular: o joystick anda e arrastar o dedo olha em volta.\n\nControle: o analógico esquerdo anda, o direito olha e A interage.',
+    },
+    {
+      heading: 'Em cada sala',
+      text: 'No centro fica a simulação. Os quadros de Teoria e História e o "i" explicam o fenômeno.\n\nTab (ou ⚙ no celular) abre os ajustes, para mudar os valores da simulação. I inspeciona de perto.',
+    },
+    {
+      heading: 'As questões',
+      text: 'Cada sala tem uma porta "Espaço de exercícios". Lá, mire no "i" verde para começar a questão.\n\nA sua resposta vira a entrada da simulação: você ajusta um valor ou escolhe uma alternativa, e a cena mostra o resultado. Se a conta estiver errada, você vê o erro acontecer (a bola cai longe da bandeira, o "fantasma" verde sai do ritmo) e pode tentar de novo.',
+    },
+  ],
+};
 
 export const CONTEUDO: Record<string, RoomContent> = {
   // ── Museu da Mecânica ──

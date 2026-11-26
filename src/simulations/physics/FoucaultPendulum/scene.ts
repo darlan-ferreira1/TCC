@@ -12,6 +12,7 @@ import * as THREE from 'three';
 import type { MountableExperiment, MountedExperiment } from '../../../core/mountable';
 import { createTextPanel } from '../../../core/textPanel';
 import { planeRate, turnHours } from './physics';
+import { ghostMaterial } from '../../../core/marcadores';
 
 export interface FoucaultConfig {
   L: number;           // m
@@ -21,6 +22,14 @@ export interface FoucaultConfig {
   place: string;       // nome do lugar, para o painel
   timeScale: number;   // quantas vezes o giro do plano é acelerado
   floorDrop: number;   // m, do ponto de suspensão até o chão
+  // Marcadores da resposta (questões de alternativas). 0 = desligado.
+  //   fantasmaT: período de oscilação escolhido (s): uma massa "fantasma"
+  //     oscila com ele; certo = acompanha a massa real.
+  //   fantasmaH: horas para o plano dar uma volta (+ = sentido do hemisfério
+  //     norte, − = sentido inverso, 1e9 = não gira): uma linha verde no disco
+  //     gira com ele; certo = acompanha o rastro.
+  fantasmaT?: number;
+  fantasmaH?: number;
 }
 
 const TRAIL_POINTS = 4000;
@@ -43,6 +52,20 @@ export const foucaultPendulum: MountableExperiment<FoucaultConfig, MountedExperi
     const bob = new THREE.Mesh(bobGeo, bobMat);
     swing.add(bob);
     let wire: THREE.Mesh | null = null;
+
+    // Fantasma da oscilação (no mesmo plano da massa real)
+    const ghostSwing = new THREE.Group();
+    plane.add(ghostSwing);
+    const ghostGeo = new THREE.SphereGeometry(0.45, 20, 14);
+    const ghostMat = ghostMaterial(0.35);
+    const ghostBob = new THREE.Mesh(ghostGeo, ghostMat);
+    ghostSwing.add(ghostBob);
+    // Linha fantasma do giro do plano (sobre o disco)
+    const ghostLineGroup = new THREE.Group();
+    root.add(ghostLineGroup);
+    const ghostLineMat = ghostMaterial(0.8);
+    let ghostLineGeo: THREE.BoxGeometry | null = null;
+    let ghostTime = 0;
 
     // Chão: disco com a linha norte–sul e o anel de pinos
     const floorGroup = new THREE.Group();
@@ -90,6 +113,12 @@ export const foucaultPendulum: MountableExperiment<FoucaultConfig, MountedExperi
         floorGroup.add(pin);
       }
       panel.mesh.position.set(0, -cfg.floorDrop + 2.4, -(reach + 1.2));
+
+      ghostLineGroup.clear();
+      ghostLineGeo?.dispose();
+      ghostLineGeo = new THREE.BoxGeometry(2 * reach, 0.02, 0.06); // ao longo de X, como o rastro
+      ghostLineGroup.add(new THREE.Mesh(ghostLineGeo, ghostLineMat));
+      ghostLineGroup.position.y = -cfg.floorDrop + 0.07;
     }
 
     function build() {
@@ -104,6 +133,11 @@ export const foucaultPendulum: MountableExperiment<FoucaultConfig, MountedExperi
       plane.rotation.y = 0;
       trailCount = 0;
       trailGeo.setDrawRange(0, 0);
+      ghostBob.position.y = -cfg.L;
+      ghostSwing.visible = (cfg.fantasmaT ?? 0) > 0;
+      ghostLineGroup.visible = (cfg.fantasmaH ?? 0) !== 0;
+      ghostLineGroup.rotation.y = 0;
+      ghostTime = 0;
     }
     build();
 
@@ -126,6 +160,10 @@ export const foucaultPendulum: MountableExperiment<FoucaultConfig, MountedExperi
         simSeconds += dt * cfg.timeScale;
         swing.rotation.z = cfg.amplitude * Math.cos(phase);
         plane.rotation.y = planeRate(cfg.latitude) * simSeconds;
+        ghostTime += dt;
+        if (cfg.fantasmaT) ghostSwing.rotation.z = cfg.amplitude * Math.cos((2 * Math.PI * ghostTime) / cfg.fantasmaT);
+        // Mesmo sinal de planeRate: horas > 0 = sentido do hemisfério norte.
+        if (cfg.fantasmaH) ghostLineGroup.rotation.y = (-(2 * Math.PI) / (cfg.fantasmaH * 3600)) * simSeconds;
 
         sinceSample += dt;
         if (sinceSample >= TRAIL_EVERY) {
@@ -154,7 +192,10 @@ export const foucaultPendulum: MountableExperiment<FoucaultConfig, MountedExperi
         updatePanel();
       },
       dispose() {
-        root.remove(plane, floorGroup, trail, panel.mesh);
+        root.remove(plane, floorGroup, trail, panel.mesh, ghostLineGroup);
+        ghostLineGeo?.dispose();
+        [ghostGeo].forEach((g) => g.dispose());
+        [ghostMat, ghostLineMat].forEach((m) => m.dispose());
         wire?.geometry.dispose();
         floorGeos.forEach((g) => g.dispose());
         [bobGeo, trailGeo].forEach((g) => g.dispose());

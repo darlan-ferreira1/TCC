@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import type { MountableExperiment, MountedExperiment } from '../../../core/mountable';
 import { createTextPanel } from '../../../core/textPanel';
 import { conicalInfo, type ConicalConfig } from './physics';
+import { ghostMaterial } from '../../../core/marcadores';
 
 const fmt = (x: number, d = 2) => x.toFixed(d).replace('.', ',');
 
@@ -36,6 +37,14 @@ export const conicalPendulum: MountableExperiment<ConicalConfig, MountedExperime
 
     const coneMat = new THREE.MeshBasicMaterial({ color: 0xe67e22, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false });
     const pathMat = new THREE.LineBasicMaterial({ color: 0xf5c16c });
+
+    // Fantasma da resposta: halo verde que gira com o período escolhido.
+    const ghostSpin = new THREE.Group();
+    const ghostGeo = new THREE.SphereGeometry(0.3, 20, 14);
+    const ghostMat = ghostMaterial(0.4);
+    const ghost = new THREE.Mesh(ghostGeo, ghostMat);
+    ghostSpin.add(ghost);
+    root.add(ghostSpin);
 
     let rod: THREE.Mesh | null = null;
     let cone: THREE.Mesh | null = null;
@@ -61,6 +70,9 @@ export const conicalPendulum: MountableExperiment<ConicalConfig, MountedExperime
       tilt.add(rod);
       mass.position.y = -cfg.L;
       tilt.rotation.z = cfg.theta;
+      ghost.position.set(cfg.L * Math.sin(cfg.theta), -cfg.L * Math.cos(cfg.theta), 0);
+      ghostSpin.visible = (cfg.fantasmaT ?? 0) > 0;
+      ghostSpin.rotation.y = 0;
 
       cone = new THREE.Mesh(new THREE.ConeGeometry(info.r, info.h, 48, 1, true), coneMat);
       cone.position.y = -info.h / 2;
@@ -85,6 +97,7 @@ export const conicalPendulum: MountableExperiment<ConicalConfig, MountedExperime
       tick(dt) {
         elapsed += dt;
         spin.rotation.y = -info.omega * elapsed;
+        if (cfg.fantasmaT) ghostSpin.rotation.y = -((2 * Math.PI) / cfg.fantasmaT) * elapsed;
         panel.setLines([
           'Pêndulo cônico',
           `L = ${fmt(cfg.L)} m · θ = ${Math.round(cfg.theta * 180 / Math.PI)}° · g = ${fmt(cfg.g, 1)} m/s²`,
@@ -97,7 +110,9 @@ export const conicalPendulum: MountableExperiment<ConicalConfig, MountedExperime
         build();
       },
       dispose() {
-        root.remove(pivot, spin, panel.mesh);
+        root.remove(pivot, spin, panel.mesh, ghostSpin);
+        ghostGeo.dispose();
+        ghostMat.dispose();
         if (cone) root.remove(cone);
         if (path) root.remove(path);
         rod?.geometry.dispose();

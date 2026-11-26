@@ -1,8 +1,8 @@
 // Textos informativos do Museu Virtual (ícones "i", quadros e pedestais).
 //
-// O texto é mostrado num pop-up paginado (InfoPopup.tsx): o estudante passa as
-// páginas com as setas sem sair do museu (no ECOS, cada quadro abria outra
-// página do site).
+// O texto é mostrado num painel 3D que surge flutuando na exposição
+// (quadro3d.ts): o estudante passa as páginas mirando nas setas, sem sair da
+// cena e sem soltar o mouse (no ECOS, cada quadro abria outra página do site).
 
 export interface InfoPage {
   heading?: string;

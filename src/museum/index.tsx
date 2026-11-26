@@ -3,8 +3,6 @@ import { createMuseumScene, type MuseumScene, type RoomInfo, type WingInfo } fro
 import { WINGS, WING_DOORS, WING_ROOMS, WINGS_CATEGORY } from './alas';
 import { CONTEUDO } from './conteudo';
 import { MINIATURAS } from './miniaturas';
-import type { InfoContent } from './info';
-import InfoPopup from './InfoPopup';
 import { EXIT_DOOR_ID, EXERCISE_DOOR_ID, NEXT_EXERCISE_DOOR_ID, PREV_EXERCISE_DOOR_ID, type DoorEntry, type DoorPlacement } from './layout';
 import ExerciseHud from './ExerciseHud';
 import { EXERCICIOS_INTERATIVOS, type ExercicioInterativo } from './exerciciosInterativos';
@@ -67,7 +65,7 @@ const KEYBOARD_HELP = [
   ['E', 'entrar na porta / segurar objeto / ler o "i"'],
   ['Tab', 'ajustes (dentro de uma sala)'],
   ['I', 'inspecionar o experimento (dentro de uma sala)'],
-  ['Esc', 'fechar textos e ajustes'],
+  ['Espaço', 'fechar textos, ajustes e a inspeção'],
   ['P', 'pausar'],
 ];
 
@@ -127,20 +125,22 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   const [nearDoor, setNearDoor] = useState<DoorPlacement | null>(null);
   const [interaction, setInteraction] = useState<string | null>(null);
   const [interactionHold, setInteractionHold] = useState(true);
-  const [info, setInfo] = useState<InfoContent | null>(null); // pop-up de texto aberto
   const [exerciseState, setExerciseState] = useState<{
     roomId: string;   // id da sala de exercício (ex.: 'pendulo-q1')
     expId: string;    // id do experimento base (ex.: 'simple-pendulum')
     exIndex: number;  // índice 0-based em EXERCICIOS_INTERATIVOS[expId]
     total: number;    // total de questões do experimento
+    started: boolean; // o estudante já apertou o "i" verde de iniciar?
     completed: boolean;
+    tentadas: number[];  // alternativas já escolhidas e erradas (tipo "alternativas")
+    tentativas: number;  // quantas escolhas o estudante fez (anônimo, para a pesquisa)
   } | null>(null);
+  const [erroToast, setErroToast] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const exerciseStateRef = useRef<typeof exerciseState>(null);
   const roomValuesRef = useRef<Record<string, import('../core/controls').ControlValue>>({});
   const correctSinceRef = useRef<number | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [infoPage, setInfoPage] = useState(0);
   const [inspecting, setInspecting] = useState(false);
   const [room, setRoom] = useState<RoomInfo | null>(null);
   const [wing, setWing] = useState<WingInfo | null>(null);
@@ -148,6 +148,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   const [hudOpen, setHudOpen] = useState(false);
   const [padFocus, setPadFocus] = useState(0); // linha do HUD selecionada pelo controle
   const padHudInput = useRef<((direction: GamepadDirection) => void) | null>(null);
+  const chooseAltRef = useRef<((i: number) => void) | null>(null); // quadro 3D → escolher alternativa
   const playing = locked || touchPlaying || padPlaying || exerciseState !== null;
 
   function pauseTouch() {
@@ -159,12 +160,14 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   const currentExercise: ExercicioInterativo | null = exerciseState
     ? (EXERCICIOS_INTERATIVOS[exerciseState.expId] ?? [])[exerciseState.exIndex] ?? null
     : null;
+  // Questão ainda não iniciada: controles e verificação ficam parados.
+  const exerciseWaiting = exerciseState !== null && !exerciseState.started;
   const lockedControlsSet = room?.id && ALL_ROOMS_FINAL[room.id]?.lockedControls
     ? new Set(ALL_ROOMS_FINAL[room.id]!.lockedControls!)
     : undefined;
 
   function changeControl(id: string, value: ControlValue) {
-    if (lockedControlsSet?.has(id)) return;
+    if (exerciseWaiting || lockedControlsSet?.has(id)) return;
     setRoom((r) => (r ? { ...r, values: { ...r.values, [id]: value } } : r));
     sceneRef.current?.setControl(id, value);
   }
@@ -193,9 +196,10 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
     s.onGamepadAction = (action) => {
       if (action === 'resume') {
         setHudOpen(false);
-        setInfo(null);
         setPadPlaying(true);
       } else if (action === 'menu') {
+        const ex = exerciseStateRef.current;
+        if (ex && !ex.started) return; // questão não iniciada: sem painel de ajustes
         setPadFocus(0);
         setHudOpen(true);
         s.unlock(); // no desktop, solta o mouse para usar o HUD
@@ -213,12 +217,10 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
       setInteraction(prompt);
       setInteractionHold(hold);
     };
-    s.onInfo = (content) => {
-      setInfo(content);
-      setInfoPage(0);
-      s.unlock(); // solta o mouse para clicar nas setas
-    };
     s.onInspectChange = setInspecting;
+    s.onExerciseStart = () => setExerciseState((p) => (p ? { ...p, started: true } : p));
+    // Alternativa escolhida no quadro 3D (mirar + E): mesma função das teclas 1–4.
+    s.onAlternative = (i) => chooseAltRef.current?.(i);
     s.onRoomChange = (r) => {
       setRoom(r);
       setHudOpen(false);
@@ -226,8 +228,9 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
         lastDoorId = wingRef.current?.id ?? r.id;
         const exInfo = getExerciseForRoom(r.id);
         if (exInfo) {
-          setExerciseState({ roomId: r.id, expId: exInfo.expId, exIndex: exInfo.index, total: exInfo.total, completed: false });
-          s.unlock();
+          // A questão começa parada: o estudante anda até o quadro "Iniciar questão".
+          setExerciseState({ roomId: r.id, expId: exInfo.expId, exIndex: exInfo.index, total: exInfo.total, started: false, completed: false, tentadas: [], tentativas: 0 });
+          setErroToast(null);
         } else {
           setExerciseState(null);
         }
@@ -260,10 +263,10 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
     if (!exerciseState) return;
     correctSinceRef.current = null;
     const ex = (EXERCICIOS_INTERATIVOS[exerciseState.expId] ?? [])[exerciseState.exIndex];
-    if (!ex) return;
+    if (!ex || ex.tipo === 'alternativas') return; // alternativas: o acerto vem da escolha
     const id = setInterval(() => {
       const state = exerciseStateRef.current;
-      if (!state || state.completed) return;
+      if (!state || !state.started || state.completed) return;
       const holdMs = ex.minHoldMs ?? 1200;
       if (ex.isCorrect(roomValuesRef.current)) {
         if (!correctSinceRef.current) correctSinceRef.current = Date.now();
@@ -293,16 +296,12 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   // Com o HUD aberto, o controle navega nele; fora dele, só move a cena
   // enquanto se está jogando com o controle.
   useEffect(() => {
-    sceneRef.current?.setGamepadMode((room && hudOpen) || info ? 'hud' : padPlaying ? 'play' : 'off');
-  }, [room, padPlaying, hudOpen, info, theme]);
+    sceneRef.current?.setGamepadMode(room && hudOpen ? 'hud' : padPlaying ? 'play' : 'off');
+  }, [room, padPlaying, hudOpen, theme]);
 
   // ↑ ↓ escolhe o parâmetro; ← → altera o valor dele.
   useEffect(() => {
     padHudInput.current = (direction) => {
-      if (info) { // pop-up de texto: ← → passam as páginas
-        if (direction === 'left' || direction === 'right') turnPage(direction === 'right' ? 1 : -1);
-        return;
-      }
       const count = room?.controls.length ?? 0;
       if (!room || count === 0) return;
       setPadPlaying(true);
@@ -316,66 +315,94 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   });
 
   // Desktop: Tab abre o HUD de ajustes dentro de uma sala (solta o mouse);
-  // Esc com o HUD aberto fecha o HUD (o mouse já está solto).
-  // Esc durante o jogo não muda de sala (sem teleporte); o navegador só solta o mouse.
+  // Espaço com o HUD aberto fecha o HUD e volta a travar o mouse.
+  // Esc não faz nada no app (o navegador ainda solta o mouse: não dá para impedir).
   useEffect(() => {
     if (IS_TOUCH) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.code === 'Tab' && room && locked) {
         e.preventDefault();
+        if (exerciseWaiting) return; // questão não iniciada: sem painel de ajustes
         setHudOpen(true);
         sceneRef.current?.unlock();
-      } else if (e.code === 'Escape' && hudOpen) {
-        setHudOpen(false);
+      } else if (e.code === 'Space' && hudOpen) {
+        e.preventDefault(); // senão o Espaço "clica" no controle focado do HUD
+        closeHud();
       }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [room, locked, hudOpen]);
+  }, [room, locked, hudOpen, exerciseWaiting]);
 
-  function showDicaExercicio() {
-    if (!currentExercise?.dica) return;
-    setInfo({ title: 'Dica', pages: [{ heading: currentExercise.titulo, text: currentExercise.dica }] });
-    setInfoPage(0);
-    if (!IS_TOUCH) sceneRef.current?.unlock();
+
+  // ── Questões de alternativas ──
+  const alternativas = currentExercise?.tipo === 'alternativas' ? currentExercise.alternativas : null;
+  const alternativasAtivas = !!alternativas && !!exerciseState?.started && !exerciseState.completed;
+
+  function showToast(setter: (t: string | null) => void, text: string, ms: number) {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setSuccessToast(null);
+    setErroToast(null);
+    setter(text);
+    toastTimerRef.current = setTimeout(() => setter(null), ms);
   }
 
-  function goToNextExercise() {
-    sceneRef.current?.goToNextExercise();
+  // Aplica a alternativa na cena (ignora os controles travados: quem muda é
+  // a alternativa, não o estudante) e verifica se está certa.
+  function chooseAlternative(i: number) {
+    const st = exerciseStateRef.current;
+    if (!alternativas || !st || !st.started || st.completed) return;
+    const alt = alternativas[i];
+    if (!alt || st.tentadas.includes(i)) return;
+    setRoom((r) => (r ? { ...r, values: { ...r.values, ...alt.valores } } : r));
+    for (const [id, v] of Object.entries(alt.valores)) sceneRef.current?.setControl(id, v);
+    setExerciseState((p) => (p ? {
+      ...p,
+      tentativas: p.tentativas + 1,
+      completed: !!alt.correta,
+      tentadas: alt.correta ? p.tentadas : [...p.tentadas, i],
+    } : p));
+    if (alt.correta) {
+      showToast(setSuccessToast, currentExercise!.feedbackCorreto, 4000);
+    } else {
+      showToast(setErroToast, `${alt.feedbackErro ?? 'Não é essa.'}\nVeja o resultado na cena e tente outra alternativa.`, 4500);
+    }
   }
 
-  function closeExercise() {
-    // Descarta o HUD mas mantém o estudante na sala de exercício.
-    setExerciseState(null);
-    if (!IS_TOUCH) sceneRef.current?.lock();
-  }
+  // O quadro 3D chama a versão mais recente de chooseAlternative.
+  useEffect(() => { chooseAltRef.current = chooseAlternative; });
 
-  function turnPage(step: number) {
-    if (!info) return;
-    setInfoPage((p) => Math.min(Math.max(p + step, 0), info.pages.length - 1));
-  }
+  // Devolve ao quadro 3D o estado da questão (erradas, acertou, qual é a certa).
+  useEffect(() => {
+    if (!exerciseState) return;
+    const certa = alternativas ? alternativas.findIndex((a) => a.correta) : undefined;
+    sceneRef.current?.setAlternativesState(exerciseState.tentadas, exerciseState.completed, certa);
+  }, [exerciseState, alternativas]);
 
-  // Fecha o pop-up de texto. No desktop, volta a travar o mouse (dentro do clique).
-  function closeInfo() {
-    setInfo(null);
-    if (!IS_TOUCH && !padPlaying) sceneRef.current?.lock();
-  }
+  // Teclado: 1 a 4 escolhem (funciona andando, com o mouse travado).
+  useEffect(() => {
+    if (!alternativasAtivas) return;
+    const onKey = (e: KeyboardEvent) => {
+      const n = Number(e.key);
+      if (Number.isInteger(n) && n >= 1 && n <= (alternativas?.length ?? 0)) chooseAlternative(n - 1);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  });
 
   function exitInspect() {
     sceneRef.current?.setInspect(false);
     if (!IS_TOUCH && !padPlaying) sceneRef.current?.lock();
   }
 
-  // Teclado com o pop-up aberto: ← → passam as páginas, Esc fecha.
-  // No modo inspecionar, Esc volta para a sala.
+  // No modo inspecionar, Espaço volta para a sala. (O painel flutuante de
+  // leitura é fechado com Espaço pela própria cena, em scene.ts.)
   useEffect(() => {
-    if (!info && !inspecting) return;
+    if (!inspecting) return;
     const onKey = (e: KeyboardEvent) => {
-      if (info && (e.code === 'ArrowRight' || e.code === 'KeyD')) turnPage(1);
-      else if (info && (e.code === 'ArrowLeft' || e.code === 'KeyA')) turnPage(-1);
-      else if (e.code === 'Escape') {
-        if (info) setInfo(null);
-        else sceneRef.current?.setInspect(false);
+      if (e.code === 'Space') {
+        e.preventDefault();
+        exitInspect();
       }
     };
     document.addEventListener('keydown', onKey);
@@ -383,7 +410,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   });
 
   const showHud = room && hudOpen;
-  const showGameUi = playing && !showHud && !info && !inspecting;
+  const showGameUi = playing && !showHud && !inspecting;
 
   return (
     <div style={{ position: 'relative', height: '100vh', overflow: 'hidden', background: 'var(--bg)', fontFamily: 'Inter, sans-serif' }}>
@@ -405,7 +432,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
                 🔍
               </button>
             )}
-            {room && (
+            {room && !exerciseWaiting && (
               <button onClick={() => { sceneRef.current?.setTouchMove(0, 0); setHudOpen(true); }} aria-label="Ajustes" style={roundButton}>
                 ⚙
               </button>
@@ -443,7 +470,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
           // Fundo escuro translúcido: o texto continua legível sobre as paredes claras.
           background: 'rgba(20,18,16,0.55)', padding: '8px 12px', borderRadius: 8,
         }}>
-          <div style={{ fontSize: 11, letterSpacing: '0.12em', opacity: 0.7, textTransform: 'uppercase' }}>Ala</div>
+          <div style={{ fontSize: 11, letterSpacing: '0.12em', opacity: 0.7, textTransform: 'uppercase' }}>Exposição</div>
           <div style={{ fontSize: 17, fontWeight: 700 }}>{wing.title}</div>
         </div>
       )}
@@ -497,28 +524,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
 
       {/* Exercícios interativos dentro da sala */}
       {exerciseState && currentExercise && (
-        <ExerciseHud
-          exercicio={currentExercise}
-          qNum={exerciseState.exIndex + 1}
-          qTotal={exerciseState.total}
-          completed={exerciseState.completed}
-          successToast={successToast}
-          onDica={showDicaExercicio}
-          onNext={goToNextExercise}
-          onClose={closeExercise}
-        />
-      )}
-
-      {/* Pop-up de texto ("i", quadros, pedestais) */}
-      {info && (
-        <InfoPopup
-          content={info}
-          page={infoPage}
-          compact={IS_TOUCH}
-          hint={padPlaying ? 'Controle: ← → passa as páginas, B fecha.' : IS_TOUCH ? undefined : '← → passam as páginas · Esc fecha'}
-          onPage={(p) => setInfoPage(Math.min(Math.max(p, 0), info.pages.length - 1))}
-          onClose={closeInfo}
-        />
+        <ExerciseHud successToast={successToast} erroToast={erroToast} />
       )}
 
       {/* Modo inspecionar: barra com a dica e o botão de voltar */}
@@ -561,7 +567,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
 
       {/* Mouse solto sem pausa (ex.: Esc): só pede um clique para voltar a travar.
           O Pointer Lock só pode ser pedido dentro de um clique. */}
-      {!playing && !menuOpen && !showHud && !info && !inspecting && (
+      {!playing && !menuOpen && !showHud && !inspecting && (
         <div
           onClick={() => (IS_TOUCH ? setTouchPlaying(true) : sceneRef.current?.lock())}
           style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
@@ -576,7 +582,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
       )}
 
       {/* Menu de instruções: no início e na pausa (P, Select, ❚❚) */}
-      {!playing && menuOpen && !showHud && !info && !inspecting && (
+      {!playing && menuOpen && !showHud && !inspecting && (
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'rgba(5,5,15,0.55)', padding: 24,
@@ -589,7 +595,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
               Exposição Virtual Interativa
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: '10px 0 20px', lineHeight: 1.6 }}>
-              Cada porta leva à sala interativa de um experimento. As paredes são organizadas por área do conhecimento.
+              Cada porta leva à sala de um fenômeno da Mecânica. No centro do salão ficam a planta da exposição e as boas-vindas.
             </p>
 
             <table style={{ margin: '0 auto 22px', fontSize: 14, borderSpacing: '12px 6px', textAlign: 'left' }}>

@@ -21,13 +21,18 @@ export function buildAllExerciseRooms(
         experiment: base.experiment,
         room: { ...base.room, exerciseDoor: false, nextExerciseDoor: hasNext, prevExerciseDoor: hasPrev },
         controls: base.controls,
-        toConfig(values) {
-          return base.toConfig({ ...values, ...ex.preControls });
-        },
+        // Os preControls são só os valores INICIAIS (scene.ts os aplica ao abrir
+        // a sala). Não forçar aqui: senão a alternativa escolhida pelo estudante
+        // seria desfeita e a cena não mostraria a resposta dele.
+        toConfig: base.toConfig,
         interactions: base.interactions,
         lockedControls: ex.lockedControls,
         preControls: ex.preControls,
-        enunciado: { heading: page.heading ?? ex.titulo, text: page.text },
+        // "Q1/5 · título": o número da questão aparece no quadro do enunciado e
+        // nos painéis flutuantes do enunciado e da Dica.
+        enunciado: { heading: `Q${i + 1}/${exercises.length} · ${page.heading ?? ex.titulo}`, text: page.text },
+        dica: ex.dica,
+        alternativas: ex.tipo === 'alternativas' ? ex.alternativas.map((a) => a.texto) : undefined,
       };
     }
   }

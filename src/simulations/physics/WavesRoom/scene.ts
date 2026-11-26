@@ -9,11 +9,16 @@
 import * as THREE from 'three';
 import type { MountableExperiment, MountedExperiment } from '../../../core/mountable';
 import { createTextPanel, type TextPanel } from '../../../core/textPanel';
+import { ghostMaterial } from '../../../core/marcadores';
 
 export interface WavesConfig {
   amplitude: number;  // m
   wavelength: number; // m
   frequency: number;  // Hz
+  // Marcador da resposta: velocidade escolhida (m/s). Um ponto verde sai junto
+  // da crista vermelha com essa velocidade; se estiver certa, os dois andam
+  // juntos. 0 = desligado.
+  fantasmaV?: number;
 }
 
 const LENGTH = 10; // m de corda
@@ -39,6 +44,11 @@ export const wavesRoom: MountableExperiment<WavesConfig, MountedExperiment<Waves
     const crestMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c, emissive: 0xe74c3c, emissiveIntensity: 0.4 });
     const crest = new THREE.Mesh(crestGeo, crestMat);
     root.add(crest);
+
+    const ghostGeo = new THREE.SphereGeometry(0.16, 16, 12);
+    const ghostMat = ghostMaterial(0.5);
+    const ghost = new THREE.Mesh(ghostGeo, ghostMat);
+    root.add(ghost);
 
     // Postes nas pontas e marcas no chão a cada 0,5 m
     const postGeo = new THREE.CylinderGeometry(0.05, 0.05, 1.6, 10);
@@ -102,6 +112,11 @@ export const wavesRoom: MountableExperiment<WavesConfig, MountedExperiment<Waves
         const v = cfg.wavelength * cfg.frequency;
         const travel = (cfg.wavelength / 4 + v * t) % LENGTH;
         crest.position.set(-LENGTH / 2 + travel, cfg.amplitude, 0);
+        ghost.visible = (cfg.fantasmaV ?? 0) > 0;
+        if (ghost.visible) {
+          const gTravel = (cfg.wavelength / 4 + cfg.fantasmaV! * t) % LENGTH;
+          ghost.position.set(-LENGTH / 2 + gTravel, cfg.amplitude, 0);
+        }
       },
       update(next) {
         cfg = next;
@@ -110,8 +125,8 @@ export const wavesRoom: MountableExperiment<WavesConfig, MountedExperiment<Waves
       },
       dispose() {
         root.clear();
-        [beadGeo, lineGeo, crestGeo, postGeo, markGeo].forEach((g) => g.dispose());
-        [beadMat, lineMat, crestMat, postMat, markMat].forEach((mt) => mt.dispose());
+        [beadGeo, lineGeo, crestGeo, postGeo, markGeo, ghostGeo].forEach((g) => g.dispose());
+        [beadMat, lineMat, crestMat, postMat, markMat, ghostMat].forEach((mt) => mt.dispose());
         beads.dispose();
         labels.forEach((l) => l.dispose());
         panel.dispose();

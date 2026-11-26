@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import type { InteractiveRoom } from '../../../museum/interactiveRoom';
 import { pendulum, type MountedPendulum, type PendulumSceneConfig } from './scene';
+import { marcadorControl } from '../../../core/marcadores';
 
 const DEG = Math.PI / 180;
 const MAX_ANGLE = 170 * DEG;
@@ -32,8 +33,9 @@ export const sala: InteractiveRoom<PendulumSceneConfig, MountedPendulum> = {
     { id: 'L', label: 'Comprimento L', kind: 'range', min: 0.5, max: 3, step: 0.1, unit: 'm', default: 1.5 },
     { id: 'g', label: 'Gravidade g', kind: 'range', min: 1, max: 20, step: 0.5, unit: 'm/s²', default: 9.8 },
     { id: 'theta0', label: 'Ângulo inicial θ₀', kind: 'range', min: -170, max: 170, step: 5, unit: '°', default: 45 },
+    marcadorControl('fantasmaT', 'Período escolhido (fantasma)'),
   ],
-  toConfig: (v) => ({ L: Number(v.L), g: Number(v.g), theta0: Number(v.theta0) * DEG }),
+  toConfig: (v) => ({ L: Number(v.L), g: Number(v.g), theta0: Number(v.theta0) * DEG, fantasmaT: Number(v.fantasmaT ?? 0) }),
 
   interactions(mounted, root) {
     const bobWorld = new THREE.Vector3();

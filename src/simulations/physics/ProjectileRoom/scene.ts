@@ -11,11 +11,19 @@
 import * as THREE from 'three';
 import type { MountableExperiment, MountedExperiment } from '../../../core/mountable';
 import { createTextPanel, type TextPanel } from '../../../core/textPanel';
+import { ghostMaterial } from '../../../core/marcadores';
 
 export interface ProjectileConfig {
   v0: number;    // m/s
   angle: number; // graus
   g: number;     // m/s²
+  // Marcadores da resposta (questões de alternativas), em metros reais:
+  //   bandeira: alcance escolhido (a bola cai nela se a conta estiver certa);
+  //   faixa:    altura máxima escolhida (a bola toca a faixa se estiver certa).
+  // 0 = desligado; −1 = esperando a escolha (a bola não é lançada, para a cena
+  // não entregar a resposta antes de o estudante responder).
+  bandeira?: number;
+  faixa?: number;
 }
 
 const SCALE = 0.45;
@@ -96,6 +104,25 @@ export const projectileRoom: MountableExperiment<ProjectileConfig, MountedExperi
     const hLine = new THREE.Line(hLineGeo, new THREE.LineDashedMaterial({ color: 0x2ecc71, dashSize: 0.1, gapSize: 0.08 }));
     root.add(rMark, hLine);
 
+    // Marcadores da resposta: bandeira no chão e faixa de altura
+    const markerMat = ghostMaterial(0.85);
+    const faixaMat = ghostMaterial(0.3);
+    const poleGeo = new THREE.CylinderGeometry(0.03, 0.03, 1.2, 8);
+    const flagGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 1.2, 0), new THREE.Vector3(0, 0.85, 0), new THREE.Vector3(0.45, 1.025, 0),
+    ]);
+    flagGeo.computeVertexNormals();
+    const bandeira = new THREE.Group();
+    const pole = new THREE.Mesh(poleGeo, markerMat);
+    pole.position.y = 0.6;
+    const flagMat = ghostMaterial(0.85);
+    flagMat.side = THREE.DoubleSide;
+    bandeira.add(pole, new THREE.Mesh(flagGeo, flagMat));
+    root.add(bandeira);
+    const faixaGeo = new THREE.BoxGeometry(RULER_MAX * SCALE, 0.06, 0.6);
+    const faixa = new THREE.Mesh(faixaGeo, faixaMat);
+    root.add(faixa);
+
     const panel = createTextPanel(4.5, 1.3);
     panel.mesh.position.set(9.5, 4.9, -3.4); // no alto, no meio da parede do fundo
     root.add(panel.mesh);
@@ -105,10 +132,17 @@ export const projectileRoom: MountableExperiment<ProjectileConfig, MountedExperi
 
     const pos = (time: number) => new THREE.Vector3(k.vx * time * SCALE, 0.2 + (k.vy * time - 0.5 * cfg.g * time * time) * SCALE, 0);
 
+    const waiting = () => (cfg.bandeira ?? 0) < 0 || (cfg.faixa ?? 0) < 0;
+
     function build() {
       k = info(cfg);
       cannonGroup.rotation.z = (cfg.angle * Math.PI) / 180;
-      if (preview) { root.remove(preview); preview.geometry.dispose(); }
+      bandeira.visible = (cfg.bandeira ?? 0) > 0;
+      bandeira.position.set((cfg.bandeira ?? 0) * SCALE, 0, 0);
+      faixa.visible = (cfg.faixa ?? 0) > 0;
+      faixa.position.set((RULER_MAX * SCALE) / 2, 0.2 + (cfg.faixa ?? 0) * SCALE, 0);
+      if (preview) { root.remove(preview); preview.geometry.dispose(); preview = null; }
+      if (waiting()) { relaunch(); return; } // sem curva prevista: ela entregaria a resposta
       const pts = Array.from({ length: 101 }, (_, i) => pos((k.time * i) / 100));
       preview = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), previewMat);
       preview.computeLineDistances();
@@ -127,6 +161,14 @@ export const projectileRoom: MountableExperiment<ProjectileConfig, MountedExperi
     }
 
     function setPanel(landed: boolean) {
+      if (waiting()) {
+        panel.setLines([
+          `v₀ = ${fmt(cfg.v0)} m/s · ângulo = ${cfg.angle}° · g = ${fmt(cfg.g)} m/s²`,
+          'Escolha uma alternativa:',
+          'o marcador verde é colocado e a bola é lançada.',
+        ]);
+        return;
+      }
       panel.setLines([
         `v₀ = ${fmt(cfg.v0)} m/s · ângulo = ${cfg.angle}° · g = ${fmt(cfg.g)} m/s²`,
         landed ? `Alcance medido: ${fmt(k.range)} m` : 'Alcance: em voo…',
@@ -138,6 +180,7 @@ export const projectileRoom: MountableExperiment<ProjectileConfig, MountedExperi
 
     return {
       tick(dt) {
+        if (waiting()) { ball.position.copy(pos(0)); return; }
         if (landedFor >= 0) {
           landedFor += dt;
           if (landedFor > WAIT_AFTER_LANDING) relaunch();
@@ -170,9 +213,9 @@ export const projectileRoom: MountableExperiment<ProjectileConfig, MountedExperi
       },
       dispose() {
         root.clear();
-        [rulerGeo, tickGeo, baseGeo, barrelGeo, ballGeo, trailGeo, rMarkGeo, hLineGeo].forEach((g) => g.dispose());
+        [rulerGeo, tickGeo, baseGeo, barrelGeo, ballGeo, trailGeo, rMarkGeo, hLineGeo, poleGeo, flagGeo, faixaGeo].forEach((g) => g.dispose());
         preview?.geometry.dispose();
-        [rulerMat, darkMat, ballMat, previewMat, trailMat, markMat, hLine.material as THREE.Material].forEach((m) => m.dispose());
+        [rulerMat, darkMat, ballMat, previewMat, trailMat, markMat, hLine.material as THREE.Material, markerMat, faixaMat, flagMat].forEach((m) => m.dispose());
         labels.forEach((l) => l.dispose());
         panel.dispose();
       },

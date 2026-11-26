@@ -9,7 +9,8 @@
 //   - WASD / setas → anda; Shift → corre.
 //   - E (ou clique) → interage com o objeto na mira (ex.: segurar a massa do
 //     pêndulo) ou, se não houver, entra na porta próxima.
-//   - Esc → o navegador destrava o mouse (comportamento padrão do Pointer Lock).
+//   - Espaço → fecha pop-ups, ajustes e o modo inspecionar (index.tsx).
+//   - Esc → o app não usa; o navegador destrava o mouse (padrão do Pointer Lock).
 //   - Tab (dentro de uma sala) → tratado no index.tsx: abre o HUD de ajustes.
 //
 // Controles (celular): TouchControls.tsx chama setTouchMove (joystick) e
@@ -46,6 +47,7 @@ import { defaultValues } from '../core/controls';
 import { createDirectionRepeat, createGamepadReader, frameDirection, type GamepadDirection } from '../core/gamepad';
 import type { InteractiveRoom, RoomInteraction } from './interactiveRoom';
 import { buildHall, buildRoom, buildWing, type Centerpiece, type Level } from './levels';
+import { createFloatingPanel } from './quadro3d';
 import {
   spawnPoint, constrainPosition, nearestDoor,
   EXIT_DOOR_ID, EXERCISE_DOOR_ID, NEXT_EXERCISE_DOOR_ID, PREV_EXERCISE_DOOR_ID, EYE_HEIGHT,
@@ -71,6 +73,8 @@ export interface WingDef {
   entries: DoorEntry[];
   centerpiece?: Centerpiece;
   noExit?: boolean;
+  placa?: string;            // texto da placa na parede do fundo (padrão: o título)
+  boasVindas?: InfoContent;  // pop-up ao interagir com a peça central
 }
 
 export interface WingInfo {
@@ -120,8 +124,16 @@ export interface MuseumScene {
   onRoomChange: ((room: RoomInfo | null) => void) | null; // entrou/saiu de uma sala
   onWingChange: ((wing: WingInfo | null) => void) | null; // entrou/saiu de uma ala
   onInteractionChange: ((prompt: string | null, hold: boolean) => void) | null;
-  onInfo: ((content: InfoContent) => void) | null;       // abrir o pop-up de texto
   onInspectChange: ((inspecting: boolean) => void) | null;
+  // Sala de exercício: o estudante apertou o "i" verde de iniciar a questão.
+  onExerciseStart: (() => void) | null;
+  // Sala de exercício (tipo "alternativas"): o estudante escolheu a alternativa i
+  // no quadro 3D. O React aplica os valores na cena e devolve o estado com
+  // setAlternativesState.
+  onAlternative: ((index: number) => void) | null;
+  setAlternativesState(tentadas: number[], acertou: boolean, certa?: number): void;
+  // Fecha o painel flutuante de leitura, se estiver aberto (Espaço).
+  closePanel(): boolean;
   // Navega para a próxima sala de exercício (ou fecha a sala se for a última).
   goToNextExercise(): void;
   // Libera (false) ou trava (true) a porta "Próxima questão".
@@ -295,8 +307,15 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     onRoomChange: null,
     onWingChange: null,
     onInteractionChange: null,
-    onInfo: null,
     onInspectChange: null,
+    onExerciseStart: null,
+    onAlternative: null,
+    setAlternativesState(tentadas, acertou, certa) { room?.level.setAlternativesState?.(tentadas, acertou, certa); },
+    closePanel() {
+      if (!panel.isOpen()) return false;
+      panel.close();
+      return true;
+    },
     goToNextExercise() { if (!fade && room) navigateNextExercise(); },
     setNextExerciseLocked(locked) { nextExerciseLocked = locked; },
     goBack,
@@ -375,7 +394,9 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     } else if (room && door.id === PREV_EXERCISE_DOOR_ID) {
       navigatePrevExercise();
     } else if (room && door.id === EXIT_DOOR_ID) {
-      transition(closeRoom);
+      // Sala de exercício: a saída volta para a sala do experimento (não para o salão).
+      const base = baseRoomDoor(room.door.id);
+      transition(base ? () => openRoom(base) : closeRoom);
     } else if (!room && wing && door.id === EXIT_DOOR_ID) {
       transition(closeWing);
     } else if (!room && !wing && config.wings?.[door.id]) {
@@ -392,11 +413,19 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   }
 
   function switchLevel(next: Level) {
+    panel.close();
     setCurrentDoor(null);
     hovered = null;
     level.group.visible = false;
     level = next;
     level.group.visible = true;
+  }
+
+  // Sala de exercício → porta da sala do experimento dela (no salão).
+  function baseRoomDoor(roomId: string): DoorPlacement | null {
+    const info = exerciseRoomInfo[roomId];
+    if (!info) return null;
+    return (wing?.level ?? hall).layout.doors.find((d) => d.id === info.experimentId) ?? null;
   }
 
   function openRoom(door: DoorPlacement) {
@@ -412,15 +441,23 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     }
     const defaults = defaultValues(def.controls);
     const values = def.preControls ? { ...defaults, ...def.preControls } : defaults;
-    const exitTitle = wing ? `Voltar ao ${wing.door.title}` : undefined;
-    const roomLevel = buildRoom(def, door.title, door.color, values, exitTitle, config.content?.[door.id], openInfo);
+    const base = baseRoomDoor(door.id);
+    const exitTitle = base ? `Voltar à sala ${base.title}` : wing ? 'Voltar ao salão' : undefined;
+    const isExercise = exerciseRoomInfo[door.id] !== undefined;
+    const roomLevel = buildRoom(
+      def, door.title, door.color, values, exitTitle, config.content?.[door.id], openInfo,
+      isExercise ? {
+        onStart: () => api.onExerciseStart?.(),
+        onAlternative: (i: number) => api.onAlternative?.(i),
+      } : undefined,
+    );
     scene.add(roomLevel.group);
     room = { level: roomLevel, door, def, values };
     // Salas de exercício sempre começam travadas: o estudante precisa responder para avançar.
-    nextExerciseLocked = exerciseRoomInfo[door.id] !== undefined;
+    nextExerciseLocked = isExercise;
     switchLevel(roomLevel);
     placePlayer();
-    api.onRoomChange?.({ id: door.id, title: door.title, controls: def.controls, values });
+    api.onRoomChange?.({ id: door.id, title: door.title, controls: def.controls.filter((c) => !c.hidden), values });
   }
 
   function closeRoom() {
@@ -437,8 +474,9 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
 
   function openWing(door: DoorPlacement) {
     const def = config.wings![door.id];
-    const wingLevel = buildWing(def.entries, door.title, door.color, def.centerpiece, {
+    const wingLevel = buildWing(def.entries, def.placa ?? door.title, door.color, def.centerpiece, {
       miniatures: config.miniatures, content: config.content, openInfo, noExit: def.noExit,
+      boasVindas: def.boasVindas,
     });
     scene.add(wingLevel.group);
     wing = { level: wingLevel, door };
@@ -496,10 +534,21 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
 
   // ── Interações diretas (camada B) ──
 
-  function openInfo(content: InfoContent) {
-    pressed.clear();
-    touchMove.x = touchMove.y = 0;
-    api.onInfo?.(content);
+  // Textos (enunciado, dica, Teoria, História, "i", boas-vindas) abrem num
+  // painel 3D que surge flutuando 1,6 m à frente do visitante, virado para ele.
+  // O mouse continua travado: dá para andar com o painel aberto.
+  const panel = createFloatingPanel();
+  scene.add(panel.group);
+  const _fwd = new THREE.Vector3();
+  function openInfo(content: InfoContent, accent?: number) {
+    camera.getWorldDirection(_fwd);
+    _fwd.y = 0;
+    if (_fwd.lengthSq() < 1e-6) _fwd.set(0, 0, -1);
+    _fwd.normalize();
+    const target = { x: camera.position.x + _fwd.x * 1.6, z: camera.position.z + _fwd.z * 1.6 };
+    const inside = constrainPosition(target, level.layout); // não entra na parede
+    const pos = new THREE.Vector3(inside.x, 1.55, inside.z);
+    panel.open(content, pos, camera.position, accent);
   }
 
   function interactPress() {
@@ -534,8 +583,13 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     pressed.add(e.code);
     if (e.code === 'KeyE' && !e.repeat && controls.isLocked) primaryDown();
     if (e.code === 'KeyI' && !e.repeat && controls.isLocked && room) setInspect(true);
-    // Esc não muda de sala: sem teleporte, o estudante volta andando pelas
-    // portas. Esc só fecha pop-ups e o HUD de ajustes (tratado no index.tsx).
+    // Esc não faz nada no app (o navegador ainda solta o mouse: isso não dá
+    // para impedir). Espaço fecha o painel flutuante (aqui) e os ajustes e a
+    // inspeção (index.tsx).
+    if (e.code === 'Space' && panel.isOpen()) {
+      e.preventDefault();
+      panel.close();
+    }
     // P pausa (solta o mouse e mostra a tela de instruções).
     if (e.code === 'KeyP' && !e.repeat && controls.isLocked && !inspecting) {
       api.onPause?.();
@@ -637,6 +691,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
       if (pad.justPressed('start') && room) api.onGamepadAction?.('menu');
       if (pad.justPressed('select')) api.onGamepadAction?.('pause');
       if (pad.justPressed('y') && room) setInspect(true);
+      if (pad.justPressed('b')) panel.close();
     } else if (pad.justPressed('a') || pad.justPressed('start')) {
       api.onGamepadAction?.('resume');
     }
@@ -653,12 +708,15 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     }
 
     level.tick(dt);
+    panel.tick(camera.position);
 
     // Interações: segurando → arrasta; senão, descobre o que está na mira.
     if (!fade) {
       const ray = aimRay();
       if (active) active.drag(ray);
-      else hovered = level.interactions.find((i) => i.isTarget(ray)) ?? null;
+      // O painel flutuante tem prioridade (está na frente de tudo).
+      else hovered = (panel.interaction.isTarget(ray) ? panel.interaction : null)
+        ?? level.interactions.find((i) => i.isTarget(ray)) ?? null;
     }
     const current = active ?? hovered;
     const prompt = current?.prompt ?? null;
@@ -690,6 +748,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     hall.dispose();
     veilGeo.dispose();
     veilMat.dispose();
+    panel.dispose();
     envMap.dispose();
     roomEnv.dispose();
     pmrem.dispose();
@@ -707,6 +766,13 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
       enter(id: string) {
         const d = level.layout.doors.find((x) => x.id === id);
         if (d) goThroughDoor(d);
+      },
+      // Abre direto uma sala de exercício pelo id (ex.: 'lancamento-q9a').
+      exercise(id: string) {
+        transition(() => openRoom({
+          id, title: id, category: 'Exercício', color: 0x27ae60,
+          wall: 'right', x: 0, z: 0, rotationY: -Math.PI / 2, normal: { x: -1, z: 0 },
+        }));
       },
     };
   }

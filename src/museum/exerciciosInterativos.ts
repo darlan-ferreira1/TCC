@@ -1,18 +1,41 @@
 import type { InfoContent } from './info';
 import type { ControlValue, ControlValues } from '../core/controls';
 
-export interface ExercicioInterativo {
+// Campos comuns aos dois tipos de questão.
+interface ExercicioBase {
   id: string;
   titulo: string;
   enunciado: InfoContent;
-  isCorrect: (values: ControlValues) => boolean;
   feedbackCorreto: string;
   preControls?: Record<string, ControlValue>;
   lockedControls?: string[];
   dica?: string;
+}
+
+// Tipo "ajustar": o estudante mexe nos controles liberados até acertar.
+export interface ExercicioAjustar extends ExercicioBase {
+  tipo?: 'ajustar';
+  isCorrect: (values: ControlValues) => boolean;
   // Tempo mínimo com isCorrect() = true antes de disparar sucesso (ms). Padrão: 1200.
   minHoldMs?: number;
 }
+
+// Uma alternativa: ao ser escolhida, `valores` é aplicado na cena (a resposta
+// do estudante vira a entrada da simulação). Errada → a cena mostra o erro.
+export interface Alternativa {
+  texto: string;
+  valores: ControlValues;
+  correta?: boolean;
+  feedbackErro?: string; // dica específica do erro típico desta alternativa
+}
+
+// Tipo "alternativas": sem teclado (bom no celular); 3 ou 4 botões.
+export interface ExercicioAlternativas extends ExercicioBase {
+  tipo: 'alternativas';
+  alternativas: Alternativa[];
+}
+
+export type ExercicioInterativo = ExercicioAjustar | ExercicioAlternativas;
 
 const period = (L: number, g: number) => 2 * Math.PI * Math.sqrt(L / g);
 
@@ -20,20 +43,25 @@ export const EXERCICIOS_INTERATIVOS: Record<string, ExercicioInterativo[]> = {
   'simple-pendulum': [
     {
       id: 'pendulo-q1',
-      titulo: 'Q1 — Período de um pêndulo de 2,5 m',
+      tipo: 'alternativas',
+      titulo: "Q1 — Período de um pêndulo de 2,5 m",
       enunciado: {
-        title: 'Exercício 1 · Pêndulo',
+        title: "Exercício 1 · Pêndulo",
         pages: [{
-          heading: 'Pêndulo de 2,5 m',
-          text: 'Um pêndulo simples tem comprimento L = 2,5 m e g = 10 m/s².\n\nQual é o período de oscilação para pequenos ângulos?\n\nObserve o pêndulo e confira com a fórmula:\nT = 2π√(L/g)',
+          heading: "Pêndulo de 2,5 m",
+          text: "Um pêndulo simples tem L = 2,5 m e g = 10 m/s².\n\nQual é o período para pequenos ângulos? Use T = 2π√(L/g).\n\nA esfera verde (fantasma) se move com o valor que você escolher: se a resposta estiver certa, ela acompanha o objeto real.",
         }],
       },
-      isCorrect: () => true,
-      feedbackCorreto: 'T = π ≈ 3,14 s — conferido na simulação!',
+      alternativas: [
+        { texto: "0,5 s", valores: { fantasmaT: 0.5 }, feedbackErro: "Faltou o 2π: √(L/g) sozinho não é o período." },
+        { texto: "1,57 s", valores: { fantasmaT: 1.571 }, feedbackErro: "Faltou a raiz: 2π·(L/g) não é 2π√(L/g)." },
+        { texto: "3,14 s", valores: { fantasmaT: 3.1416 }, correta: true },
+        { texto: "12,6 s", valores: { fantasmaT: 12.566 }, feedbackErro: "A fração está invertida: é √(L/g), não √(g/L)." },
+      ],
+      feedbackCorreto: "T = 2π√(2,5/10) = 2π·0,5 = π ≈ 3,14 s: o fantasma acompanha o pêndulo!",
       preControls: { L: 2.5, g: 10, theta0: 15 },
-      lockedControls: ['L', 'g', 'theta0'],
-      dica: 'T = 2π√(L/g) = 2π√(2,5/10) = 2π · 0,5 = π ≈ 3,14 s',
-      minHoldMs: 3000,
+      lockedControls: ['L', 'g', 'theta0', 'fantasmaT'],
+      dica: "T = 2π√(L/g) = 2π√(2,5/10) = 2π · 0,5",
     },
     {
       id: 'pendulo-q2',
@@ -103,20 +131,25 @@ export const EXERCICIOS_INTERATIVOS: Record<string, ExercicioInterativo[]> = {
   'projectile-room': [
     {
       id: 'lancamento-q7',
-      titulo: 'Q7 — Dados do lançamento (20 m/s, 30°)',
+      tipo: 'alternativas',
+      titulo: "Q7 — Alcance do lançamento (20 m/s, 30°)",
       enunciado: {
-        title: 'Exercício 1 · Lançamento',
+        title: "Exercício 1 · Lançamento",
         pages: [{
-          heading: 'Calcule e confira',
-          text: 'Uma bola é lançada a v₀ = 20 m/s, θ = 30°, g = 10 m/s².\n\nCalcule o tempo de voo, a altura máxima e o alcance. Depois observe a trajetória e confira.',
+          heading: "Qual é o alcance?",
+          text: "Uma bola é lançada a v₀ = 20 m/s, θ = 30°, g = 10 m/s².\n\nQual é o alcance?\n\nAo escolher, uma bandeira verde é fincada no alcance escolhido e a bola é lançada.",
         }],
       },
-      isCorrect: () => true,
-      feedbackCorreto: 'T = 2 s, H = 5 m, R ≈ 34,6 m — conferido na simulação!',
-      preControls: { v0: 20, angle: 30 },
-      lockedControls: ['v0', 'angle'],
-      dica: 'v₀y = 20·sin30° = 10 m/s\nT = 2v₀y/g = 2 s\nH = v₀y²/(2g) = 5 m\nv₀x = 20·cos30° ≈ 17,3 m/s\nR = v₀x·T ≈ 34,6 m',
-      minHoldMs: 3000,
+      alternativas: [
+        { texto: "17,3 m", valores: { bandeira: 17.32 }, feedbackErro: "Esse é o caminho só até o ponto mais alto (1 s). O voo inteiro dura 2 s." },
+        { texto: "20 m", valores: { bandeira: 20 }, feedbackErro: "A componente horizontal usa cos 30°, não sen 30°." },
+        { texto: "34,6 m", valores: { bandeira: 34.64 }, correta: true },
+        { texto: "40 m", valores: { bandeira: 40 }, feedbackErro: "R = v₀²/g só vale a 45°. Falta o sen(2θ)." },
+      ],
+      feedbackCorreto: "R = v₀x · T = 17,3 · 2 ≈ 34,6 m: a bola caiu na bandeira!",
+      preControls: { v0: 20, angle: 30, bandeira: -1 },
+      lockedControls: ['v0', 'angle', 'bandeira'],
+      dica: "v₀y = 20·sen30° = 10 m/s → T = 2v₀y/g = 2 s\nv₀x = 20·cos30° ≈ 17,3 m/s → R = v₀x·T",
     },
     {
       id: 'lancamento-q8',
@@ -136,92 +169,117 @@ export const EXERCICIOS_INTERATIVOS: Record<string, ExercicioInterativo[]> = {
     },
     {
       id: 'lancamento-q9a',
-      titulo: 'Q9a — Lançamento a 30°',
+      tipo: 'alternativas',
+      titulo: 'Q9a — Outro ângulo, mesmo alcance',
       enunciado: {
         title: 'Exercício 3 · Lançamento',
         pages: [{
-          heading: 'Compare 30° e 60°',
-          text: 'Lançamento a 30°. Observe e anote o alcance.\n\nNa próxima questão você compara com 60°.',
+          heading: 'Mesmo alcance, outro ângulo',
+          text: 'Com v₀ = 20 m/s e θ = 30°, a bola cai a ≈ 34,6 m.\n\nQual OUTRO ângulo faz a bola cair no mesmo lugar?\n\nA bandeira verde marca esse ponto. Escolha uma alternativa: o canhão é apontado no ângulo escolhido.',
         }],
       },
-      isCorrect: () => true,
-      feedbackCorreto: 'Anotou o alcance? Próxima questão: 60°.',
-      preControls: { v0: 20, angle: 30 },
-      lockedControls: ['v0', 'angle'],
-      dica: 'R = v₀²·sin(60°)/g ≈ 34,6 m',
-      minHoldMs: 2000,
+      alternativas: [
+        { texto: '15°', valores: { angle: 15 }, feedbackErro: 'Metade de 30° não dá o mesmo alcance: veja onde a bola caiu.' },
+        { texto: '45°', valores: { angle: 45 }, feedbackErro: '45° dá o MAIOR alcance (40 m), não o mesmo.' },
+        { texto: '60°', valores: { angle: 60 }, correta: true },
+        { texto: '75°', valores: { angle: 75 }, feedbackErro: '75° é complementar de 15°, não de 30°.' },
+      ],
+      feedbackCorreto: '60° e 30° são complementares: sen(2·60°) = sen(2·30°), mesmo alcance!',
+      preControls: { v0: 20, angle: 30, bandeira: 34.64 },
+      lockedControls: ['v0', 'angle', 'bandeira'],
+      dica: 'R = v₀²·sen(2θ)/g. Procure θ com sen(2θ) = sen(60°).',
     },
     {
       id: 'lancamento-q9b',
-      titulo: 'Q9b — Lançamento a 60° (mesmo alcance, mais alto)',
+      tipo: 'alternativas',
+      titulo: "Q9b — Altura máxima a 60°",
       enunciado: {
-        title: 'Exercício 4 · Lançamento',
+        title: "Exercício 4 · Lançamento",
         pages: [{
-          heading: 'Compare com 30°',
-          text: 'Agora observe o lançamento a 60°. Compare o alcance com o de 30°.\n\n30° e 60° são complementares: sin(2·30°) = sin(2·60°), então R é igual!\nMas qual sobe mais alto?',
+          heading: "Mesmo alcance, mais alto",
+          text: "A 60°, a bola cai no mesmo lugar que a 30°, mas sobe mais.\n\nCom v₀ = 20 m/s e θ = 60°, qual é a altura máxima?\n\nAo escolher, uma faixa verde é colocada nessa altura e a bola é lançada.",
         }],
       },
-      isCorrect: () => true,
-      feedbackCorreto: 'Mesmo alcance, maior altura! sin(60°) = sin(120°).',
-      preControls: { v0: 20, angle: 60 },
-      lockedControls: ['v0', 'angle'],
-      dica: 'Com 60°: v₀y = 17,3 m/s → H = 15 m (3× maior). Mesmo R, maior H.',
-      minHoldMs: 2000,
+      alternativas: [
+        { texto: "5 m", valores: { faixa: 5 }, feedbackErro: "Essa é a altura a 30°. A 60°, v₀y é maior." },
+        { texto: "10 m", valores: { faixa: 10 }, feedbackErro: "Confira v₀y = 20·sen60° ≈ 17,3 m/s." },
+        { texto: "15 m", valores: { faixa: 15 }, correta: true },
+        { texto: "20 m", valores: { faixa: 20 }, feedbackErro: "v₀²/2g é a altura de um lançamento vertical. Falta o sen60°." },
+      ],
+      feedbackCorreto: "H = (20·sen60°)²/(2·10) = 15 m: a bola tocou a faixa! (a 30° eram só 5 m)",
+      preControls: { v0: 20, angle: 60, faixa: -1 },
+      lockedControls: ['v0', 'angle', 'faixa'],
+      dica: "v₀y = 20·sen60° ≈ 17,3 m/s\nH = v₀y²/(2g)",
     },
   ],
   'kepler-room': [
     {
       id: 'kepler-q10',
-      titulo: 'Q10 — Período do Planeta X a 4 UA',
+      tipo: 'alternativas',
+      titulo: "Q10 — Período do Planeta X a 4 UA",
       enunciado: {
-        title: 'Exercício 1 · Kepler',
+        title: "Exercício 1 · Kepler",
         pages: [{
-          heading: '3ª Lei de Kepler',
-          text: 'O Planeta X está a 4 UA do Sol. Pela 3ª Lei: T² = a³ (T em anos, a em UA).\n\nQual é o período? Observe: quantas vezes a Terra volta enquanto o Planeta X dá uma?',
+          heading: "Planeta X a 4 UA",
+          text: "O Planeta X está a 4 UA do Sol. Pela 3ª lei, T² = a³ (T em anos, a em UA).\n\nQual é o período do Planeta X?\n\nO planeta verde (fantasma) anda na mesma órbita com o período que você escolher: se estiver certo, ele acompanha o Planeta X.",
         }],
       },
-      isCorrect: () => true,
-      feedbackCorreto: 'T = 8 anos — confirmado contando as voltas da Terra!',
+      alternativas: [
+        { texto: "4 anos", valores: { fantasmaT: 4 }, feedbackErro: "T não é igual a a: a 3ª lei é T² = a³." },
+        { texto: "8 anos", valores: { fantasmaT: 8 }, correta: true },
+        { texto: "16 anos", valores: { fantasmaT: 16 }, feedbackErro: "Isso é a², não √(a³)." },
+        { texto: "64 anos", valores: { fantasmaT: 64 }, feedbackErro: "64 é T². Falta tirar a raiz." },
+      ],
+      feedbackCorreto: "T² = 4³ = 64 → T = 8 anos: o fantasma acompanha o Planeta X!",
       preControls: { planetX: 4, yearsPerSecond: 0.5 },
-      lockedControls: ['planetX', 'yearsPerSecond'],
-      dica: 'T² = 4³ = 64 → T = 8 anos.',
-      minHoldMs: 5000,
+      lockedControls: ['planetX', 'yearsPerSecond', 'fantasmaT'],
+      dica: "T² = a³ = 4³ = 64",
     },
     {
       id: 'kepler-q11',
-      titulo: 'Q11 — Órbita de Marte (1,52 UA)',
+      tipo: 'alternativas',
+      titulo: "Q11 — Órbita de Marte (1,52 UA)",
       enunciado: {
-        title: 'Exercício 2 · Kepler',
+        title: "Exercício 2 · Kepler",
         pages: [{
-          heading: 'Período de Marte',
-          text: 'Marte orbita a 1,52 UA. Posicione o Planeta X na mesma distância e calcule T.\n\nCompare: quantas vezes a Terra volta enquanto Marte dá uma?',
+          heading: "Na órbita de Marte",
+          text: "O Planeta X foi colocado na órbita de Marte, a 1,52 UA do Sol.\n\nQual é o período? (T² = a³)\n\nO planeta verde (fantasma) anda na mesma órbita com o período que você escolher: se estiver certo, ele acompanha o Planeta X.",
         }],
       },
-      isCorrect: () => true,
-      feedbackCorreto: 'T ≈ 1,87 anos — Marte leva quase 2 anos para completar uma órbita!',
+      alternativas: [
+        { texto: "1,52 anos", valores: { fantasmaT: 1.52 }, feedbackErro: "T não é igual a a: a 3ª lei é T² = a³." },
+        { texto: "1,87 anos", valores: { fantasmaT: 1.874 }, correta: true },
+        { texto: "2,31 anos", valores: { fantasmaT: 2.31 }, feedbackErro: "Isso é a², não √(a³)." },
+        { texto: "3,51 anos", valores: { fantasmaT: 3.512 }, feedbackErro: "3,51 é T². Falta tirar a raiz." },
+      ],
+      feedbackCorreto: "T = √(1,52³) ≈ 1,87 anos: Marte leva quase 2 anos para dar uma volta!",
       preControls: { planetX: 1.52, yearsPerSecond: 0.5 },
-      lockedControls: ['planetX', 'yearsPerSecond'],
-      dica: 'T² = 1,52³ ≈ 3,51 → T ≈ 1,87 anos.',
-      minHoldMs: 5000,
+      lockedControls: ['planetX', 'yearsPerSecond', 'fantasmaT'],
+      dica: "T² = 1,52³ ≈ 3,51",
     },
   ],
   'waves-room': [
     {
       id: 'ondas-q12',
-      titulo: 'Q12 — Velocidade e período (λ=2m, f=1Hz)',
+      tipo: 'alternativas',
+      titulo: "Q12 — Velocidade da onda (λ = 2 m, f = 0,5 Hz)",
       enunciado: {
-        title: 'Exercício 1 · Ondas',
+        title: "Exercício 1 · Ondas",
         pages: [{
-          heading: 'v = λ·f',
-          text: 'Uma onda com λ = 2 m e f = 1 Hz. Qual é a velocidade e o período?\n\nObserve uma crista se mover e confira: v = λ·f e T = 1/f.',
+          heading: "Velocidade da onda",
+          text: "Uma onda tem λ = 2 m e f = 0,5 Hz.\n\nQual é a velocidade da onda?\n\nO ponto verde sai junto da crista vermelha com a velocidade que você escolher: se estiver certa, os dois andam juntos.",
         }],
       },
-      isCorrect: () => true,
-      feedbackCorreto: 'v = 2 m/s e T = 1 s — a crista percorre 2 m a cada segundo!',
-      preControls: { wavelength: 2, frequency: 1, amplitude: 0.4 },
-      lockedControls: ['wavelength', 'frequency', 'amplitude'],
-      dica: 'v = 2·1 = 2 m/s; T = 1/1 = 1 s',
-      minHoldMs: 4000,
+      alternativas: [
+        { texto: "0,25 m/s", valores: { fantasmaV: 0.25 }, feedbackErro: "Isso é f/λ. A velocidade é λ·f." },
+        { texto: "1 m/s", valores: { fantasmaV: 1 }, correta: true },
+        { texto: "2 m/s", valores: { fantasmaV: 2 }, feedbackErro: "Esse é só o λ. Falta multiplicar pela frequência." },
+        { texto: "4 m/s", valores: { fantasmaV: 4 }, feedbackErro: "Isso é λ/f. A velocidade é λ·f." },
+      ],
+      feedbackCorreto: "v = λ·f = 2 · 0,5 = 1 m/s: o ponto verde acompanha a crista!",
+      preControls: { wavelength: 2, frequency: 0.5, amplitude: 0.4 },
+      lockedControls: ['wavelength', 'frequency', 'amplitude', 'fantasmaV'],
+      dica: "v = λ · f",
     },
     {
       id: 'ondas-q13',
@@ -243,20 +301,25 @@ export const EXERCICIOS_INTERATIVOS: Record<string, ExercicioInterativo[]> = {
   'conical-pendulum': [
     {
       id: 'conico-c1',
-      titulo: 'C1 — Período com L=1m, θ=60°',
+      tipo: 'alternativas',
+      titulo: "C1 — Período com L = 1 m e θ = 60°",
       enunciado: {
-        title: 'Exercício 1 · Pêndulo Cônico',
+        title: "Exercício 1 · Pêndulo cônico",
         pages: [{
-          heading: 'Cronometre o período',
-          text: 'O pêndulo cônico tem L = 1 m e θ = 60°. Qual é o período?\n\nCronometre 3 voltas e divida por 3. Use: T = 2π√(L·cosθ/g)',
+          heading: "Período do pêndulo cônico",
+          text: "O pêndulo cônico tem L = 1 m e θ = 60°. Use T = 2π√(L·cosθ/g).\n\nQual é o período?\n\nA esfera verde (fantasma) se move com o valor que você escolher: se a resposta estiver certa, ela acompanha o objeto real.",
         }],
       },
-      isCorrect: () => true,
-      feedbackCorreto: 'T ≈ 1,40 s — confirmado na simulação!',
+      alternativas: [
+        { texto: "0,70 s", valores: { fantasmaT: 0.702 }, feedbackErro: "Use 2π, não π." },
+        { texto: "1,40 s", valores: { fantasmaT: 1.405 }, correta: true },
+        { texto: "1,85 s", valores: { fantasmaT: 1.849 }, feedbackErro: "A fórmula usa cos θ (a altura do cone), não sen θ." },
+        { texto: "1,99 s", valores: { fantasmaT: 1.987 }, feedbackErro: "Esse é o período do pêndulo simples: faltou o cos θ." },
+      ],
+      feedbackCorreto: "T = 2π√(cos60°/10) ≈ 1,40 s: o fantasma acompanha a massa!",
       preControls: { L: 1, theta: 60, g: 10 },
-      lockedControls: ['L', 'theta', 'g'],
-      dica: 'T = 2π√(cos60°/10) = 2π√(0,05) ≈ 1,40 s',
-      minHoldMs: 4200,
+      lockedControls: ['L', 'theta', 'g', 'fantasmaT'],
+      dica: "T = 2π√(1·cos60°/10) = 2π√0,05",
     },
     {
       id: 'conico-c3',
@@ -298,122 +361,129 @@ export const EXERCICIOS_INTERATIVOS: Record<string, ExercicioInterativo[]> = {
       id: 'conico-c5',
       titulo: 'C5 — θ→0: cônico ≈ simples',
       enunciado: {
-        title: 'Exercício 4 · Pêndulo Cônico',
+        title: 'Exercício 4 · Pêndulo cônico',
         pages: [{
-          heading: 'Limite para θ→0',
-          text: 'Com θ = 5°, o pêndulo cônico deve ter período próximo ao do pêndulo simples.\n\nObserve e compare com T = 2π√(L/g) ≈ 2 s.',
+          heading: 'Cônico ou simples?',
+          text: 'Com L = 1 m, o pêndulo simples tem período T = 2π√(L/g) ≈ 2 s.\n\nDiminua θ até o período do pêndulo cônico ficar praticamente igual ao do simples (diferença menor que 2%).',
         }],
       },
-      isCorrect: () => true,
-      feedbackCorreto: 'T ≈ 2 s — igual ao pêndulo simples! Quando θ→0, cosθ→1.',
-      preControls: { L: 1, g: 10, theta: 5 },
+      isCorrect: (v) => Number(v.theta) <= 10,
+      feedbackCorreto: 'Com θ pequeno, cos θ ≈ 1: o cônico vira um pêndulo simples (T ≈ 2 s)!',
+      preControls: { L: 1, g: 10, theta: 50 },
       lockedControls: ['L', 'g'],
-      dica: 'cos(5°) ≈ 0,996 ≈ 1 → T_cônico ≈ T_simples = 2π√(1/10) ≈ 2 s',
-      minHoldMs: 3000,
+      dica: 'T_cônico = 2π√(L·cosθ/g). Quando cos θ ≈ 1, T_cônico ≈ T_simples. cos 10° ≈ 0,985.',
     },
   ],
   'foucault-pendulum': [
     {
       id: 'foucault-f1',
-      titulo: 'F1 — Período do pêndulo (L=6m)',
+      tipo: 'alternativas',
+      titulo: "F1 — Período do pêndulo (L = 6 m)",
       enunciado: {
-        title: 'Exercício 1 · Foucault',
+        title: "Exercício 1 · Foucault",
         pages: [{
-          heading: 'Período do pêndulo',
-          text: 'O pêndulo desta sala tem L = 6 m. Qual é o período?\n\nCronometre as oscilações e confira com T = 2π√(L/g).',
+          heading: "Período da oscilação",
+          text: "O pêndulo desta sala tem L = 6 m e g = 10 m/s².\n\nQual é o período de uma oscilação? Use T = 2π√(L/g).\n\nA esfera verde (fantasma) oscila com o período que você escolher: se estiver certo, ela acompanha a massa.",
         }],
       },
-      isCorrect: () => true,
-      feedbackCorreto: 'T ≈ 4,87 s — período de um pêndulo de 6 m!',
-      preControls: { place: 'paris', timeScale: 600 },
-      lockedControls: ['place', 'timeScale'],
-      dica: 'T = 2π√(6/10) ≈ 4,87 s',
-      minHoldMs: 5000,
+      alternativas: [
+        { texto: "0,77 s", valores: { fantasmaT: 0.775 }, feedbackErro: "Faltou o 2π." },
+        { texto: "3,77 s", valores: { fantasmaT: 3.77 }, feedbackErro: "Faltou a raiz: 2π·(L/g) não é 2π√(L/g)." },
+        { texto: "4,87 s", valores: { fantasmaT: 4.867 }, correta: true },
+        { texto: "8,11 s", valores: { fantasmaT: 8.112 }, feedbackErro: "A fração está invertida: é √(L/g)." },
+      ],
+      feedbackCorreto: "T = 2π√(6/10) ≈ 4,87 s: o fantasma acompanha a massa!",
+      preControls: { place: "paris", timeScale: 600 },
+      lockedControls: ['place', 'timeScale', 'fantasmaT'],
+      dica: "T = 2π√(6/10)",
     },
     {
       id: 'foucault-f2',
-      titulo: 'F2 — Por que o plano gira?',
+      tipo: 'alternativas',
+      titulo: 'F2 — Onde o plano não gira?',
       enunciado: {
         title: 'Exercício 2 · Foucault',
         pages: [{
           heading: 'A Terra que gira',
-          text: 'Em Paris, acelere o tempo e observe o plano girar.\n\nO pêndulo não recebe força lateral. Por que o plano parece girar?',
+          text: 'O plano de oscilação é fixo no espaço: é a Terra que gira por baixo dele.\n\nEm qual destes lugares o plano NÃO gira?\n\nEscolha uma alternativa: a sala é levada para o lugar escolhido.',
         }],
       },
-      isCorrect: () => true,
-      feedbackCorreto: 'O plano é fixo no espaço. É o chão que gira!',
-      preControls: { place: 'paris', timeScale: 3600 },
+      alternativas: [
+        { texto: 'Polo Norte', valores: { place: 'polo_norte' }, feedbackErro: 'No polo o plano gira mais rápido: uma volta em 24 h.' },
+        { texto: 'Paris', valores: { place: 'paris' }, feedbackErro: 'Em Paris o plano gira (≈ 32 h por volta).' },
+        { texto: 'Equador', valores: { place: 'equador' }, correta: true },
+        { texto: 'Quixadá', valores: { place: 'quixada' }, feedbackErro: 'Quixadá está perto do equador, mas não nele: o plano gira bem devagar.' },
+      ],
+      feedbackCorreto: 'No equador, sen(0°) = 0: o plano nunca gira!',
+      preControls: { place: 'paris', timeScale: 7200 },
       lockedControls: ['place', 'timeScale'],
-      dica: 'O plano é fixo no espaço; a Terra (e você) gira por baixo dele.',
-      minHoldMs: 4000,
+      dica: 'T = 24 h / sen(latitude). O que acontece quando a latitude é 0°?',
     },
     {
       id: 'foucault-f3a',
-      titulo: 'F3a — Polo Norte: 1 volta em 24 h',
+      tipo: 'alternativas',
+      titulo: "F3 — Polo Norte: tempo de uma volta",
       enunciado: {
-        title: 'Exercício 3a · Foucault',
+        title: "Exercício 3 · Foucault",
         pages: [{
-          heading: 'No Polo Norte',
-          text: 'No Polo Norte, o plano gira uma volta completa em 24 h.\n\nAcelere o tempo. T_Foucault = 24 h / sen(latitude). Latitude = 90°.',
+          heading: "No Polo Norte",
+          text: "No Polo Norte (latitude 90°), quanto tempo o plano de oscilação leva para dar uma volta completa?\n\nUse T = 24 h / sen(latitude). O tempo está acelerado.\n\nAo escolher, uma linha verde gira no disco com o tempo de volta (e o sentido) escolhido: se estiver certo, ela acompanha o rastro da massa.",
         }],
       },
-      isCorrect: () => true,
-      feedbackCorreto: 'Uma volta em 24 h no polo!',
-      preControls: { place: 'polo_norte', timeScale: 7200 },
-      lockedControls: ['place', 'timeScale'],
-      dica: 'T = 24 / sen(90°) = 24 / 1 = 24 h.',
-      minHoldMs: 3000,
-    },
-    {
-      id: 'foucault-f3b',
-      titulo: 'F3b — Equador: plano não gira',
-      enunciado: {
-        title: 'Exercício 3b · Foucault',
-        pages: [{
-          heading: 'No Equador',
-          text: 'No Equador (latitude = 0°), o plano não gira.\n\nObserve. T = 24 / sen(0°) = ?',
-        }],
-      },
-      isCorrect: () => true,
-      feedbackCorreto: 'T → ∞ no equador. O plano nunca gira!',
-      preControls: { place: 'equador', timeScale: 7200 },
-      lockedControls: ['place', 'timeScale'],
-      dica: 'sen(0°) = 0 → T → ∞: nunca completa uma volta.',
-      minHoldMs: 3000,
+      alternativas: [
+        { texto: "12 h", valores: { fantasmaH: 12 }, feedbackErro: "sen 90° = 1: o tempo não diminui." },
+        { texto: "24 h", valores: { fantasmaH: 24 }, correta: true },
+        { texto: "48 h", valores: { fantasmaH: 48 }, feedbackErro: "sen 90° = 1: o tempo não dobra." },
+        { texto: "Nunca gira", valores: { fantasmaH: 1000000000.0 }, feedbackErro: "Quem não gira é o equador. No polo o giro é o mais rápido." },
+      ],
+      feedbackCorreto: "T = 24 h / sen 90° = 24 h: no polo, uma volta por dia!",
+      preControls: { place: "polo_norte", timeScale: 7200 },
+      lockedControls: ['place', 'timeScale', 'fantasmaH'],
+      dica: "T = 24 / sen(90°) = 24 / 1",
     },
     {
       id: 'foucault-f4',
-      titulo: 'F4 — Paris: período ≈ 32 h',
+      tipo: 'alternativas',
+      titulo: "F4 — Paris: tempo de uma volta",
       enunciado: {
-        title: 'Exercício 4 · Foucault',
+        title: "Exercício 4 · Foucault",
         pages: [{
-          heading: 'Em Paris',
-          text: 'Em Paris (lat. 49° N), quanto tempo o plano leva para girar uma volta?\n\nAcelere o tempo. T = 24 h / sen(49°).',
+          heading: "Em Paris (49° N)",
+          text: "Em Paris (latitude 49° N), quanto tempo o plano leva para dar uma volta?\n\nUse T = 24 h / sen(latitude), com sen 49° ≈ 0,755.\n\nAo escolher, uma linha verde gira no disco com o tempo de volta (e o sentido) escolhido: se estiver certo, ela acompanha o rastro da massa.",
         }],
       },
-      isCorrect: () => true,
-      feedbackCorreto: 'T ≈ 32 h em Paris!',
-      preControls: { place: 'paris', timeScale: 7200 },
-      lockedControls: ['place', 'timeScale'],
-      dica: 'T = 24 / sen(49°) ≈ 24 / 0,755 ≈ 32 h.',
-      minHoldMs: 4000,
+      alternativas: [
+        { texto: "18 h", valores: { fantasmaH: 18.11 }, feedbackErro: "Você multiplicou: é 24 h DIVIDIDO por sen(latitude)." },
+        { texto: "24 h", valores: { fantasmaH: 24 }, feedbackErro: "Isso só vale no polo. Em Paris a latitude importa." },
+        { texto: "32 h", valores: { fantasmaH: 31.8 }, correta: true },
+        { texto: "37 h", valores: { fantasmaH: 36.58 }, feedbackErro: "A fórmula usa sen(latitude), não cos." },
+      ],
+      feedbackCorreto: "T = 24 / sen49° ≈ 32 h: a linha acompanha o rastro!",
+      preControls: { place: "paris", timeScale: 7200 },
+      lockedControls: ['place', 'timeScale', 'fantasmaH'],
+      dica: "T = 24 / 0,755",
     },
     {
       id: 'foucault-f5',
-      titulo: 'F5 — Quixadá: 276 h, sentido inverso',
+      tipo: 'alternativas',
+      titulo: "F5 — Quixadá: tempo e sentido",
       enunciado: {
-        title: 'Exercício 5 · Foucault',
+        title: "Exercício 5 · Foucault",
         pages: [{
-          heading: 'Em Quixadá',
-          text: 'Em Quixadá (lat. 5° S), calcule T e observe o sentido de rotação.\n\nCompare com Paris: mesmo sentido ou inverso?',
+          heading: "Em Quixadá (5° S)",
+          text: "Em Quixadá (latitude 5° S), quanto tempo o plano leva para dar uma volta, e em que sentido, comparado com Paris?\n\nsen 5° ≈ 0,087.\n\nAo escolher, uma linha verde gira no disco com o tempo de volta (e o sentido) escolhido: se estiver certo, ela acompanha o rastro da massa.",
         }],
       },
-      isCorrect: () => true,
-      feedbackCorreto: 'T ≈ 276 h e sentido inverso ao de Paris!',
-      preControls: { place: 'quixada', timeScale: 14400 },
-      lockedControls: ['place', 'timeScale'],
-      dica: 'T = 24 / sen(5°) ≈ 276 h ≈ 11,5 dias. No hemisfério sul, sentido invertido.',
-      minHoldMs: 4000,
+      alternativas: [
+        { texto: "≈ 24 h, mesmo sentido de Paris", valores: { fantasmaH: 24.09 }, feedbackErro: "A fórmula usa sen(latitude), não cos. E no hemisfério sul o sentido muda." },
+        { texto: "≈ 276 h, mesmo sentido de Paris", valores: { fantasmaH: 275.4 }, feedbackErro: "O tempo está certo, mas no hemisfério sul o sentido é o inverso." },
+        { texto: "≈ 276 h, sentido inverso ao de Paris", valores: { fantasmaH: -275.4 }, correta: true },
+        { texto: "Nunca gira", valores: { fantasmaH: 1000000000.0 }, feedbackErro: "Quixadá está perto do equador, mas não nele: o plano gira, só que bem devagar." },
+      ],
+      feedbackCorreto: "T = 24 / sen5° ≈ 276 h (11,5 dias), no sentido inverso ao de Paris!",
+      preControls: { place: "quixada", timeScale: 14400 },
+      lockedControls: ['place', 'timeScale', 'fantasmaH'],
+      dica: "T = 24 / 0,087 ≈ 276 h. No hemisfério sul, o plano gira no sentido anti-horário.",
     },
   ],
 };
