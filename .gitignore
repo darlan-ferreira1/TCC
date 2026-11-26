@@ -2,3 +2,10 @@ node_modules/
 dist/
 *.log
 .vite/
+
+# Fora do versionamento (ficam só no PC)
+normasFormatacaoUFC/
+pdfsTrabalhosRelacionados/
+CLAUDE.md
+.claude/
+tarefas/
