@@ -39,6 +39,7 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { InfoContent, RoomContent } from './info';
 import type { ControlDef, ControlValue, ControlValues } from '../core/controls';
 import { defaultValues } from '../core/controls';
@@ -150,11 +151,27 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.domElement.style.display = 'block';
+  // Visual (ver devRelatorios.md): tone mapping "de cinema" (ACES) deixa as
+  // cores e o contraste mais naturais; as sombras suaves fazem os objetos
+  // "pousarem" no chão em vez de flutuarem.
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   container.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(config.background);
-  scene.fog = new THREE.Fog(config.background, 18, 45);
+  scene.fog = new THREE.Fog(config.background, 30, 70);
+
+  // Mapa de ambiente gerado por código (RoomEnvironment, sem arquivo externo):
+  // é o "reflexo" que os materiais PBR (MeshStandardMaterial) usam. Sem ele,
+  // metal e verniz ficam chapados.
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const roomEnv = new RoomEnvironment();
+  const envMap = pmrem.fromScene(roomEnv, 0.04).texture;
+  scene.environment = envMap;
+  scene.environmentIntensity = 0.45;
 
   const camera = new THREE.PerspectiveCamera(70, container.clientWidth / container.clientHeight, 0.05, 100);
   scene.add(camera); // necessário para o véu de transição (filho da câmera) ser desenhado
@@ -162,9 +179,20 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   const controls = new PointerLockControls(camera, renderer.domElement);
 
   // ── Luzes (valem para o salão e para todas as salas) ──
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x444466, 1.2));
-  const sun = new THREE.DirectionalLight(0xffffff, 1.0);
-  sun.position.set(4, 10, 6);
+  // Luz quente, como numa galeria: céu creme e reflexo do chão de madeira.
+  scene.add(new THREE.HemisphereLight(0xfff3e0, 0x8a6f52, 1.1));
+  const sun = new THREE.DirectionalLight(0xfff1dd, 1.6);
+  sun.position.set(4, 12, 6);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.left = -16;
+  sun.shadow.camera.right = 16;
+  sun.shadow.camera.top = 16;
+  sun.shadow.camera.bottom = -16;
+  sun.shadow.camera.near = 1;
+  sun.shadow.camera.far = 40;
+  sun.shadow.bias = -0.0005;
+  sun.shadow.normalBias = 0.02;
   scene.add(sun);
 
   // ── Véu de transição: plano preto colado na frente da câmera ──
@@ -662,8 +690,25 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     hall.dispose();
     veilGeo.dispose();
     veilMat.dispose();
+    envMap.dispose();
+    roomEnv.dispose();
+    pmrem.dispose();
+    if (import.meta.env.DEV) delete (window as unknown as Record<string, unknown>).__expoDebug;
     renderer.dispose();
     renderer.domElement.remove();
+  }
+
+  // Só no `npm run dev` (some no build): atalho para testes automáticos e
+  // prints, ex. no console: __expoDebug.enter('simple-pendulum').
+  if (import.meta.env.DEV) {
+    (window as unknown as Record<string, unknown>).__expoDebug = {
+      camera,
+      doors: () => level.layout.doors.map((d) => d.id),
+      enter(id: string) {
+        const d = level.layout.doors.find((x) => x.id === id);
+        if (d) goThroughDoor(d);
+      },
+    };
   }
 
   return api;

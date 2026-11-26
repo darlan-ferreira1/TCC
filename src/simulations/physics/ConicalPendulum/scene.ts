@@ -19,7 +19,7 @@ const fmt = (x: number, d = 2) => x.toFixed(d).replace('.', ',');
 export const conicalPendulum: MountableExperiment<ConicalConfig, MountedExperiment<ConicalConfig>> = {
   mount({ root }, config) {
     const pivotGeo = new THREE.SphereGeometry(0.07, 12, 8);
-    const pivotMat = new THREE.MeshPhongMaterial({ color: 0x888888 });
+    const pivotMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8, roughness: 0.35 });
     const pivot = new THREE.Mesh(pivotGeo, pivotMat);
     root.add(pivot);
 
@@ -28,9 +28,9 @@ export const conicalPendulum: MountableExperiment<ConicalConfig, MountedExperime
     spin.add(tilt);
     root.add(spin);
 
-    const rodMat = new THREE.MeshPhongMaterial({ color: 0x95a5a6 });
+    const rodMat = new THREE.MeshStandardMaterial({ color: 0x95a5a6, metalness: 0.7, roughness: 0.3 });
     const massGeo = new THREE.SphereGeometry(0.18, 20, 14);
-    const massMat = new THREE.MeshPhongMaterial({ color: 0xe67e22, shininess: 90 });
+    const massMat = new THREE.MeshStandardMaterial({ color: 0xe67e22, metalness: 0.2, roughness: 0.25 });
     const mass = new THREE.Mesh(massGeo, massMat);
     tilt.add(mass);
 

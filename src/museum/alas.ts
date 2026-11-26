@@ -40,7 +40,7 @@ const door = (id: string, title: string, color: number): DoorEntry => ({ id, tit
 
 // Museu da Mecânica: um pequeno pêndulo cônico girando.
 const mechanicsPiece: Centerpiece = (group, t) => {
-  const mat = t.track(new THREE.MeshStandardMaterial({ color: 0x3a3a55, roughness: 0.6 }));
+  const mat = t.track(new THREE.MeshStandardMaterial({ color: 0x3d342c, roughness: 0.35, metalness: 0.7 }));
   const post = new THREE.Mesh(t.track(new THREE.CylinderGeometry(0.03, 0.03, 1.1, 8)), mat);
   post.position.y = 0.55;
   const arm = new THREE.Mesh(t.track(new THREE.BoxGeometry(0.04, 0.04, 0.04)), mat);

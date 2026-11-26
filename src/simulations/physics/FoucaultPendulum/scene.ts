@@ -37,7 +37,7 @@ export const foucaultPendulum: MountableExperiment<FoucaultConfig, MountedExperi
     plane.add(swing);
     root.add(plane);
 
-    const wireMat = new THREE.MeshPhongMaterial({ color: 0xaaaaaa });
+    const wireMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.8, roughness: 0.3 });
     const bobGeo = new THREE.SphereGeometry(0.3, 24, 16);
     const bobMat = new THREE.MeshStandardMaterial({ color: 0xc9a227, metalness: 0.8, roughness: 0.3 });
     const bob = new THREE.Mesh(bobGeo, bobMat);

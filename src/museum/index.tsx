@@ -420,6 +420,8 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
         <div style={{
           position: 'absolute', top: 'calc(14px + env(safe-area-inset-top, 0px))', left: 16,
           color: '#e0e0f0', textShadow: '0 1px 4px rgba(0,0,0,0.8)', pointerEvents: 'none',
+          // Fundo escuro translúcido: o texto continua legível sobre as paredes claras.
+          background: 'rgba(20,18,16,0.55)', padding: '8px 12px', borderRadius: 8,
         }}>
           <div style={{ fontSize: 11, letterSpacing: '0.12em', opacity: 0.7, textTransform: 'uppercase' }}>Sala</div>
           <div style={{ fontSize: 17, fontWeight: 700 }}>{room.title}</div>
@@ -438,6 +440,8 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
         <div style={{
           position: 'absolute', top: 'calc(14px + env(safe-area-inset-top, 0px))', left: 16,
           color: '#e0e0f0', textShadow: '0 1px 4px rgba(0,0,0,0.8)', pointerEvents: 'none',
+          // Fundo escuro translúcido: o texto continua legível sobre as paredes claras.
+          background: 'rgba(20,18,16,0.55)', padding: '8px 12px', borderRadius: 8,
         }}>
           <div style={{ fontSize: 11, letterSpacing: '0.12em', opacity: 0.7, textTransform: 'uppercase' }}>Ala</div>
           <div style={{ fontSize: 17, fontWeight: 700 }}>{wing.title}</div>

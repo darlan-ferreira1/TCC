@@ -9,7 +9,7 @@ import type { Centerpiece } from './levels';
 const std = (t: Tracker, color: number, extra: THREE.MeshStandardMaterialParameters = {}) =>
   t.track(new THREE.MeshStandardMaterial({ color, roughness: 0.5, ...extra }));
 const sphere = (t: Tracker, r: number) => t.track(new THREE.SphereGeometry(r, 18, 12));
-const DARK = 0x3a3a55;
+const DARK = 0x3d342c; // bronze escuro (combina com a madeira)
 
 // Pórtico com um fio pendurado: devolve o grupo que balança.
 function gallows(group: THREE.Group, t: Tracker, height: number, color: number): THREE.Group {

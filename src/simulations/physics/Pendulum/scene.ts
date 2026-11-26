@@ -53,7 +53,7 @@ export const pendulum: MountableExperiment<PendulumSceneConfig, MountedPendulum>
 
     // Pivô fixo — marcador visual na origem
     const pivotGeo = new THREE.SphereGeometry(0.07, 12, 8);
-    const pivotMat = new THREE.MeshPhongMaterial({ color: 0x888888 });
+    const pivotMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8, roughness: 0.35 });
     const pivotMesh = new THREE.Mesh(pivotGeo, pivotMat);
     root.add(pivotMesh);
 
@@ -61,8 +61,8 @@ export const pendulum: MountableExperiment<PendulumSceneConfig, MountedPendulum>
     const pivotGroup = new THREE.Group();
     root.add(pivotGroup);
 
-    const rodMat  = new THREE.MeshPhongMaterial({ color: 0x95a5a6, shininess: 50 });
-    const massMat = new THREE.MeshPhongMaterial({ color: 0xe74c3c, shininess: 90 });
+    const rodMat  = new THREE.MeshStandardMaterial({ color: 0x95a5a6, metalness: 0.7, roughness: 0.3 });
+    const massMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c, metalness: 0.2, roughness: 0.25 });
 
     // Massa (bob) — geometria fixa, apenas a posição Y muda com L
     const massGeo  = new THREE.SphereGeometry(0.18, 16, 12);

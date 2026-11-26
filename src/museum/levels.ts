@@ -9,9 +9,9 @@
 import * as THREE from 'three';
 import type { ControlValues } from '../core/controls';
 import type { InteractiveRoom, RoomInteraction } from './interactiveRoom';
-import { buildEasel, buildEnunciadoPanel, buildInfoIcon, buildPedestal, buildShell, Tracker } from './builders';
+import { addSpotlight, buildEasel, buildEnunciadoPanel, buildInfoIcon, buildPedestal, buildShell, enableShadows, Tracker } from './builders';
 import type { InfoContent, RoomContent } from './info';
-import { computeLayout, computeRoomLayout, computeWingLayout, EXHIBIT_RADIUS, type DoorEntry, type MuseumLayout, type Obstacle } from './layout';
+import { computeLayout, computeRoomLayout, computeWingLayout, EXHIBIT_RADIUS, WALL_HEIGHT, type DoorEntry, type MuseumLayout, type Obstacle } from './layout';
 
 export interface Level {
   group: THREE.Group;
@@ -60,6 +60,8 @@ export function buildHall(entries: DoorEntry[]): Level {
   );
   sculpture.position.set(pedestal.x, 1.65, pedestal.z);
   group.add(sculpture);
+  addSpotlight(group, t, pedestal.x, 1.2, pedestal.z, WALL_HEIGHT, 40);
+  enableShadows(group);
 
   return {
     group,
@@ -100,6 +102,7 @@ export function buildWing(entries: DoorEntry[], title: string, color: number, ce
   for (const ex of layout.exhibits ?? []) {
     const h = 1.0;
     buildPedestal(group, t, ex.x, ex.z, EXHIBIT_RADIUS, h);
+    addSpotlight(group, t, ex.x, h, ex.z, WALL_HEIGHT, 18);
     const mini = extras.miniatures?.[ex.doorId];
     if (mini) {
       const top = new THREE.Group();
@@ -123,6 +126,8 @@ export function buildWing(entries: DoorEntry[], title: string, color: number, ce
   top.position.set(pedestal.x, 1.0, pedestal.z);
   group.add(top);
   const animate = centerpiece?.(top, t);
+  addSpotlight(group, t, pedestal.x, 1.4, pedestal.z, WALL_HEIGHT, 40);
+  enableShadows(group);
 
   return {
     group,
@@ -195,6 +200,12 @@ export function buildRoom(
   }
 
   const [tx, ty, tz] = spec.inspect?.target ?? spec.place;
+  // Spot de galeria sobre o experimento (mira no pedestal ou no centro do fenômeno).
+  const spotY = Math.min(ty, 1.2);
+  const ceilingY = spec.wallHeight ?? WALL_HEIGHT;
+  // Intensidade cresce com o quadrado da distância: salas altas (Foucault) recebem a mesma luz.
+  addSpotlight(group, t, tx, spotY, tz, ceilingY, 5 * (ceilingY - spotY) ** 2);
+  enableShadows(group);
 
   return {
     group,
