@@ -5,8 +5,8 @@
 //
 // Camada A (HUD): comprimento, gravidade e ângulo inicial — os mesmos 3
 //   parâmetros dos sliders da página.
-// Camada B (interação direta): mirar na massa e segurar E (ou o botão, no
-//   celular) para pegá-la; arrastar define o ângulo; soltar larga o pêndulo a
+// Camada B (interação direta): mirar na massa e segurar E (no celular,
+//   encostar o dedo na massa) para pegá-la; arrastar define o ângulo; soltar larga o pêndulo a
 //   partir do repouso. É a forma mais natural de "definir θ₀".
 
 import * as THREE from 'three';
@@ -49,7 +49,10 @@ export const sala: InteractiveRoom<PendulumSceneConfig, MountedPendulum> = {
       plane.set(new THREE.Vector3(0, 0, 1), -pivotWorld.z); // plano z = z do pivô
       if (!ray.intersectPlane(plane, hit)) return null;
       const local = root.worldToLocal(hit.clone());
-      const theta = Math.atan2(local.x, -local.y); // 0 = pendurado na vertical
+      // 0 = pendurado na vertical. O sinal segue a cena (pivotGroup.rotation.z
+      // = -θ põe θ > 0 para a esquerda, x < 0): sem o "-" a massa ia para o
+      // lado oposto ao da mira/do dedo.
+      const theta = Math.atan2(-local.x, -local.y);
       return Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, theta));
     }
 

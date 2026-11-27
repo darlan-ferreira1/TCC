@@ -1,6 +1,10 @@
 // Controles de toque do Museu Virtual (celular/tablet).
 //
-//   - Área de olhar: ocupa a tela toda; arrastar o dedo gira a câmera.
+//   - Área de olhar: ocupa a tela toda; arrastar o dedo gira a câmera. Um
+//     toque rápido (sem arrastar) aciona o que está sob o dedo: setas e ✕ do
+//     painel flutuante, "i", alternativas (scene.tapAt). Encostar o dedo num
+//     objeto de segurar (massa do pêndulo) pega o objeto: arrastar o move e
+//     soltar o dedo o larga (scene.touchGrab/touchDrag/interactRelease).
 //   - Joystick virtual: canto inferior esquerdo; o deslocamento do botão
 //     central em relação à base vira um vetor analógico em [-1, 1].
 //
@@ -14,37 +18,53 @@ const BASE_SIZE = 120; // diâmetro da base do joystick (px)
 const KNOB_SIZE = 52;
 const MAX_OFFSET = (BASE_SIZE - KNOB_SIZE) / 2; // quanto o botão pode se afastar do centro
 const DEAD_ZONE = 0.12; // ignora toques muito pequenos (dedo apoiado)
+const TAP_MAX_MS = 500;  // toque rápido: dedo solto em menos que isso...
+const TAP_MAX_MOVE = 12; // ...e sem andar mais que isso (px)
 
 interface Props {
   onMove: (x: number, y: number) => void;  // x = lado (+ direita), y = frente (+ para frente)
   onLook: (dx: number, dy: number) => void;
+  onTap: (x: number, y: number) => void;   // toque rápido (coordenadas da tela)
+  onGrab: (x: number, y: number) => boolean; // dedo encostou: pegou um objeto?
+  onGrabMove: (x: number, y: number) => void;
+  onGrabEnd: () => void;
 }
 
-export default function TouchControls({ onMove, onLook }: Props) {
+export default function TouchControls({ onMove, onLook, onTap, onGrab, onGrabMove, onGrabEnd }: Props) {
   return (
     <>
-      <LookArea onLook={onLook} />
+      <LookArea onLook={onLook} onTap={onTap} onGrab={onGrab} onGrabMove={onGrabMove} onGrabEnd={onGrabEnd} />
       <Joystick onMove={onMove} />
     </>
   );
 }
 
-function LookArea({ onLook }: Pick<Props, 'onLook'>) {
+function LookArea({ onLook, onTap, onGrab, onGrabMove, onGrabEnd }: Omit<Props, 'onMove'>) {
   const last = useRef<{ id: number; x: number; y: number } | null>(null);
+  const grabbing = useRef(false); // o dedo está segurando um objeto (não gira a câmera)
+  const start = useRef<{ x: number; y: number; t: number; moved: number }>({ x: 0, y: 0, t: 0, moved: 0 });
 
   function down(e: PointerEvent<HTMLDivElement>) {
     if (last.current) return; // um dedo por vez olhando
-    e.currentTarget.setPointerCapture(e.pointerId);
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* toque sintético (testes) */ }
     last.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    start.current = { x: e.clientX, y: e.clientY, t: e.timeStamp, moved: 0 };
+    grabbing.current = onGrab(e.clientX, e.clientY);
   }
   function move(e: PointerEvent<HTMLDivElement>) {
     const l = last.current;
     if (!l || l.id !== e.pointerId) return;
+    if (grabbing.current) { onGrabMove(e.clientX, e.clientY); return; }
     onLook(e.clientX - l.x, e.clientY - l.y);
+    start.current.moved = Math.max(start.current.moved, Math.hypot(e.clientX - start.current.x, e.clientY - start.current.y));
     last.current = { id: l.id, x: e.clientX, y: e.clientY };
   }
   function up(e: PointerEvent<HTMLDivElement>) {
-    if (last.current?.id === e.pointerId) last.current = null;
+    if (last.current?.id !== e.pointerId) return;
+    last.current = null;
+    if (grabbing.current) { grabbing.current = false; onGrabEnd(); return; }
+    const st = start.current;
+    if (e.type === 'pointerup' && e.timeStamp - st.t < TAP_MAX_MS && st.moved < TAP_MAX_MOVE) onTap(e.clientX, e.clientY);
   }
 
   return (

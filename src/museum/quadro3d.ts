@@ -4,6 +4,8 @@
 //   visitante (enunciado, dica, Teoria, História, "i", boas-vindas). O
 //   visitante continua andando; mira nas setas e aperta E para passar as
 //   páginas, e fecha no ✕, com Espaço (ou B no controle) ou se afastando.
+//   No celular dá para tocar direto nas setas/✕ do painel, ou usar os botões
+//   ◀ ✕ ▶ ao lado do joystick (index.tsx).
 // - `hitRegion`: descobre em que ponto de um quadro (plano) a mira está, para
 //   quadros com vários botões (ex.: as alternativas).
 
@@ -64,7 +66,8 @@ export const inRect = (p: { x: number; y: number }, r: Rect) => p.x >= r.x && p.
 
 // ── Painel flutuante de leitura ──
 
-const PW = 1.5, PH = 1.05;       // m
+export const PANEL_W = 1.5;
+const PW = PANEL_W, PH = 1.05;   // m
 const CW = 1024, CH = 717;       // px (mesma proporção)
 const CLOSE_DISTANCE = 7;        // m: longe disso, o painel fecha sozinho
 const BTN_PREV: Rect = { x: 30, y: CH - 96, w: 150, h: 70 };
@@ -77,6 +80,12 @@ export interface FloatingPanel {
   open(content: InfoContent, position: THREE.Vector3, lookAt: THREE.Vector3, accent?: number): void;
   close(): void;
   interaction: RoomInteraction;
+  // Botões de fora (◀ ✕ ▶ do celular) e toque direto no painel.
+  prev(): void;
+  next(): void;
+  tap(ray: THREE.Ray): boolean; // true = o toque caiu no painel
+  // Avisa quando abre, troca de página ou fecha (null).
+  onChange: ((state: { page: number; total: number } | null) => void) | null;
   tick(cameraPos: THREE.Vector3): void;
   dispose(): void;
 }
@@ -90,7 +99,9 @@ export function createFloatingPanel(): FloatingPanel {
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
   const geo = new THREE.PlaneGeometry(PW, PH);
-  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+  // depthTest false + renderOrder alto: o painel é desenhado sempre por cima da
+  // cena (não some atrás de um pedestal ou de uma mesa que fique na frente).
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthTest: false, depthWrite: false });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.renderOrder = 10;
   const group = new THREE.Group();
@@ -163,10 +174,25 @@ export function createFloatingPanel(): FloatingPanel {
     if (h !== hover) { hover = h; draw(); }
   }
 
+  function notify() {
+    api.onChange?.(content ? { page, total: content.pages.length } : null);
+  }
+
   function close() {
+    if (!content) return;
     content = null;
     group.visible = false;
     hover = null;
+    notify();
+  }
+
+  function goTo(p: number) {
+    if (!content) return;
+    const n = Math.min(Math.max(p, 0), content.pages.length - 1);
+    if (n === page) return;
+    page = n;
+    draw();
+    notify();
   }
 
   const interaction: RoomInteraction = {
@@ -193,15 +219,13 @@ export function createFloatingPanel(): FloatingPanel {
       if (!content) return;
       const last = page >= content.pages.length - 1;
       if (hover === 'close' || (hover === 'body' && last)) { close(); return; }
-      if (hover === 'prev') page = Math.max(0, page - 1);
-      else page = Math.min(content.pages.length - 1, page + 1);
-      draw();
+      goTo(hover === 'prev' ? page - 1 : page + 1);
     },
     drag() { /* nada */ },
     release() { /* nada */ },
   };
 
-  return {
+  const api: FloatingPanel = {
     group,
     isOpen: () => content !== null,
     open(c, position, lookAt, accentColor = 0xe67e22) {
@@ -213,9 +237,18 @@ export function createFloatingPanel(): FloatingPanel {
       group.lookAt(lookAt.x, position.y, lookAt.z);
       group.visible = true;
       draw();
+      notify();
     },
     close,
     interaction,
+    prev: () => goTo(page - 1),
+    next: () => goTo(page + 1),
+    tap(ray) {
+      if (!interaction.isTarget(ray)) return false;
+      interaction.press(ray);
+      return true;
+    },
+    onChange: null,
     tick(cameraPos) {
       if (content && cameraPos.distanceTo(group.position) > CLOSE_DISTANCE) close();
     },
@@ -225,4 +258,5 @@ export function createFloatingPanel(): FloatingPanel {
       tex.dispose();
     },
   };
+  return api;
 }

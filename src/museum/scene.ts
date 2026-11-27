@@ -47,7 +47,7 @@ import { defaultValues } from '../core/controls';
 import { createDirectionRepeat, createGamepadReader, frameDirection, type GamepadDirection } from '../core/gamepad';
 import type { InteractiveRoom, RoomInteraction } from './interactiveRoom';
 import { buildHall, buildRoom, buildWing, type Centerpiece, type Level } from './levels';
-import { createFloatingPanel } from './quadro3d';
+import { createFloatingPanel, PANEL_W } from './quadro3d';
 import {
   spawnPoint, constrainPosition, nearestDoor,
   EXIT_DOOR_ID, EXERCISE_DOOR_ID, NEXT_EXERCISE_DOOR_ID, PREV_EXERCISE_DOOR_ID, EYE_HEIGHT,
@@ -123,7 +123,9 @@ export interface MuseumScene {
   onEnter: ((doorId: string) => void) | null;          // abrir a PÁGINA do experimento
   onRoomChange: ((room: RoomInfo | null) => void) | null; // entrou/saiu de uma sala
   onWingChange: ((wing: WingInfo | null) => void) | null; // entrou/saiu de uma ala
-  onInteractionChange: ((prompt: string | null, hold: boolean) => void) | null;
+  // fromPanel = o que está na mira é o painel flutuante (no celular o React
+  // troca o botão de ação pelos botões ◀ ✕ ▶).
+  onInteractionChange: ((prompt: string | null, hold: boolean, fromPanel: boolean) => void) | null;
   onInspectChange: ((inspecting: boolean) => void) | null;
   // Sala de exercício: o estudante apertou o "i" verde de iniciar a questão.
   onExerciseStart: (() => void) | null;
@@ -134,6 +136,20 @@ export interface MuseumScene {
   setAlternativesState(tentadas: number[], acertou: boolean, certa?: number): void;
   // Fecha o painel flutuante de leitura, se estiver aberto (Espaço).
   closePanel(): boolean;
+  // Botões ◀ ▶ do celular e aviso de painel aberto/página (null = fechado).
+  panelPrev(): void;
+  panelNext(): void;
+  onPanelChange: ((state: { page: number; total: number } | null) => void) | null;
+  // Toque rápido na tela (celular): aciona o que estiver sob o dedo (setas e ✕
+  // do painel, "i", alternativas). true = o toque acionou algo.
+  tapAt(clientX: number, clientY: number): boolean;
+  // Dedo que encosta num objeto de segurar (ex.: massa do pêndulo): pega,
+  // arrasta seguindo o dedo e solta com interactRelease. true = pegou.
+  touchGrab(clientX: number, clientY: number): boolean;
+  touchDrag(clientX: number, clientY: number): void;
+  // false = sem mira no centro (celular): nada é acionado por mirar, só por
+  // tocar; o botão de ação fica só para as portas.
+  setAimEnabled(on: boolean): void;
   // Navega para a próxima sala de exercício (ou fecha a sala se for a última).
   goToNextExercise(): void;
   // Libera (false) ou trava (true) a porta "Próxima questão".
@@ -245,6 +261,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   let nextExerciseLocked = false;
   let active: RoomInteraction | null = null; // interação sendo segurada
   let shownPrompt: string | null = null;
+  let shownFromPanel = false;
   let fade: { phase: 'out' | 'in'; t: number; action?: () => void } | null = null;
 
   const raycaster = new THREE.Raycaster();
@@ -316,6 +333,13 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
       panel.close();
       return true;
     },
+    panelPrev: () => panel.prev(),
+    panelNext: () => panel.next(),
+    onPanelChange: null,
+    tapAt,
+    touchGrab,
+    touchDrag(x, y) { if (active && touchRay) touchRay.copy(rayAt(x, y)); },
+    setAimEnabled(on) { aimEnabled = on; if (!on) hovered = null; },
     goToNextExercise() { if (!fade && room) navigateNextExercise(); },
     setNextExerciseLocked(locked) { nextExerciseLocked = locked; },
     goBack,
@@ -538,14 +562,51 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   // painel 3D que surge flutuando 1,6 m à frente do visitante, virado para ele.
   // O mouse continua travado: dá para andar com o painel aberto.
   const panel = createFloatingPanel();
+  panel.onChange = (state) => api.onPanelChange?.(state);
   scene.add(panel.group);
+
+  // Toque rápido: raio que sai da câmera e passa pelo ponto tocado (em vez do
+  // centro da tela). Só aciona o que é de "apertar" (hold false): o que é de
+  // segurar e arrastar continua usando a mira + botão de ação.
+  const tapNdc = new THREE.Vector2();
+  let aimEnabled = true;
+  let touchRay: THREE.Ray | null = null; // raio do dedo enquanto segura um objeto
+  function rayAt(clientX: number, clientY: number): THREE.Ray {
+    const r = renderer.domElement.getBoundingClientRect();
+    tapNdc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+    raycaster.setFromCamera(tapNdc, camera);
+    return raycaster.ray;
+  }
+  function touchGrab(clientX: number, clientY: number): boolean {
+    if (fade || active || inspecting || panel.isOpen() && panel.interaction.isTarget(rayAt(clientX, clientY))) return false;
+    const ray = rayAt(clientX, clientY);
+    const hit = level.interactions.find((i) => i.hold !== false && i.isTarget(ray));
+    if (!hit) return false;
+    touchRay = ray.clone();
+    active = hit;
+    hit.press(touchRay);
+    return true;
+  }
+  function tapAt(clientX: number, clientY: number): boolean {
+    if (fade || active || inspecting) return false;
+    const ray = rayAt(clientX, clientY);
+    if (panel.tap(ray)) return true;
+    const hit = level.interactions.find((i) => i.hold === false && i.isTarget(ray));
+    if (!hit) return false;
+    hit.press(ray);
+    return true;
+  }
   const _fwd = new THREE.Vector3();
   function openInfo(content: InfoContent, accent?: number) {
     camera.getWorldDirection(_fwd);
     _fwd.y = 0;
     if (_fwd.lengthSq() < 1e-6) _fwd.set(0, 0, -1);
     _fwd.normalize();
-    const target = { x: camera.position.x + _fwd.x * 1.6, z: camera.position.z + _fwd.z * 1.6 };
+    // 1,6 m à frente; numa tela estreita (celular em pé) o painel inteiro
+    // não caberia na largura, então ele surge mais longe, até caber com folga.
+    const halfFovX = Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * camera.aspect);
+    const dist = Math.max(1.6, (PANEL_W / 2) * 1.12 / Math.tan(halfFovX));
+    const target = { x: camera.position.x + _fwd.x * dist, z: camera.position.z + _fwd.z * dist };
     const inside = constrainPosition(target, level.layout); // não entra na parede
     const pos = new THREE.Vector3(inside.x, 1.55, inside.z);
     panel.open(content, pos, camera.position, accent);
@@ -562,6 +623,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   }
 
   function interactRelease() {
+    touchRay = null;
     if (!active) return;
     active.release();
     active = null;
@@ -713,16 +775,19 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     // Interações: segurando → arrasta; senão, descobre o que está na mira.
     if (!fade) {
       const ray = aimRay();
-      if (active) active.drag(ray);
+      if (active) active.drag(touchRay ?? ray);
+      else if (!aimEnabled) hovered = null;
       // O painel flutuante tem prioridade (está na frente de tudo).
       else hovered = (panel.interaction.isTarget(ray) ? panel.interaction : null)
         ?? level.interactions.find((i) => i.isTarget(ray)) ?? null;
     }
-    const current = active ?? hovered;
+    const current = touchRay ? null : (active ?? hovered); // segurando com o dedo: sem aviso
     const prompt = current?.prompt ?? null;
-    if (prompt !== shownPrompt) {
+    const fromPanel = current === panel.interaction;
+    if (prompt !== shownPrompt || fromPanel !== shownFromPanel) {
       shownPrompt = prompt;
-      api.onInteractionChange?.(prompt, current?.hold !== false);
+      shownFromPanel = fromPanel;
+      api.onInteractionChange?.(prompt, current?.hold !== false, fromPanel);
     }
 
     setCurrentDoor(fade ? null : nearestDoor({ x: camera.position.x, z: camera.position.z }, level.layout));

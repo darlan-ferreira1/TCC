@@ -91,6 +91,9 @@ const roundButton = {
   background: 'rgba(10,10,26,0.6)', color: '#e0e0f0', fontSize: 16, cursor: 'pointer',
 } as const;
 
+// Botões ◀ ✕ ▶ do painel flutuante no celular (maiores, para o polegar).
+const panelButton = { ...roundButton, width: 52, height: 52, borderRadius: 12, fontSize: 20, touchAction: 'manipulation' } as const;
+
 function doorPrompt(door: DoorPlacement, nextLocked = false): string {
   if (door.id === EXIT_DOOR_ID) return door.title;
   if (door.id === EXERCISE_DOOR_ID) return 'Entrar no espaço de exercícios';
@@ -125,6 +128,8 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   const [nearDoor, setNearDoor] = useState<DoorPlacement | null>(null);
   const [interaction, setInteraction] = useState<string | null>(null);
   const [interactionHold, setInteractionHold] = useState(true);
+  const [interactionFromPanel, setInteractionFromPanel] = useState(false); // a mira está no painel flutuante?
+  const [panelState, setPanelState] = useState<{ page: number; total: number } | null>(null); // painel aberto (página)
   const [exerciseState, setExerciseState] = useState<{
     roomId: string;   // id da sala de exercício (ex.: 'pendulo-q1')
     expId: string;    // id do experimento base (ex.: 'simple-pendulum')
@@ -213,10 +218,12 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
     };
     s.onGamepadHud = (direction) => padHudInput.current?.(direction);
     s.onNearDoorChange = setNearDoor;
-    s.onInteractionChange = (prompt, hold) => {
+    s.onInteractionChange = (prompt, hold, fromPanel) => {
       setInteraction(prompt);
       setInteractionHold(hold);
+      setInteractionFromPanel(fromPanel);
     };
+    s.onPanelChange = setPanelState;
     s.onInspectChange = setInspecting;
     s.onExerciseStart = () => setExerciseState((p) => (p ? { ...p, started: true } : p));
     // Alternativa escolhida no quadro 3D (mirar + E): mesma função das teclas 1–4.
@@ -411,6 +418,12 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
 
   const showHud = room && hudOpen;
   const showGameUi = playing && !showHud && !inspecting;
+  // No celular, o painel flutuante tem os próprios botões (◀ ✕ ▶ ao lado do
+  // joystick): o botão de ação do centro não mostra "Toque para próxima página".
+  const actionInteraction = touchPlaying && interactionFromPanel ? null : interaction;
+  // Só toque (sem controle de videogame): sem mira, sem "Toque para ler".
+  const touchOnly = touchPlaying && !padPlaying;
+  useEffect(() => { sceneRef.current?.setAimEnabled(!touchOnly); }, [touchOnly, theme]);
 
   return (
     <div className="expo-root" style={{ position: 'relative', overflow: 'hidden', background: 'var(--bg)', fontFamily: 'Inter, sans-serif' }}>
@@ -422,6 +435,10 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
           <TouchControls
             onMove={(x, y) => sceneRef.current?.setTouchMove(x, y)}
             onLook={(dx, dy) => sceneRef.current?.touchLook(dx, dy)}
+            onTap={(x, y) => sceneRef.current?.tapAt(x, y)}
+            onGrab={(x, y) => sceneRef.current?.touchGrab(x, y) ?? false}
+            onGrabMove={(x, y) => sceneRef.current?.touchDrag(x, y)}
+            onGrabEnd={() => sceneRef.current?.interactRelease()}
           />
           <div style={{
             position: 'absolute', top: 'calc(12px + env(safe-area-inset-top, 0px))', right: 12,
@@ -475,8 +492,8 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
         </div>
       )}
 
-      {/* Mira no centro da tela */}
-      {showGameUi && (
+      {/* Mira no centro da tela (não no celular: lá se toca direto nas coisas) */}
+      {showGameUi && !touchOnly && (
         <div style={{
           position: 'absolute', top: '50%', left: '50%', width: 6, height: 6,
           margin: '-3px 0 0 -3px', borderRadius: '50%',
@@ -487,9 +504,9 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
 
       {/* Aviso de ação: interação na mira tem prioridade sobre a porta.
           No desktop é só um aviso (tecla E); no celular é um botão. */}
-      {showGameUi && (interaction || nearDoor) && (
+      {showGameUi && (actionInteraction || nearDoor) && (
         <button
-          {...(interaction
+          {...(actionInteraction
             ? {
                 // segurar: aperta e mantém (pegar a massa do pêndulo, por ex.)
                 onPointerDown: () => sceneRef.current?.interactPress(),
@@ -503,7 +520,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
             position: 'absolute', left: '50%', transform: 'translateX(-50%)',
             bottom: touchPlaying ? 'calc(180px + env(safe-area-inset-bottom, 0px))' : 48,
             background: 'rgba(10,10,26,0.85)',
-            border: `1px solid ${interaction ? '#f1c40f' : `#${nearDoor!.color.toString(16).padStart(6, '0')}`}`,
+            border: `1px solid ${actionInteraction ? '#f1c40f' : `#${nearDoor!.color.toString(16).padStart(6, '0')}`}`,
             borderRadius: 10, padding: touchPlaying ? '12px 20px' : '10px 18px', color: '#e0e0f0', fontSize: 15,
             display: 'flex', alignItems: 'center', gap: 10, whiteSpace: 'nowrap',
             maxWidth: 'calc(100vw - 32px)', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -513,13 +530,33 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
         >
           {!touchPlaying && <kbd style={kbdStyle}>{padPlaying ? 'A' : 'E'}</kbd>}
           <span>
-            {interaction
+            {actionInteraction
               ? (interactionHold
-                  ? (touchPlaying ? `Segure aqui para ${interaction}` : `Segure para ${interaction}`)
-                  : (touchPlaying ? `Toque para ${interaction}` : interaction))
+                  ? (touchPlaying ? `Segure aqui para ${actionInteraction}` : `Segure para ${actionInteraction}`)
+                  : (touchPlaying ? `Toque para ${actionInteraction}` : actionInteraction))
               : (touchPlaying ? 'Toque: ' : '') + doorPrompt(nearDoor!, !exerciseState?.completed)}
           </span>
         </button>
+      )}
+
+      {/* Celular, painel flutuante aberto: ◀ ✕ ▶ ao lado do joystick
+          (também dá para tocar direto nas setas e no ✕ do painel). */}
+      {showGameUi && touchPlaying && panelState && (
+        <div style={{
+          position: 'absolute',
+          left: 'calc(28px + 120px + 16px + env(safe-area-inset-left, 0px))',
+          bottom: 'calc(36px + 34px + env(safe-area-inset-bottom, 0px))',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <button aria-label="Página anterior" onClick={() => sceneRef.current?.panelPrev()}
+            disabled={panelState.page === 0}
+            style={{ ...panelButton, opacity: panelState.page === 0 ? 0.35 : 1 }}>◀</button>
+          <button aria-label="Fechar" onClick={() => sceneRef.current?.closePanel()}
+            style={{ ...panelButton, borderColor: '#f1c40f' }}>✕</button>
+          <button aria-label="Próxima página" onClick={() => sceneRef.current?.panelNext()}
+            disabled={panelState.page >= panelState.total - 1}
+            style={{ ...panelButton, opacity: panelState.page >= panelState.total - 1 ? 0.35 : 1 }}>▶</button>
+        </div>
       )}
 
       {/* Exercícios interativos dentro da sala */}
